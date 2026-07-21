@@ -333,6 +333,25 @@ def _alignment_for_game(m):
     }
 
 
+def _conviction_score(row):
+    """Ranks aligned games (model, betting money, and Reddit all pointing the
+    same way) by how strong the agreement is - more corroborating signals
+    first, then by how lopsided those signals are."""
+    m = row["matchup"]
+    signals = [d for d in (row["model_direction"], row["split_direction"], row["reddit_direction"]) if d]
+    signal_count = len(signals)
+
+    model_margin = 0.0
+    if m.dratings and m.dratings.away_win_pct is not None:
+        model_margin = abs(m.dratings.away_win_pct - m.dratings.home_win_pct)
+
+    split_margin = 0.0
+    if m.moundedge and m.moundedge.split_ml_away_money is not None:
+        split_margin = abs(m.moundedge.split_ml_away_money - m.moundedge.split_ml_home_money)
+
+    return signal_count * 1000 + model_margin + split_margin
+
+
 def _totals_alignment_for_game(m):
     dr_total = m.dratings.total_projected_runs if m.dratings else None
     bpp_total = m.moundedge.bpp_total if m.moundedge else None
@@ -374,6 +393,14 @@ def build_report_data(dr_games, me_games, reddit_result, today_iso, today_displa
     alignment_rows = sorted((_alignment_for_game(m) for m in matchups), key=lambda row: row["agree"])
     alignment_disagreements = [row for row in alignment_rows if not row["agree"]]
 
+    # headline: the game with the strongest agreement across model/money/Reddit,
+    # not the game with the most disagreement (that's the flags table below)
+    aligned_rows = [
+        row for row in alignment_rows
+        if row["agree"] and any((row["model_direction"], row["split_direction"], row["reddit_direction"]))
+    ]
+    highest_conviction = max(aligned_rows, key=_conviction_score, default=None)
+
     totals_rows = sorted(
         (_totals_alignment_for_game(m) for m in matchups if m.flags), key=lambda row: row["agree"]
     )
@@ -388,6 +415,7 @@ def build_report_data(dr_games, me_games, reddit_result, today_iso, today_displa
         "games": matchups,
         "notable_games": notable_games,
         "most_flagged": most_flagged,
+        "highest_conviction": highest_conviction,
         "alignment_rows": alignment_rows,
         "alignment_disagreements": alignment_disagreements,
         "totals_rows": totals_rows,

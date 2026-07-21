@@ -134,7 +134,7 @@
 </div>
 <div class="disclaimer-strip">Personal-learning report comparing model projections to market/public data. No betting units, stake sizing, or recommended plays anywhere in this report.{% if r.slate_subtitle %} · {{ r.slate_subtitle }}{% endif %}</div>
 
-<div class="eyebrow"><span class="label cond">Most Notable Games</span><span class="rule"></span></div>
+<div class="eyebrow"><span class="label cond">Highest Conviction</span><span class="sub">the game where the model, the betting money, and Reddit (when available) all point the same way</span><span class="rule"></span></div>
 {% macro prediction_line(m) %}
 {% if m.prediction_away is not none %}
 <div class="prediction-line"><strong>{% if m.prediction_winner and m.prediction_winner != 'tie' %}{{ m.prediction_winner }} favored{% else %}Even matchup{% endif %}</strong> — predicted score: {{ m.away_abbrev }} {{ "%.1f"|format(m.prediction_away) }}, {{ m.home_abbrev }} {{ "%.1f"|format(m.prediction_home) }} <span class="src">({{ m.prediction_source }})</span></div>
@@ -142,18 +142,29 @@
 <div class="no-prediction">No prediction available for this game.</div>
 {% endif %}
 {% endmacro %}
-{% if r.most_flagged %}
+{% if r.highest_conviction %}
+{% set hc = r.highest_conviction %}
 <div class="headline-game">
-  <div class="tag cond">Most flagged — {{ r.most_flagged.flags|length }} things worth a second look</div>
-  <div class="matchup">{{ r.most_flagged.away_abbrev }} @ {{ r.most_flagged.home_abbrev }}</div>
-  {{ prediction_line(r.most_flagged) }}
-  <div style="margin-top:10px">
-  {% for f in r.most_flagged.flags %}
-  <div class="flag-line"><span class="dot"></span><span class="flag-text"><span class="tag-mini">{{ f.label }}</span><span class="detail-main">{{ f.detail }}</span></span></div>
-  {% endfor %}
+  <div class="tag cond">
+    {% set parts = [] %}
+    {% if hc.model_direction %}{% set _ = parts.append("Model") %}{% endif %}
+    {% if hc.split_direction %}{% set _ = parts.append("betting money") %}{% endif %}
+    {% if hc.reddit_direction %}{% set _ = parts.append("Reddit") %}{% endif %}
+    {{ parts|join(" + ") }} all favor the {{ hc.model_direction or hc.split_direction or hc.reddit_direction }} team
+  </div>
+  <div class="matchup">{{ hc.matchup.away_abbrev }} @ {{ hc.matchup.home_abbrev }}</div>
+  {{ prediction_line(hc.matchup) }}
+  <div style="margin-top:10px; font-size:13.5px">
+    {% if hc.model_direction %}<div class="flag-line"><span class="dot dot-quiet"></span><span class="flag-text"><span class="detail-main">Model favors the {{ hc.model_direction }} team{% if hc.matchup.dratings and hc.matchup.dratings.away_win_pct is not none %} ({{ hc.matchup.dratings.away_win_pct if hc.matchup.dratings.away_win_pct > hc.matchup.dratings.home_win_pct else hc.matchup.dratings.home_win_pct }}% win probability){% endif %}</span></span></div>{% endif %}
+    {% if hc.split_direction %}<div class="flag-line"><span class="dot dot-quiet"></span><span class="flag-text"><span class="detail-main">Betting money favors the {{ hc.split_direction }} team{% if hc.matchup.moundedge and hc.matchup.moundedge.split_ml_away_money is not none %} ({{ [hc.matchup.moundedge.split_ml_away_money, hc.matchup.moundedge.split_ml_home_money]|max|round|int }}% of money){% endif %}</span></span></div>{% endif %}
+    {% if hc.reddit_direction %}<div class="flag-line"><span class="dot dot-quiet"></span><span class="flag-text"><span class="detail-main">Reddit sentiment leans toward the {{ hc.reddit_direction }} team</span></span></div>{% endif %}
   </div>
 </div>
+{% else %}
+<div class="card boxed">No game shows full agreement across model, betting money, and Reddit today — every game has at least one source pointing a different way.</div>
 {% endif %}
+
+<div class="eyebrow"><span class="label cond">Where Sources Disagree</span><span class="sub">games that tripped at least one of the six checks below</span><span class="rule"></span></div>
 <div class="disclaimer-strip" style="margin:0 0 6px">A game gets flagged when at least one of these trips: models expect a different total than the market (off by &gt;{{ r.thresholds.total_gap }} runs) · the two models disagree · public bets and public money disagree by &gt;{{ r.thresholds.split_divergence }} points · a starter is off their normal form by &gt;{{ r.thresholds.pitcher_split }} ERA · weather/park effect is large (≥{{ r.thresholds.weather_net }}%) · MoundEdge's own trend arrow looks inconsistent. See "Glossary" below for any unfamiliar terms.</div>
 <div class="table-wrap"><table>
 <thead><tr><th>Matchup</th><th>Prediction</th><th>Why it's flagged</th></tr></thead>
