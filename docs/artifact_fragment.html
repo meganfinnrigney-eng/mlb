@@ -73,11 +73,35 @@
 
   /* scorecard-style annotation dots, not badges */
   .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 7px;
-    background: var(--accent); flex-shrink: 0; position: relative; top: -1px; }
+    background: var(--accent); flex-shrink: 0; position: relative; top: 5px; }
   .dot-quiet { background: var(--line); }
-  .flag-line { display: flex; align-items: flex-start; margin: 3px 0; }
-  .flag-text strong { font-weight: 700; }
-  .flag-text span.detail { display: block; color: var(--muted); font-size: 12px; margin-top: 1px; }
+  .flag-line { display: flex; align-items: flex-start; margin: 7px 0; }
+  .flag-text { display: block; }
+  .flag-text .tag-mini { display: block; font-size: 10px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.05em; color: var(--muted); margin-bottom: 2px; }
+  .flag-text .detail-main { display: block; color: var(--ink); font-size: 13.5px; }
+
+  .prediction-line { font-size: 15px; margin: 6px 0 2px; }
+  .prediction-line .src { color: var(--muted); font-size: 11.5px; font-weight: 400; text-transform: uppercase; letter-spacing: 0.03em; }
+  .no-prediction { color: var(--muted); font-style: italic; font-size: 13px; }
+
+  .weather-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin: 10px 0 8px; }
+  .weather-tile { border: 1px solid var(--line); border-radius: 5px; padding: 12px 13px; }
+  .weather-tile .wt-matchup { font-weight: 700; font-size: 13px; margin-bottom: 6px; }
+  .weather-tile .wt-main { display: flex; align-items: baseline; gap: 8px; }
+  .weather-tile .wt-icon { font-size: 22px; line-height: 1; }
+  .weather-tile .wt-temp { font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .weather-tile .wt-cond { color: var(--muted); font-size: 12.5px; }
+  .weather-tile .wt-wind { color: var(--muted); font-size: 12px; margin-top: 4px; }
+  .weather-tile .wt-effect { font-size: 12.5px; margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--line); }
+
+  .glossary dt { font-weight: 700; }
+  .glossary dl { display: grid; grid-template-columns: 110px 1fr; gap: 7px 14px; margin: 0; font-size: 13px; }
+
+  .sources { list-style: none; margin: 0; padding: 0; }
+  .sources li { padding: 8px 0; border-bottom: 1px solid var(--line); }
+  .sources li:last-child { border-bottom: none; }
+  .sources .src-name { font-weight: 700; display: inline-block; min-width: 150px; }
 
   .verdict { display: flex; align-items: center; font-weight: 600; }
   .verdict.no { color: var(--ink); }
@@ -106,79 +130,100 @@
 
 <div class="masthead">
   <h1 class="cond">MLB Daily Analysis</h1>
-  <div class="meta">Monday, July 20, 2026<strong>Published 2026-07-20 19:44 PDT</strong></div>
+  <div class="meta">Monday, July 20, 2026<strong>Published 2026-07-20 20:09 PDT</strong></div>
 </div>
 <div class="disclaimer-strip">Personal-learning report comparing model projections to market/public data. No betting units, stake sizing, or recommended plays anywhere in this report. · Monday, July 20, 2026 · 15-game slate · season stats + last-30-day trends · ▲▼ trend vs season</div>
 
 <div class="eyebrow"><span class="label cond">Most Notable Games</span><span class="rule"></span></div>
 
+
 <div class="headline-game">
-  <div class="tag cond">Most flagged — 5 triggers</div>
+  <div class="tag cond">Most flagged — 5 things worth a second look</div>
   <div class="matchup">LAD @ PHI</div>
+  
+
+<div class="prediction-line"><strong>Even matchup</strong> — predicted score: LAD 4.9, PHI 4.9 <span class="src">(BPP sim)</span></div>
+
+
   <div style="margin-top:10px">
   
-  <div class="flag-line"><span class="dot"></span><span class="flag-text"><strong>Model vs market total gap</strong><span class="detail">Model total 9.2 vs market total 8.0 (gap 1.2)</span></span></div>
+  <div class="flag-line"><span class="dot"></span><span class="flag-text"><span class="tag-mini">Models expect a different total than the betting market</span><span class="detail-main">Model total 9.2 runs vs. market total 8.0 runs (off by 1.2)</span></span></div>
   
-  <div class="flag-line"><span class="dot"></span><span class="flag-text"><strong>DRatings vs BPP disagreement</strong><span class="detail">DRatings favors away, BPP favors tie; DRatings total 8.0 vs BPP total 9.8 (gap 1.8)</span></span></div>
+  <div class="flag-line"><span class="dot"></span><span class="flag-text"><span class="tag-mini">The two models disagree with each other</span><span class="detail-main">DRatings picks the away team, MoundEdge&#39;s BPP sim picks the tie team; DRatings projects 8.0 total runs, BPP projects 9.8 (off by 1.8)</span></span></div>
   
-  <div class="flag-line"><span class="dot"></span><span class="flag-text"><strong>Lopsided bets% vs money% split</strong><span class="detail">Total Over bets/money gap 16pts; Total Under bets/money gap 16pts</span></span></div>
+  <div class="flag-line"><span class="dot"></span><span class="flag-text"><span class="tag-mini">Public bets and public money don&#39;t agree</span><span class="detail-main">Total Over: 16-point gap between % of bets and % of money; Total Under: 16-point gap between % of bets and % of money</span></span></div>
   
-  <div class="flag-line"><span class="dot"></span><span class="flag-text"><strong>Extreme starter home/road split</strong><span class="detail">C. Sanchez home ERA 0.86 vs season 2.62 (-1.76)</span></span></div>
+  <div class="flag-line"><span class="dot"></span><span class="flag-text"><span class="tag-mini">Starting pitcher is far from their normal form</span><span class="detail-main">C. Sanchez home ERA 0.86 vs season 2.62 (-1.76)</span></span></div>
   
-  <div class="flag-line"><span class="dot"></span><span class="flag-text"><strong>Extreme weather/park effect</strong><span class="detail">BPP net +9%</span></span></div>
+  <div class="flag-line"><span class="dot"></span><span class="flag-text"><span class="tag-mini">Weather/ballpark will change scoring a lot</span><span class="detail-main">makes scoring notably easier (+9% simulated effect)</span></span></div>
   
   </div>
 </div>
 
-<div class="disclaimer-strip" style="margin:0 0 6px">Thresholds: total gap &gt; 1.0 runs · BPP/DRatings disagreement &gt; 1.0 runs · split divergence &gt; 15.0 pts · pitcher split &gt; 1.0 ERA · weather net ≥ 8.0%.</div>
+<div class="disclaimer-strip" style="margin:0 0 6px">A game gets flagged when at least one of these trips: models expect a different total than the market (off by &gt;1.0 runs) · the two models disagree · public bets and public money disagree by &gt;15.0 points · a starter is off their normal form by &gt;1.0 ERA · weather/park effect is large (≥8.0%) · MoundEdge's own trend arrow looks inconsistent. See "Glossary" below for any unfamiliar terms.</div>
 <div class="table-wrap"><table>
-<thead><tr><th>Matchup</th><th>Flags</th></tr></thead>
+<thead><tr><th>Matchup</th><th>Prediction</th><th>Why it's flagged</th></tr></thead>
 <tbody>
 
 <tr><td class="cond" style="font-weight:700; white-space:nowrap">LAD @ PHI</td>
-  <td><div class="flag-line"><span class="dot"></span><span class="flag-text"><strong>Model vs market total gap</strong><span class="detail">Model total 9.2 vs market total 8.0 (gap 1.2)</span></span></div><div class="flag-line"><span class="dot"></span><span class="flag-text"><strong>DRatings vs BPP disagreement</strong><span class="detail">DRatings favors away, BPP favors tie; DRatings total 8.0 vs BPP total 9.8 (gap 1.8)</span></span></div><div class="flag-line"><span class="dot"></span><span class="flag-text"><strong>Lopsided bets% vs money% split</strong><span class="detail">Total Over bets/money gap 16pts; Total Under bets/money gap 16pts</span></span></div><div class="flag-line"><span class="dot"></span><span class="flag-text"><strong>Extreme starter home/road split</strong><span class="detail">C. Sanchez home ERA 0.86 vs season 2.62 (-1.76)</span></span></div><div class="flag-line"><span class="dot"></span><span class="flag-text"><strong>Extreme weather/park effect</strong><span class="detail">BPP net +9%</span></span></div></td></tr>
+  <td style="white-space:nowrap">even<br><span class="num" style="font-size:12px;color:var(--muted)">4.9–4.9</span></td>
+  <td><div class="flag-line"><span class="dot"></span><span class="flag-text"><span class="tag-mini">Models expect a different total than the betting market</span><span class="detail-main">Model total 9.2 runs vs. market total 8.0 runs (off by 1.2)</span></span></div><div class="flag-line"><span class="dot"></span><span class="flag-text"><span class="tag-mini">The two models disagree with each other</span><span class="detail-main">DRatings picks the away team, MoundEdge&#39;s BPP sim picks the tie team; DRatings projects 8.0 total runs, BPP projects 9.8 (off by 1.8)</span></span></div><div class="flag-line"><span class="dot"></span><span class="flag-text"><span class="tag-mini">Public bets and public money don&#39;t agree</span><span class="detail-main">Total Over: 16-point gap between % of bets and % of money; Total Under: 16-point gap between % of bets and % of money</span></span></div><div class="flag-line"><span class="dot"></span><span class="flag-text"><span class="tag-mini">Starting pitcher is far from their normal form</span><span class="detail-main">C. Sanchez home ERA 0.86 vs season 2.62 (-1.76)</span></span></div><div class="flag-line"><span class="dot"></span><span class="flag-text"><span class="tag-mini">Weather/ballpark will change scoring a lot</span><span class="detail-main">makes scoring notably easier (+9% simulated effect)</span></span></div></td></tr>
 
 <tr><td class="cond" style="font-weight:700; white-space:nowrap">SFG @ KCR</td>
-  <td><div class="flag-line"><span class="dot"></span><span class="flag-text"><strong>DRatings vs BPP disagreement</strong><span class="detail">DRatings total 9.6 vs BPP total 11.1 (gap 1.5)</span></span></div><div class="flag-line"><span class="dot"></span><span class="flag-text"><strong>Lopsided bets% vs money% split</strong><span class="detail">ML SFG bets/money gap 19pts; ML KCR bets/money gap 19pts</span></span></div><div class="flag-line"><span class="dot"></span><span class="flag-text"><strong>Extreme starter home/road split</strong><span class="detail">T. McDonald road ERA 3.19 vs season 5.02 (-1.83)</span></span></div><div class="flag-line"><span class="dot"></span><span class="flag-text"><strong>Extreme weather/park effect</strong><span class="detail">BPP net +15%</span></span></div></td></tr>
+  <td style="white-space:nowrap"><strong>SFG</strong><br><span class="num" style="font-size:12px;color:var(--muted)">5.6–5.5</span></td>
+  <td><div class="flag-line"><span class="dot"></span><span class="flag-text"><span class="tag-mini">The two models disagree with each other</span><span class="detail-main">DRatings projects 9.6 total runs, BPP projects 11.1 (off by 1.5)</span></span></div><div class="flag-line"><span class="dot"></span><span class="flag-text"><span class="tag-mini">Public bets and public money don&#39;t agree</span><span class="detail-main">ML SFG: 19-point gap between % of bets and % of money; ML KCR: 19-point gap between % of bets and % of money</span></span></div><div class="flag-line"><span class="dot"></span><span class="flag-text"><span class="tag-mini">Starting pitcher is far from their normal form</span><span class="detail-main">T. McDonald road ERA 3.19 vs season 5.02 (-1.83)</span></span></div><div class="flag-line"><span class="dot"></span><span class="flag-text"><span class="tag-mini">Weather/ballpark will change scoring a lot</span><span class="detail-main">makes scoring notably easier (+15% simulated effect)</span></span></div></td></tr>
 
 <tr><td class="cond" style="font-weight:700; white-space:nowrap">PIT @ NYY</td>
-  <td><div class="flag-line"><span class="dot"></span><span class="flag-text"><strong>DRatings vs BPP disagreement</strong><span class="detail">DRatings favors home, BPP favors tie; DRatings total 9.5 vs BPP total 7.4 (gap 2.1)</span></span></div><div class="flag-line"><span class="dot"></span><span class="flag-text"><strong>Lopsided bets% vs money% split</strong><span class="detail">ML PIT bets/money gap 25pts; ML NYY bets/money gap 25pts</span></span></div><div class="flag-line"><span class="dot"></span><span class="flag-text"><strong>Extreme weather/park effect</strong><span class="detail">BPP net -9%</span></span></div></td></tr>
+  <td style="white-space:nowrap">even<br><span class="num" style="font-size:12px;color:var(--muted)">3.7–3.7</span></td>
+  <td><div class="flag-line"><span class="dot"></span><span class="flag-text"><span class="tag-mini">The two models disagree with each other</span><span class="detail-main">DRatings picks the home team, MoundEdge&#39;s BPP sim picks the tie team; DRatings projects 9.5 total runs, BPP projects 7.4 (off by 2.1)</span></span></div><div class="flag-line"><span class="dot"></span><span class="flag-text"><span class="tag-mini">Public bets and public money don&#39;t agree</span><span class="detail-main">ML PIT: 25-point gap between % of bets and % of money; ML NYY: 25-point gap between % of bets and % of money</span></span></div><div class="flag-line"><span class="dot"></span><span class="flag-text"><span class="tag-mini">Weather/ballpark will change scoring a lot</span><span class="detail-main">makes scoring notably harder (-9% simulated effect)</span></span></div></td></tr>
 
 <tr><td class="cond" style="font-weight:700; white-space:nowrap">DET @ CHC</td>
-  <td><div class="flag-line"><span class="dot"></span><span class="flag-text"><strong>DRatings vs BPP disagreement</strong><span class="detail">DRatings favors home, BPP favors away; DRatings total 8.4 vs BPP total 11.9 (gap 3.5)</span></span></div><div class="flag-line"><span class="dot"></span><span class="flag-text"><strong>Lopsided bets% vs money% split</strong><span class="detail">ML DET bets/money gap 24pts; ML CHC bets/money gap 24pts</span></span></div><div class="flag-line"><span class="dot"></span><span class="flag-text"><strong>Extreme weather/park effect</strong><span class="detail">BPP net +13%</span></span></div></td></tr>
+  <td style="white-space:nowrap"><strong>DET</strong><br><span class="num" style="font-size:12px;color:var(--muted)">6.2–5.7</span></td>
+  <td><div class="flag-line"><span class="dot"></span><span class="flag-text"><span class="tag-mini">The two models disagree with each other</span><span class="detail-main">DRatings picks the home team, MoundEdge&#39;s BPP sim picks the away team; DRatings projects 8.4 total runs, BPP projects 11.9 (off by 3.5)</span></span></div><div class="flag-line"><span class="dot"></span><span class="flag-text"><span class="tag-mini">Public bets and public money don&#39;t agree</span><span class="detail-main">ML DET: 24-point gap between % of bets and % of money; ML CHC: 24-point gap between % of bets and % of money</span></span></div><div class="flag-line"><span class="dot"></span><span class="flag-text"><span class="tag-mini">Weather/ballpark will change scoring a lot</span><span class="detail-main">makes scoring notably easier (+13% simulated effect)</span></span></div></td></tr>
 
 <tr><td class="cond" style="font-weight:700; white-space:nowrap">WSN @ COL</td>
-  <td><div class="flag-line"><span class="dot"></span><span class="flag-text"><strong>DRatings vs BPP disagreement</strong><span class="detail">DRatings favors away, BPP favors home; DRatings total 12.8 vs BPP total 11.2 (gap 1.6)</span></span></div><div class="flag-line"><span class="dot"></span><span class="flag-text"><strong>Lopsided bets% vs money% split</strong><span class="detail">ML WSN bets/money gap 21pts; ML COL bets/money gap 21pts</span></span></div><div class="flag-line"><span class="dot"></span><span class="flag-text"><strong>Extreme weather/park effect</strong><span class="detail">BPP net +31%</span></span></div></td></tr>
+  <td style="white-space:nowrap"><strong>COL</strong><br><span class="num" style="font-size:12px;color:var(--muted)">5.5–5.7</span></td>
+  <td><div class="flag-line"><span class="dot"></span><span class="flag-text"><span class="tag-mini">The two models disagree with each other</span><span class="detail-main">DRatings picks the away team, MoundEdge&#39;s BPP sim picks the home team; DRatings projects 12.8 total runs, BPP projects 11.2 (off by 1.6)</span></span></div><div class="flag-line"><span class="dot"></span><span class="flag-text"><span class="tag-mini">Public bets and public money don&#39;t agree</span><span class="detail-main">ML WSN: 21-point gap between % of bets and % of money; ML COL: 21-point gap between % of bets and % of money</span></span></div><div class="flag-line"><span class="dot"></span><span class="flag-text"><span class="tag-mini">Weather/ballpark will change scoring a lot</span><span class="detail-main">makes scoring notably easier (+31% simulated effect)</span></span></div></td></tr>
 
 <tr><td class="cond" style="font-weight:700; white-space:nowrap">STL @ LAA</td>
-  <td><div class="flag-line"><span class="dot"></span><span class="flag-text"><strong>DRatings vs BPP disagreement</strong><span class="detail">DRatings favors home, BPP favors tie</span></span></div><div class="flag-line"><span class="dot"></span><span class="flag-text"><strong>Lopsided bets% vs money% split</strong><span class="detail">ML STL bets/money gap 33pts; ML LAA bets/money gap 33pts</span></span></div></td></tr>
+  <td style="white-space:nowrap">even<br><span class="num" style="font-size:12px;color:var(--muted)">5.0–5.0</span></td>
+  <td><div class="flag-line"><span class="dot"></span><span class="flag-text"><span class="tag-mini">The two models disagree with each other</span><span class="detail-main">DRatings picks the home team, MoundEdge&#39;s BPP sim picks the tie team</span></span></div><div class="flag-line"><span class="dot"></span><span class="flag-text"><span class="tag-mini">Public bets and public money don&#39;t agree</span><span class="detail-main">ML STL: 33-point gap between % of bets and % of money; ML LAA: 33-point gap between % of bets and % of money</span></span></div></td></tr>
 
 <tr><td class="cond" style="font-weight:700; white-space:nowrap">MIN @ CLE</td>
-  <td><div class="flag-line"><span class="dot"></span><span class="flag-text"><strong>Model vs market total gap</strong><span class="detail">Model total 8.7 vs market total 7.5 (gap 1.2)</span></span></div><div class="flag-line"><span class="dot"></span><span class="flag-text"><strong>DRatings vs BPP disagreement</strong><span class="detail">DRatings favors home, BPP favors away</span></span></div></td></tr>
+  <td style="white-space:nowrap"><strong>MIN</strong><br><span class="num" style="font-size:12px;color:var(--muted)">4.4–3.6</span></td>
+  <td><div class="flag-line"><span class="dot"></span><span class="flag-text"><span class="tag-mini">Models expect a different total than the betting market</span><span class="detail-main">Model total 8.7 runs vs. market total 7.5 runs (off by 1.2)</span></span></div><div class="flag-line"><span class="dot"></span><span class="flag-text"><span class="tag-mini">The two models disagree with each other</span><span class="detail-main">DRatings picks the home team, MoundEdge&#39;s BPP sim picks the away team</span></span></div></td></tr>
 
 <tr><td class="cond" style="font-weight:700; white-space:nowrap">TBR @ TOR</td>
-  <td><div class="flag-line"><span class="dot"></span><span class="flag-text"><strong>DRatings vs BPP disagreement</strong><span class="detail">DRatings favors away, BPP favors home; DRatings total 7.3 vs BPP total 8.7 (gap 1.4)</span></span></div><div class="flag-line"><span class="dot"></span><span class="flag-text"><strong>Lopsided bets% vs money% split</strong><span class="detail">ML TBR bets/money gap 45pts; ML TOR bets/money gap 45pts</span></span></div></td></tr>
+  <td style="white-space:nowrap"><strong>TOR</strong><br><span class="num" style="font-size:12px;color:var(--muted)">3.8–4.9</span></td>
+  <td><div class="flag-line"><span class="dot"></span><span class="flag-text"><span class="tag-mini">The two models disagree with each other</span><span class="detail-main">DRatings picks the away team, MoundEdge&#39;s BPP sim picks the home team; DRatings projects 7.3 total runs, BPP projects 8.7 (off by 1.4)</span></span></div><div class="flag-line"><span class="dot"></span><span class="flag-text"><span class="tag-mini">Public bets and public money don&#39;t agree</span><span class="detail-main">ML TBR: 45-point gap between % of bets and % of money; ML TOR: 45-point gap between % of bets and % of money</span></span></div></td></tr>
 
 <tr><td class="cond" style="font-weight:700; white-space:nowrap">BAL @ BOS</td>
-  <td><div class="flag-line"><span class="dot"></span><span class="flag-text"><strong>DRatings vs BPP disagreement</strong><span class="detail">DRatings total 8.8 vs BPP total 9.9 (gap 1.1)</span></span></div><div class="flag-line"><span class="dot"></span><span class="flag-text"><strong>Extreme weather/park effect</strong><span class="detail">BPP net +17%</span></span></div></td></tr>
+  <td style="white-space:nowrap"><strong>BOS</strong><br><span class="num" style="font-size:12px;color:var(--muted)">4.7–5.1</span></td>
+  <td><div class="flag-line"><span class="dot"></span><span class="flag-text"><span class="tag-mini">The two models disagree with each other</span><span class="detail-main">DRatings projects 8.9 total runs, BPP projects 9.9 (off by 1.0)</span></span></div><div class="flag-line"><span class="dot"></span><span class="flag-text"><span class="tag-mini">Weather/ballpark will change scoring a lot</span><span class="detail-main">makes scoring notably easier (+17% simulated effect)</span></span></div></td></tr>
 
 <tr><td class="cond" style="font-weight:700; white-space:nowrap">CHW @ TEX</td>
-  <td><div class="flag-line"><span class="dot"></span><span class="flag-text"><strong>Lopsided bets% vs money% split</strong><span class="detail">ML CHW bets/money gap 18pts; ML TEX bets/money gap 18pts</span></span></div><div class="flag-line"><span class="dot"></span><span class="flag-text"><strong>Extreme weather/park effect</strong><span class="detail">BPP net -8%</span></span></div></td></tr>
+  <td style="white-space:nowrap"><strong>TEX</strong><br><span class="num" style="font-size:12px;color:var(--muted)">3.3–4.9</span></td>
+  <td><div class="flag-line"><span class="dot"></span><span class="flag-text"><span class="tag-mini">Public bets and public money don&#39;t agree</span><span class="detail-main">ML CHW: 18-point gap between % of bets and % of money; ML TEX: 18-point gap between % of bets and % of money</span></span></div><div class="flag-line"><span class="dot"></span><span class="flag-text"><span class="tag-mini">Weather/ballpark will change scoring a lot</span><span class="detail-main">makes scoring notably harder (-8% simulated effect)</span></span></div></td></tr>
 
 <tr><td class="cond" style="font-weight:700; white-space:nowrap">MIA @ HOU</td>
-  <td><div class="flag-line"><span class="dot"></span><span class="flag-text"><strong>DRatings vs BPP disagreement</strong><span class="detail">DRatings favors away, BPP favors tie</span></span></div><div class="flag-line"><span class="dot"></span><span class="flag-text"><strong>Lopsided bets% vs money% split</strong><span class="detail">Total Over bets/money gap 21pts; Total Under bets/money gap 21pts</span></span></div></td></tr>
+  <td style="white-space:nowrap">even<br><span class="num" style="font-size:12px;color:var(--muted)">4.4–4.4</span></td>
+  <td><div class="flag-line"><span class="dot"></span><span class="flag-text"><span class="tag-mini">The two models disagree with each other</span><span class="detail-main">DRatings picks the away team, MoundEdge&#39;s BPP sim picks the tie team</span></span></div><div class="flag-line"><span class="dot"></span><span class="flag-text"><span class="tag-mini">Public bets and public money don&#39;t agree</span><span class="detail-main">Total Over: 21-point gap between % of bets and % of money; Total Under: 21-point gap between % of bets and % of money</span></span></div></td></tr>
 
 <tr><td class="cond" style="font-weight:700; white-space:nowrap">ATH @ ARI</td>
-  <td><div class="flag-line"><span class="dot"></span><span class="flag-text"><strong>Model vs market total gap</strong><span class="detail">Model total 11.2 vs market total 9.5 (gap 1.7)</span></span></div><div class="flag-line"><span class="dot"></span><span class="flag-text"><strong>Lopsided bets% vs money% split</strong><span class="detail">ML ATH bets/money gap 16pts; ML ARI bets/money gap 16pts</span></span></div></td></tr>
+  <td style="white-space:nowrap"><strong>ARI</strong><br><span class="num" style="font-size:12px;color:var(--muted)">4.3–5.1</span></td>
+  <td><div class="flag-line"><span class="dot"></span><span class="flag-text"><span class="tag-mini">Models expect a different total than the betting market</span><span class="detail-main">Model total 11.2 runs vs. market total 9.5 runs (off by 1.7)</span></span></div><div class="flag-line"><span class="dot"></span><span class="flag-text"><span class="tag-mini">Public bets and public money don&#39;t agree</span><span class="detail-main">ML ATH: 16-point gap between % of bets and % of money; ML ARI: 16-point gap between % of bets and % of money</span></span></div></td></tr>
 
 <tr><td class="cond" style="font-weight:700; white-space:nowrap">SDP @ ATL</td>
-  <td><div class="flag-line"><span class="dot"></span><span class="flag-text"><strong>DRatings vs BPP disagreement</strong><span class="detail">DRatings favors home, BPP favors away</span></span></div></td></tr>
+  <td style="white-space:nowrap"><strong>SDP</strong><br><span class="num" style="font-size:12px;color:var(--muted)">5.4–4.7</span></td>
+  <td><div class="flag-line"><span class="dot"></span><span class="flag-text"><span class="tag-mini">The two models disagree with each other</span><span class="detail-main">DRatings picks the home team, MoundEdge&#39;s BPP sim picks the away team; DRatings projects 8.9 total runs, BPP projects 10.0 (off by 1.1)</span></span></div></td></tr>
 
 <tr><td class="cond" style="font-weight:700; white-space:nowrap">NYM @ MIL</td>
-  <td><div class="flag-line"><span class="dot"></span><span class="flag-text"><strong>Lopsided bets% vs money% split</strong><span class="detail">ML NYM bets/money gap 18pts; ML MIL bets/money gap 18pts</span></span></div></td></tr>
+  <td style="white-space:nowrap"><strong>MIL</strong><br><span class="num" style="font-size:12px;color:var(--muted)">3.9–5.2</span></td>
+  <td><div class="flag-line"><span class="dot"></span><span class="flag-text"><span class="tag-mini">Public bets and public money don&#39;t agree</span><span class="detail-main">ML NYM: 18-point gap between % of bets and % of money; ML MIL: 18-point gap between % of bets and % of money</span></span></div></td></tr>
 
 <tr><td class="cond" style="font-weight:700; white-space:nowrap">CIN @ SEA</td>
-  <td><div class="flag-line"><span class="dot"></span><span class="flag-text"><strong>Lopsided bets% vs money% split</strong><span class="detail">ML CIN bets/money gap 25pts; ML SEA bets/money gap 25pts</span></span></div></td></tr>
+  <td style="white-space:nowrap"><strong>SEA</strong><br><span class="num" style="font-size:12px;color:var(--muted)">3.7–4.3</span></td>
+  <td><div class="flag-line"><span class="dot"></span><span class="flag-text"><span class="tag-mini">Public bets and public money don&#39;t agree</span><span class="detail-main">ML CIN: 25-point gap between % of bets and % of money; ML SEA: 25-point gap between % of bets and % of money</span></span></div></td></tr>
 
 </tbody>
 </table></div>
@@ -318,7 +363,7 @@
 
 <tr>
   <td class="cond" style="font-weight:700; white-space:nowrap">SDP @ ATL</td>
-  <td class="num">9.0</td>
+  <td class="num">8.9</td>
   <td class="num">10.0</td>
   <td class="num">8.7</td>
   <td class="num">9.5</td>
@@ -395,7 +440,7 @@
 
 <tr>
   <td class="cond" style="font-weight:700; white-space:nowrap">BAL @ BOS</td>
-  <td class="num">8.8</td>
+  <td class="num">8.9</td>
   <td class="num">9.9</td>
   <td class="num">9.0</td>
   <td class="num">8.5</td>
@@ -525,6 +570,104 @@
 </div>
 
 
+<div class="eyebrow"><span class="label cond">Weather</span><span class="sub">current conditions and how they're expected to affect scoring</span><span class="rule"></span></div>
+<div class="weather-grid">
+
+
+<div class="weather-tile">
+  <div class="wt-matchup">STL @ LAA</div>
+  <div class="wt-main"><span class="wt-icon">☀️</span><span class="wt-temp">79°F</span></div>
+  <div class="wt-cond">Clear · wind 6 mph SSW</div>
+  <div class="wt-effect">Makes scoring a bit easier · park: neutral (1.00×)</div>
+</div>
+
+
+
+<div class="weather-tile">
+  <div class="wt-matchup">MIN @ CLE</div>
+  <div class="wt-main"><span class="wt-icon">☁️</span><span class="wt-temp">79°F</span></div>
+  <div class="wt-cond">Clouds · wind 3 mph NNW</div>
+  <div class="wt-effect">Makes scoring a bit harder · park: neutral (0.97×)</div>
+</div>
+
+
+
+<div class="weather-tile">
+  <div class="wt-matchup">PIT @ NYY</div>
+  <div class="wt-main"><span class="wt-icon">☀️</span><span class="wt-temp">79°F</span></div>
+  <div class="wt-cond">Clear · wind 8 mph S</div>
+  <div class="wt-effect">Makes scoring notably harder · park: neutral (0.97×)</div>
+</div>
+
+
+
+
+
+<div class="weather-tile">
+  <div class="wt-matchup">BAL @ BOS</div>
+  <div class="wt-main"><span class="wt-icon">⛅</span><span class="wt-temp">80°F</span></div>
+  <div class="wt-cond">Partly Cloudy · wind 9 mph SSW</div>
+  <div class="wt-effect">Makes scoring notably easier · park: hitter-friendly (1.12×)</div>
+</div>
+
+
+
+<div class="weather-tile">
+  <div class="wt-matchup">LAD @ PHI</div>
+  <div class="wt-main"><span class="wt-icon">☀️</span><span class="wt-temp">83°F</span></div>
+  <div class="wt-cond">Clear · wind 5 mph SSW</div>
+  <div class="wt-effect">Makes scoring notably easier · park: neutral (1.03×)</div>
+</div>
+
+
+
+<div class="weather-tile">
+  <div class="wt-matchup">SDP @ ATL</div>
+  <div class="wt-main"><span class="wt-icon">⛅</span><span class="wt-temp">90°F</span></div>
+  <div class="wt-cond">Partly Cloudy · wind 5 mph S</div>
+  <div class="wt-effect">Makes scoring a bit harder · park: pitcher-friendly (0.93×)</div>
+</div>
+
+
+
+
+
+<div class="weather-tile">
+  <div class="wt-matchup">SFG @ KCR</div>
+  <div class="wt-main"><span class="wt-icon">☀️</span><span class="wt-temp">94°F</span></div>
+  <div class="wt-cond">Clear · wind 7 mph SSW</div>
+  <div class="wt-effect">Makes scoring notably easier · park: hitter-friendly (1.07×)</div>
+</div>
+
+
+
+
+
+<div class="weather-tile">
+  <div class="wt-matchup">DET @ CHC</div>
+  <div class="wt-main"><span class="wt-icon">☁️</span><span class="wt-temp">84°F</span></div>
+  <div class="wt-cond">Mostly Cloudy · wind 12 mph SW</div>
+  <div class="wt-effect">Makes scoring notably easier · park: neutral (0.96×)</div>
+</div>
+
+
+
+
+
+<div class="weather-tile">
+  <div class="wt-matchup">WSN @ COL</div>
+  <div class="wt-main"><span class="wt-icon">☁️</span><span class="wt-temp">96°F</span></div>
+  <div class="wt-cond">Mostly Cloudy · wind 7 mph NE</div>
+  <div class="wt-effect">Makes scoring notably easier · park: hitter-friendly (1.32×)</div>
+</div>
+
+
+
+
+
+
+</div>
+
 <div class="eyebrow"><span class="label cond">Today's Slate</span><span class="rule"></span></div>
 <div class="table-wrap"><table>
 <thead><tr><th>Matchup</th><th>Time</th><th>Venue</th><th>Away Pitcher</th><th>Home Pitcher</th></tr></thead>
@@ -576,10 +719,14 @@
 
 <div class="eyebrow"><span class="label cond">Reddit Sentiment</span><span class="rule"></span></div>
 
-<div class="card boxed">Reddit sentiment unavailable today. live fetch failed (403 Client Error: Blocked for url: https://www.reddit.com/r/sportsbook/search.json?q=MLB%20daily%20thread&amp;restrict_sr=1&amp;sort=new&amp;limit=10) and no manual paste found at mlb_daily/data/reddit_manual_2026-07-20.txt - to include Reddit sentiment today, paste the daily thread&#39;s text into that file and re-run the workflow.</div>
+<div class="card boxed">
+Reddit sentiment isn't available today. Reddit blocks most automated requests outright — even from well-behaved scripts with a proper User-Agent — so this section will often be empty; it's not a bug in this report, and there's no way to make Reddit reliably allow it without switching to their official OAuth API (which this project deliberately avoids).
+<div style="margin-top:8px; font-size:12px; color:var(--muted)">Technical detail: live fetch failed (403 Client Error: Blocked for url: https://www.reddit.com/r/sportsbook/search.json?q=MLB%20daily%20thread&amp;restrict_sr=1&amp;sort=new&amp;limit=10) and no manual paste found at mlb_daily/data/reddit_manual_2026-07-20.txt - to include Reddit sentiment today, paste the daily thread&#39;s text into that file and re-run the workflow.</div>
+</div>
 
 
 <div class="eyebrow"><span class="label cond">Model Predictions</span><span class="rule"></span></div>
+<div class="disclaimer-strip">Three independent projections per game — they won't always agree with each other, which is normal and part of the point of tracking them.</div>
 <div class="table-wrap"><table>
 <thead><tr><th>Matchup</th><th class="num">DRatings</th><th>Winner</th><th class="num">MoundEdge Model</th><th class="num">BPP sim</th><th>BPP winner</th></tr></thead>
 <tbody>
@@ -622,7 +769,7 @@
 
 <tr>
   <td class="cond" style="font-weight:700; white-space:nowrap">BAL @ BOS</td>
-  <td class="num">4.1–4.7</td>
+  <td class="num">4.1–4.8</td>
   <td>BOS (55.9%)</td>
   <td class="num">4.4–4.6</td>
   <td class="num">4.7–5.1</td>
@@ -640,7 +787,7 @@
 
 <tr>
   <td class="cond" style="font-weight:700; white-space:nowrap">SDP @ ATL</td>
-  <td class="num">3.6–5.4</td>
+  <td class="num">3.6–5.3</td>
   <td>ATL (66.9%)</td>
   <td class="num">4.1–4.6</td>
   <td class="num">5.4–4.7</td>
@@ -724,8 +871,37 @@
 
 <div class="eyebrow"><span class="label cond">How to Scan a Slate</span><span class="rule"></span></div>
 <div class="card boxed">
-<strong>Routine game:</strong> DRatings and BPP agree on the winner, totals sit close to market, betting splits move together, starters are near their season norms, and there's no extreme weather/park effect. Nothing here needs a second look.<br><br>
-<strong>Notable game:</strong> one or more of the six checks above trips. Notable doesn't mean "bet this" — it means there's more disagreement between sources than usual, which is exactly the kind of case worth comparing against the actual final score afterward.
+<strong>Routine game:</strong> the two models agree on the winner, totals sit close to the market number, betting splits move together, starting pitchers are near their normal form, and there's no extreme weather/park effect. Nothing here needs a second look.<br><br>
+<strong>Notable game:</strong> one or more of the checks in the first section above trips. Notable doesn't mean "bet this" — it means there's more disagreement between sources than usual, which is exactly the kind of case worth comparing against the actual final score afterward.
 </div>
+
+<div class="eyebrow"><span class="label cond">Glossary</span><span class="sub">jargon used above, in plain English</span><span class="rule"></span></div>
+<div class="card boxed glossary">
+<dl>
+  <dt>ERA</dt><dd>Earned run average — average runs a pitcher allows per 9 innings. Lower is better.</dd>
+  <dt>xERA / xFIP</dt><dd>"Expected" versions of ERA that try to strip out luck/defense — same idea, lower is better.</dd>
+  <dt>K/9</dt><dd>Strikeouts per 9 innings, for a pitcher. Higher usually means more dominant stuff.</dd>
+  <dt>wRC+</dt><dd>A hitting stat where 100 = league-average offense. 120 means 20% better than average; 80 means 20% worse.</dd>
+  <dt>OPS</dt><dd>On-base plus slugging — a quick overall measure of a hitter's production. Higher is better.</dd>
+  <dt>ISO / K%</dt><dd>ISO = raw power (extra bases per at-bat). K% = how often a hitter strikes out — lower is generally better for the hitter.</dd>
+  <dt>BPP</dt><dd>MoundEdge's simulation-based projection — it runs the matchup many times and averages the outcomes, as opposed to a single-formula model.</dd>
+  <dt>Moneyline</dt><dd>A bet on which team simply wins the game, no point spread involved.</dd>
+  <dt>Total / Over-Under</dt><dd>A bet on whether the combined final score of both teams will be above or below a set number.</dd>
+  <dt>Bets% vs money%</dt><dd>% of individual bets placed on a side vs. % of total dollars wagered on it. When these two disagree a lot, it usually means a small number of large bettors are on the opposite side of the general public.</dd>
+  <dt>Home/road split</dt><dd>How much better or worse a pitcher performs at home vs. on the road, compared to their season average.</dd>
+</dl>
+</div>
+
+<div class="eyebrow"><span class="label cond">Sources</span><span class="rule"></span></div>
+<ul class="sources">
+
+<li><span class="src-name">SportsBettingDime</span><a href="https://www.sportsbettingdime.com/mlb/public-betting-trends/" target="_blank" rel="noopener">https://www.sportsbettingdime.com/mlb/public-betting-trends/</a></li>
+
+<li><span class="src-name">DRatings</span><a href="https://www.dratings.com/predictor/mlb-baseball-predictions/" target="_blank" rel="noopener">https://www.dratings.com/predictor/mlb-baseball-predictions/</a></li>
+
+<li><span class="src-name">MoundEdge</span><a href="https://moundedge.github.io/MLB-Summaries/" target="_blank" rel="noopener">https://moundedge.github.io/MLB-Summaries/</a></li>
+
+<li><span class="src-name">Reddit</span>not fetched today — Reddit blocks most automated requests outright (confirmed: a 403 "blocked due to network policy" response, not just rate-limiting), so this section is often empty. Pasting the daily thread's text into <code>mlb_daily/data/reddit_manual_&lt;date&gt;.txt</code> before the next run will fill it in.</li>
+</ul>
 
 <div class="final-note">Personal learning project: compares model/market/public-sentiment data to actual outcomes over time. No betting units, stake sizing, or recommended plays are included or implied anywhere in this report.</div>
