@@ -130,7 +130,7 @@
 
 <div class="masthead">
   <h1 class="cond">MLB Daily Analysis</h1>
-  <div class="meta">Monday, July 20, 2026<strong>Published 2026-07-20 20:09 PDT</strong></div>
+  <div class="meta">Monday, July 20, 2026<strong>Published 2026-07-20 20:15 PDT</strong></div>
 </div>
 <div class="disclaimer-strip">Personal-learning report comparing model projections to market/public data. No betting units, stake sizing, or recommended plays anywhere in this report. · Monday, July 20, 2026 · 15-game slate · season stats + last-30-day trends · ▲▼ trend vs season</div>
 
@@ -721,6 +721,7 @@
 
 <div class="card boxed">
 Reddit sentiment isn't available today. Reddit blocks most automated requests outright — even from well-behaved scripts with a proper User-Agent — so this section will often be empty; it's not a bug in this report, and there's no way to make Reddit reliably allow it without switching to their official OAuth API (which this project deliberately avoids).
+<div style="margin-top:8px">Want it filled in? Paste today's daily-thread text into a Claude session on this project and ask for it to be added — no GitHub needed.</div>
 <div style="margin-top:8px; font-size:12px; color:var(--muted)">Technical detail: live fetch failed (403 Client Error: Blocked for url: https://www.reddit.com/r/sportsbook/search.json?q=MLB%20daily%20thread&amp;restrict_sr=1&amp;sort=new&amp;limit=10) and no manual paste found at mlb_daily/data/reddit_manual_2026-07-20.txt - to include Reddit sentiment today, paste the daily thread&#39;s text into that file and re-run the workflow.</div>
 </div>
 
@@ -815,7 +816,7 @@ Reddit sentiment isn't available today. Reddit blocks most automated requests ou
 <tr>
   <td class="cond" style="font-weight:700; white-space:nowrap">CHW @ TEX</td>
   <td class="num">4.1–4.7</td>
-  <td>TEX (55.1%)</td>
+  <td>TEX (55.3%)</td>
   <td class="num">3.9–4.3</td>
   <td class="num">3.3–4.9</td>
   <td>TEX</td>
@@ -901,7 +902,7 @@ Reddit sentiment isn't available today. Reddit blocks most automated requests ou
 
 <li><span class="src-name">MoundEdge</span><a href="https://moundedge.github.io/MLB-Summaries/" target="_blank" rel="noopener">https://moundedge.github.io/MLB-Summaries/</a></li>
 
-<li><span class="src-name">Reddit</span>not fetched today — Reddit blocks most automated requests outright (confirmed: a 403 "blocked due to network policy" response, not just rate-limiting), so this section is often empty. Pasting the daily thread's text into <code>mlb_daily/data/reddit_manual_&lt;date&gt;.txt</code> before the next run will fill it in.</li>
+<li><span class="src-name">Reddit</span>not fetched today — Reddit blocks most automated requests outright. Paste the daily thread's text into a Claude session on this project to fill it in.</li>
 </ul>
 
 <div class="final-note">Personal learning project: compares model/market/public-sentiment data to actual outcomes over time. No betting units, stake sizing, or recommended plays are included or implied anywhere in this report.</div>
