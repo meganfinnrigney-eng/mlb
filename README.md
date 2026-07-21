@@ -29,7 +29,7 @@ The live report is published as a Claude Artifact:
 **https://claude.ai/code/artifact/cc53d3a4-0284-4b9e-adec-df02706e6765**
 
 A Claude Code Remote Routine ("MLB Daily Analysis — Artifact Refresh", cron
-`30 11 * * *`) fires 30 minutes after the GitHub Actions job, pulls the
+`20 14 * * *`) fires 20 minutes after the GitHub Actions job, pulls the
 freshly-generated `docs/artifact_fragment.html`, and redeploys it to that
 same URL, so the link never changes. `docs/index.html` (the full HTML page,
 not the artifact fragment) is still generated too and works as a plain
@@ -37,10 +37,18 @@ GitHub Pages site if you'd rather host it that way instead/as well.
 
 ## How it runs
 
-`.github/workflows/daily-report.yml` runs `main.py` once a day (11:00 UTC,
-before first pitch) via GitHub Actions `schedule`, and on-demand via
-`workflow_dispatch`. It writes `docs/<date>.html` and `docs/index.html` and
-commits them back to the repository.
+`.github/workflows/daily-report.yml` runs `main.py` once a day (14:00 UTC)
+via GitHub Actions `schedule`, and on-demand via `workflow_dispatch`. It
+writes `docs/<date>.html` and `docs/index.html` and commits them back to
+the repository.
+
+The 14:00 UTC time (rather than an earlier, "well before first pitch"
+time) is a deliberate choice: MoundEdge's daily page has been observed to
+still show the *previous* day's slate as late as 4am Eastern. If a source
+is still stale by the time the report runs, `main.py` detects it (comparing
+today's date against MoundEdge's own slate-date subtitle) and the report
+shows an explicit "may be stale" banner instead of silently presenting
+yesterday's games as today's.
 
 **Scheduled workflows only fire from the repository's default branch.**
 `claude/mlb-daily-analysis-573rh3` is that default branch (this repo had no
