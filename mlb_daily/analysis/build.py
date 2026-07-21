@@ -58,6 +58,31 @@ def _weather_plain(net_pct):
     return "close to a neutral effect on scoring"
 
 
+def _weather_arrow(net_pct):
+    """Scannable up/down glyph + a size class for the scoring-effect
+    magnitude, for the prose section (separate from _weather_icon, which
+    picks a sky-conditions emoji for the deep-dive weather tiles)."""
+    if net_pct is None:
+        return "", ""
+    if net_pct >= 8:
+        return "↑", "strong"
+    if net_pct >= 3:
+        return "↑", "light"
+    if net_pct <= -8:
+        return "↓", "strong"
+    if net_pct <= -3:
+        return "↓", "light"
+    return "", ""
+
+
+_CONFIDENCE_ICONS = {
+    "strong consensus": ("●", "strong"),
+    "fairly confident pick": ("◐", "fair"),
+    "mixed signals": ("⚠", "mixed"),
+    "not much consensus": ("–", "tossup"),
+}
+
+
 @dataclass
 class Flag:
     code: str
@@ -90,6 +115,8 @@ class Matchup:
     weather_icon: str = "🌤️"
     weather_plain: str = ""
     weather_notable: bool = False
+    weather_arrow: str = ""
+    weather_arrow_class: str = ""
 
     # set after alignment_rows is computed - {model_direction, split_direction,
     # reddit_direction, agree, confidence_score, confidence_label}, see _alignment_for_game
@@ -303,6 +330,7 @@ def _build_matchups(dr_games, me_games, reddit_result):
             m.weather_icon = _weather_icon(me.conditions)
             m.weather_plain = _weather_plain(me.weather_net_pct)
             m.weather_notable = me.weather_net_pct is not None and abs(me.weather_net_pct) >= 3
+            m.weather_arrow, m.weather_arrow_class = _weather_arrow(me.weather_net_pct)
 
         for check in ALL_CHECKS:
             flag = check(m)
@@ -407,6 +435,8 @@ def _prose_signals(m):
     signals = [t for t in (model_team, split_team, reddit_team) if t and t != "tie"]
     agree = len(set(signals)) <= 1 if signals else True
     score = a["confidence_score"] if a else 0.0
+    label = _confidence_label(score, agree)
+    icon, icon_class = _CONFIDENCE_ICONS[label]
 
     return {
         "model_team": model_team,
@@ -415,7 +445,9 @@ def _prose_signals(m):
         "signal_count": len(signals),
         "agree": agree,
         "score": score,
-        "label": _confidence_label(score, agree),
+        "label": label,
+        "icon": icon,
+        "icon_class": icon_class,
     }
 
 
@@ -494,15 +526,21 @@ def build_report_data(dr_games, me_games, reddit_result, today_iso, today_displa
     )
     highest_conviction_is_spotlight = headline_key in spotlight_keys if headline_key else False
 
-    # everything not already covered by the spotlight or the headline callout,
-    # ranked most- to least-confident for the "rest of the slate" prose
+    # everything not already covered by the spotlight or the headline callout.
+    # "Clear" = signals agree AND are strong enough to clear the toss-up bar;
+    # everything else (weak signals, OR strong-but-conflicting "mixed
+    # signals") goes in the toss-up group, per-request. Sorting by
+    # (not agree, -score) puts agreeing games first, strongest first, then
+    # groups every disagreeing/weak game at the end.
+    def _is_clear(m):
+        return m.prose["agree"] and m.prose["score"] >= TOSS_UP_THRESHOLD
+
     rest_of_slate = sorted(
         (m for m in matchups if (m.away_abbrev, m.home_abbrev) not in spotlight_keys and (m.away_abbrev, m.home_abbrev) != headline_key),
-        key=lambda m: m.prose["score"],
-        reverse=True,
+        key=lambda m: (not _is_clear(m), -m.prose["score"]),
     )
-    rest_clear_games = [m for m in rest_of_slate if m.prose["score"] >= TOSS_UP_THRESHOLD]
-    rest_toss_up_games = [m for m in rest_of_slate if m.prose["score"] < TOSS_UP_THRESHOLD]
+    rest_clear_games = [m for m in rest_of_slate if _is_clear(m)]
+    rest_toss_up_games = [m for m in rest_of_slate if not _is_clear(m)]
 
     return {
         "date_iso": today_iso,

@@ -74,6 +74,14 @@ def main():
     report_data = build_report_data(dr_games, me_games, reddit_result, today_iso, today_display, slate_subtitle)
     report_data["sbd_status_note"] = sbd_status.note
 
+    # MoundEdge (and, less commonly, DRatings) is a daily-generated page that
+    # doesn't always refresh for the new day by the time this runs - detect
+    # that rather than silently presenting last night's slate as today's.
+    source_date_stale = bool(slate_subtitle) and today_display not in slate_subtitle
+    report_data["source_date_stale"] = source_date_stale
+    if source_date_stale:
+        print(f"[warn] MoundEdge slate subtitle doesn't mention today ({today_display}): {slate_subtitle!r}")
+
     inline_font_css = _fetch_safe("Google Fonts (Oswald/Inter)", _inline_font_css, "")
     if inline_font_css:
         print(f"Inline fonts: {len(inline_font_css) // 1024}KB embedded")

@@ -2,9 +2,14 @@ name: Daily MLB Analysis
 
 on:
   schedule:
-    # 11:00 UTC = ~7am US Eastern (DST) / ~6am Eastern (standard time),
-    # well before the day's first pitch.
-    - cron: "0 11 * * *"
+    # 14:00 UTC = ~7am Pacific / ~10am Eastern (DST) - checked empirically
+    # that MoundEdge's daily page still shows the *previous* day's slate as
+    # late as 4am Eastern, so this runs later than "well before first pitch"
+    # would technically require, to give the source more time to refresh.
+    # If it's still occasionally stale at this hour, the report says so
+    # explicitly (see source_date_stale in main.py) rather than silently
+    # showing yesterday's games.
+    - cron: "0 14 * * *"
   workflow_dispatch: {}
 
 permissions:

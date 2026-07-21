@@ -1,6 +1,6 @@
 <title>MLB Daily Analysis — {{ r.date_display }}</title>
 <style>
-{{ inline_font_css }}
+{{ inline_font_css|safe }}
 
   :root {
     --bg:#f7f5f0; --bg-alt:#efeae0; --ink:#1a1d1b; --muted:#6b6559;
@@ -58,9 +58,27 @@
   .deep-dive .eyebrow .label { font-size: 15px; }
 
   /* ---------- prose (Tonight in Plain English) ---------- */
-  .prose p { margin: 0 0 14px; font-size: 15px; }
+  .prose p { margin: 0 0 10px; font-size: 15px; }
+  .g-row { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 9px; }
   .g-head { font-family: var(--font-display); font-weight: 700; letter-spacing: 0.01em; }
-  .g-time { color: var(--muted); font-size: 13px; font-weight: 400; font-family: var(--font-body); }
+  .g-time { color: var(--muted); font-size: 12.5px; font-weight: 400; font-family: var(--font-body); }
+  .g-score { font-weight: 600; font-variant-numeric: tabular-nums; }
+  .g-score.muted { font-weight: 400; color: var(--muted); font-style: italic; }
+
+  .icon { display: inline-block; font-size: 14px; line-height: 1; }
+  .conf-strong { color: var(--accent); font-weight: 700; }
+  .conf-fair { color: var(--accent); opacity: 0.55; }
+  .conf-mixed { color: var(--accent); }
+  .conf-tossup { color: var(--muted); }
+  .weather-strong { color: var(--ink); font-weight: 700; }
+  .weather-light { color: var(--muted); font-size: 11px; }
+  .total-flag { font-size: 12.5px; }
+
+  .icon-legend { font-size: 11.5px; color: var(--muted); margin: 0 0 16px; }
+  .icon-legend .conf-strong, .icon-legend .conf-fair, .icon-legend .conf-mixed, .icon-legend .conf-tossup { margin-right: 2px; }
+
+  .stale-banner { background: var(--accent-tint); border: 1px solid var(--accent); color: var(--accent);
+    border-radius: 4px; padding: 10px 14px; font-size: 13px; margin: 0 0 20px; }
 
   .spotlight-box { background: var(--accent-tint); border-left: 3px solid var(--accent);
     border-radius: 0 4px 4px 0; padding: 16px 20px; margin-bottom: 22px; }
@@ -74,9 +92,10 @@
   .conviction-box p:last-child { margin-bottom: 0; }
   .also-note { font-size: 13.5px; color: var(--muted); margin: 0 0 22px; }
 
-  .toss-up-line { font-size: 13.5px; color: var(--muted); margin: 18px 0 0; padding-top: 14px; border-top: 1px solid var(--line); }
-  .toss-up-line .kicker { font-family: var(--font-display); font-size: 11px; font-weight: 700;
-    letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin-right: 6px; }
+  .toss-up-line { margin: 18px 0 0; padding-top: 14px; border-top: 1px solid var(--line); }
+  .toss-up-line .kicker { display: block; font-family: var(--font-display); font-size: 11px; font-weight: 700;
+    letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+  .toss-up-line p { font-size: 13px; opacity: 0.85; margin-bottom: 6px; }
 
   .divider { border: none; border-top: 1px solid var(--line); margin: 46px 0 8px; }
 
@@ -145,28 +164,19 @@
   .final-note { margin-top: 50px; padding-top: 16px; border-top: 1px solid var(--line); font-size: 12px; color: var(--muted); }
 </style>
 
-{% macro game_sentence(m) %}
+{% macro game_line(m) %}
 {% set p = m.prose %}
-<span class="g-head">{{ m.away_abbrev }} @ {{ m.home_abbrev }}</span>{% if m.game_time %} <span class="g-time">({{ m.game_time }})</span>{% endif %}:
+<span class="g-row">
+<span class="g-head">{{ m.away_abbrev }} @ {{ m.home_abbrev }}</span>{% if m.game_time %} <span class="g-time">{{ m.game_time }}</span>{% endif %}
+{% if p %}<span class="icon conf-{{ p.icon_class }}" title="{{ p.label }}">{{ p.icon }}</span>{% endif %}
 {% if m.prediction_away is not none %}
-  {% if m.prediction_winner and m.prediction_winner != 'tie' %}
-    {% set winner_name = m.away_name if m.prediction_winner == m.away_abbrev else m.home_name %}
-    Model favors {{ winner_name }} {{ "%.1f"|format(m.prediction_away) }}–{{ "%.1f"|format(m.prediction_home) }}
-  {% else %}
-    models see this as an even matchup ({{ "%.1f"|format(m.prediction_away) }}–{{ "%.1f"|format(m.prediction_home) }})
-  {% endif %}
-  {% if p and p.split_team and m.prediction_winner != 'tie' %}
-    {% if p.split_team == m.prediction_winner %}, and the betting money agrees{% else %}, though the betting money leans the other way{% endif %}
-  {% elif p and p.split_team %}
-    {% set money_name = m.away_name if p.split_team == m.away_abbrev else m.home_name %}
-    , though the betting money leans toward {{ money_name }}
-  {% endif %}
-  {% if p %} — {{ p.label }}{% endif %}.
+  <span class="g-score">{% if m.prediction_winner and m.prediction_winner != 'tie' %}{{ m.prediction_winner }} {% endif %}{{ "%.1f"|format(m.prediction_away) }}–{{ "%.1f"|format(m.prediction_home) }}</span>
 {% else %}
-  no prediction available for this game yet.
+  <span class="g-score muted">no prediction</span>
 {% endif %}
-{% if m.weather_notable %} Weather-wise, it {{ m.weather_plain }} tonight.{% endif %}
-{% if 'a' in m.flag_codes %} The model total also looks notably different from the market number.{% endif %}
+{% if m.weather_arrow %}<span class="icon weather-{{ m.weather_arrow_class }}" title="Weather {{ m.weather_plain }}">{{ m.weather_arrow }}</span>{% endif %}
+{% if 'a' in m.flag_codes %}<span class="icon total-flag" title="Model total differs notably from the market number">🎯</span>{% endif %}
+</span>
 {% endmacro %}
 
 <div class="masthead">
@@ -174,14 +184,18 @@
   <div class="meta">{{ r.date_display }}<strong>Published {{ generated_at }}</strong></div>
 </div>
 <div class="disclaimer-strip">Personal-learning report comparing model projections to market/public data. No betting units, stake sizing, or recommended plays anywhere in this report.{% if r.slate_subtitle %} · {{ r.slate_subtitle }}{% endif %}</div>
+{% if r.source_date_stale %}
+<div class="stale-banner">⚠ MoundEdge's page is still dated "{{ r.slate_subtitle }}" as of this run, not today ({{ r.date_display }}) — its daily update may not have posted yet. The games below could still be repeating last night's slate. If so, check back later today for a refresh.</div>
+{% endif %}
 
 <div class="eyebrow"><span class="label">Tonight, in Plain English</span><span class="rule"></span></div>
+<div class="icon-legend"><span class="conf-strong">●</span> strong consensus &nbsp; <span class="conf-fair">◐</span> fairly confident &nbsp; <span class="conf-mixed">⚠</span> mixed signals &nbsp; <span class="conf-tossup">–</span> toss-up &nbsp;|&nbsp; ↑ easier to score &nbsp; ↓ harder to score &nbsp;|&nbsp; 🎯 model total differs from market</div>
 <div class="prose">
 
 {% if r.spotlight_games %}
 <div class="spotlight-box">
   <div class="kicker">Tigers / Mariners</div>
-  {% for m in r.spotlight_games %}<p>{{ game_sentence(m) }}</p>{% endfor %}
+  {% for m in r.spotlight_games %}<p>{{ game_line(m) }}</p>{% endfor %}
 </div>
 {% else %}
 <div class="also-note">Neither the Detroit Tigers nor the Seattle Mariners play today.</div>
@@ -194,19 +208,18 @@
   {% set hc = r.highest_conviction %}
   <div class="conviction-box">
     <div class="kicker">Highest conviction tonight</div>
-    <p>{{ game_sentence(hc.matchup) }}
-    {% if hc.reddit_direction_team %} Reddit chatter leans the same way too.{% endif %}
-    That's about as much agreement across sources as you'll find on tonight's slate.</p>
+    <p>{{ game_line(hc.matchup) }}</p>
+    <p class="also-note" style="margin:2px 0 0">{% if hc.reddit_direction_team %}Reddit chatter leans the same way too. {% endif %}That's about as much agreement across sources as you'll find on tonight's slate.</p>
   </div>
   {% endif %}
 {% else %}
 <div class="also-note">No game shows full agreement across model, betting money, and Reddit today.</div>
 {% endif %}
 
-{% for m in r.rest_clear_games %}<p>{{ game_sentence(m) }}</p>{% endfor %}
+{% for m in r.rest_clear_games %}<p>{{ game_line(m) }}</p>{% endfor %}
 
 {% if r.rest_toss_up_games %}
-<div class="toss-up-line"><span class="kicker">Less clear tonight</span>{% for m in r.rest_toss_up_games %}{{ m.away_abbrev }} @ {{ m.home_abbrev }}{% if not loop.last %}, {% endif %}{% endfor %} — not much consensus among the sources.</div>
+<div class="toss-up-line"><span class="kicker">Less clear tonight</span>{% for m in r.rest_toss_up_games %}<p>{{ game_line(m) }}</p>{% endfor %}</div>
 {% endif %}
 
 </div>
