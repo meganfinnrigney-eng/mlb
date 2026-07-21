@@ -65,20 +65,26 @@
   .g-row { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 9px; }
   .g-head { font-family: var(--font-display); font-weight: 700; letter-spacing: 0.01em; }
   .g-time { color: var(--muted); font-size: 12.5px; font-weight: 400; font-family: var(--font-body); }
-  .g-score { font-weight: 600; font-variant-numeric: tabular-nums; }
-  .g-score.muted { font-weight: 400; color: var(--muted); font-style: italic; }
+  .muted { font-weight: 400; color: var(--muted); font-style: italic; }
 
-  .icon { display: inline-block; font-size: 14px; line-height: 1; }
-  .conf-strong { color: var(--accent); font-weight: 700; }
-  .conf-fair { color: var(--accent); opacity: 0.55; }
-  .conf-mixed { color: var(--accent); }
-  .conf-tossup { color: var(--muted); }
-  .weather-strong { color: var(--ink); font-weight: 700; }
-  .weather-light { color: var(--muted); font-size: 11px; }
-  .total-flag { font-size: 12.5px; }
+  /* status badges: icon + word together, always legible on their own -
+     color is reserved for the two things that should visually pop
+     (Mixed confidence, Differs-from-market total); everything else stays
+     calm/neutral so routine games don't compete for attention. No emoji
+     glyphs are used in badges - only plain Unicode symbols with reliable
+     text-glyph fallback, to avoid the tofu-box rendering risk emoji can hit. */
+  .badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px;
+    border-radius: 20px; font-size: 12px; font-weight: 600; white-space: nowrap; line-height: 1.4; }
+  .badge-icon { font-size: 12px; line-height: 1; }
+  .badge-confidence { background: var(--bg-alt); color: var(--ink); }
+  .badge-confidence.conf-fair { opacity: 0.7; font-weight: 500; }
+  .badge-confidence.conf-tossup { color: var(--muted); font-weight: 500; }
+  .badge-confidence.conf-mixed { background: var(--accent-tint); color: var(--accent);
+    border: 1px solid var(--accent); font-weight: 700; }
+  .badge-weather { background: var(--bg-alt); color: var(--muted); font-weight: 500; }
+  .badge-flag { background: var(--accent-tint); color: var(--accent); border: 1px solid var(--accent); font-weight: 700; }
 
   .icon-legend { font-size: 11.5px; color: var(--muted); margin: 0 0 16px; }
-  .icon-legend .conf-strong, .icon-legend .conf-fair, .icon-legend .conf-mixed, .icon-legend .conf-tossup { margin-right: 2px; }
 
   .stale-banner { background: var(--accent-tint); border: 1px solid var(--accent); color: var(--accent);
     border-radius: 4px; padding: 10px 14px; font-size: 13px; margin: 0 0 20px; }
@@ -87,18 +93,22 @@
     border-radius: 0 4px 4px 0; padding: 16px 20px; margin-bottom: 22px; }
   .spotlight-box .kicker { font-family: var(--font-display); font-size: 11.5px; font-weight: 700;
     letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
-  .spotlight-box p:last-child { margin-bottom: 0; }
 
   .conviction-box { border: 1px solid var(--ink); border-radius: 4px; padding: 16px 20px; margin-bottom: 22px; }
   .conviction-box .kicker { font-family: var(--font-display); font-size: 11.5px; font-weight: 700;
     letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
-  .conviction-box p:last-child { margin-bottom: 0; }
   .also-note { font-size: 13.5px; color: var(--muted); margin: 0 0 22px; }
 
-  .toss-up-line { margin: 18px 0 0; padding-top: 14px; border-top: 1px solid var(--line); }
-  .toss-up-line .kicker { display: block; font-family: var(--font-display); font-size: 11px; font-weight: 700;
-    letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
-  .toss-up-line p { font-size: 13px; opacity: 0.85; margin-bottom: 6px; }
+  .callout-game + .callout-game { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); }
+  .cg-score { font-weight: 600; font-variant-numeric: tabular-nums; margin: 4px 0 8px; font-size: 15px; }
+  .cg-badges { display: flex; flex-wrap: wrap; gap: 6px; }
+  .cg-note { font-size: 13.5px; color: var(--muted); margin-top: 8px; }
+
+  .tonight-table th.num, .tonight-table td.num { text-align: right; }
+  .tonight-table tbody tr.section-row td { background: var(--bg-alt); font-family: var(--font-display);
+    font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted);
+    border-bottom: 1px solid var(--line); padding: 8px 10px; }
+  .tonight-table tbody tr.section-row:hover { background: var(--bg-alt); }
 
   .divider { border: none; border-top: 1px solid var(--line); margin: 46px 0 8px; }
 
@@ -169,9 +179,13 @@
 
 
 
+
+
+
+
 <div class="masthead">
   <h1>MLB Daily Analysis</h1>
-  <div class="meta">Tuesday, July 21, 2026<strong>Published 2026-07-21 01:13 PDT</strong></div>
+  <div class="meta">Tuesday, July 21, 2026<strong>Published 2026-07-21 01:34 PDT</strong></div>
 </div>
 <div class="disclaimer-strip">Personal-learning report comparing model projections to market/public data. No betting units, stake sizing, or recommended plays anywhere in this report. · Monday, July 20, 2026 · 15-game slate · season stats + last-30-day trends · ▲▼ trend vs season</div>
 
@@ -179,35 +193,38 @@
 
 
 <div class="eyebrow"><span class="label">Tonight, in Plain English</span><span class="rule"></span></div>
-<div class="icon-legend"><span class="conf-strong">●</span> strong consensus &nbsp; <span class="conf-fair">◐</span> fairly confident &nbsp; <span class="conf-mixed">⚠</span> mixed signals &nbsp; <span class="conf-tossup">–</span> toss-up &nbsp;|&nbsp; ↑ easier to score &nbsp; ↓ harder to score &nbsp;|&nbsp; 🎯 model total differs from market</div>
 <div class="prose">
 
 
 <div class="spotlight-box">
   <div class="kicker">Tigers / Mariners</div>
-  <p>
+  
+  <div class="callout-game">
+    <div class="g-row"><span class="g-head">DET @ CHC</span> <span class="g-time">8:05 pm</span></div>
+    <div class="cg-score">
+<strong>DET</strong> 6.2–5.7
+</div>
+    <div class="cg-badges">
 
-<span class="g-row">
-<span class="g-head">DET @ CHC</span> <span class="g-time">8:05 pm</span>
-<span class="icon conf-mixed" title="mixed signals">⚠</span>
+<span class="badge badge-confidence conf-mixed" title="mixed signals"><span class="badge-icon">⚠</span>Mixed</span>
+<span class="badge badge-weather" title="Weather makes scoring notably easier"><span class="badge-icon">↑</span>Easier</span>
 
-  <span class="g-score">DET 6.2–5.7</span>
+</div>
+  </div>
+  
+  <div class="callout-game">
+    <div class="g-row"><span class="g-head">CIN @ SEA</span> <span class="g-time">9:40 pm</span></div>
+    <div class="cg-score">
+<strong>SEA</strong> 3.7–4.3
+</div>
+    <div class="cg-badges">
 
-<span class="icon weather-strong" title="Weather makes scoring notably easier">↑</span>
+<span class="badge badge-confidence conf-fair" title="fairly confident pick"><span class="badge-icon">◐</span>Fairly confident</span>
+<span class="badge badge-weather" title="Weather makes scoring a bit harder"><span class="badge-icon">↓</span>Harder</span>
 
-</span>
-</p><p>
-
-<span class="g-row">
-<span class="g-head">CIN @ SEA</span> <span class="g-time">9:40 pm</span>
-<span class="icon conf-fair" title="fairly confident pick">◐</span>
-
-  <span class="g-score">SEA 3.7–4.3</span>
-
-<span class="icon weather-light" title="Weather makes scoring a bit harder">↓</span>
-
-</span>
-</p>
+</div>
+  </div>
+  
 </div>
 
 
@@ -216,159 +233,167 @@
   
   <div class="conviction-box">
     <div class="kicker">Highest conviction tonight</div>
-    <p>
+    <div class="callout-game">
+      <div class="g-row"><span class="g-head">NYM @ MIL</span> <span class="g-time">7:40 pm</span></div>
+      <div class="cg-score">
+<strong>MIL</strong> 3.9–5.2
+</div>
+      <div class="cg-badges">
 
-<span class="g-row">
-<span class="g-head">NYM @ MIL</span> <span class="g-time">7:40 pm</span>
-<span class="icon conf-strong" title="strong consensus">●</span>
+<span class="badge badge-confidence conf-strong" title="strong consensus"><span class="badge-icon">●</span>Strong</span>
+<span class="badge badge-weather" title="Weather makes scoring a bit easier"><span class="badge-icon">↑</span>Easier</span>
 
-  <span class="g-score">MIL 3.9–5.2</span>
-
-<span class="icon weather-light" title="Weather makes scoring a bit easier">↑</span>
-
-</span>
-</p>
-    <p class="also-note" style="margin:2px 0 0">That's about as much agreement across sources as you'll find on tonight's slate.</p>
+</div>
+      <div class="cg-note">That's about as much agreement across sources as you'll find on tonight's slate.</div>
+    </div>
   </div>
   
 
 
-<p>
 
-<span class="g-row">
-<span class="g-head">BAL @ BOS</span> <span class="g-time">7:10 pm</span>
-<span class="icon conf-strong" title="strong consensus">●</span>
+<div class="icon-legend">A "Differs from market" badge only appears in the Total column when the model's projected total is notably off from the betting market's number — most games are left blank there.</div>
+<div class="table-wrap"><table class="tonight-table">
+<thead><tr><th>Matchup</th><th>Time</th><th class="num">Predicted Score</th><th>Confidence</th><th>Weather</th><th>Total</th></tr></thead>
+<tbody>
 
-  <span class="g-score">BOS 4.7–5.1</span>
+<tr>
+<td style="white-space:nowrap"><span class="g-head">BAL @ BOS</span></td>
+<td style="white-space:nowrap">7:10 pm</td>
+<td class="num">
+<strong>BOS</strong> 4.7–5.1
+</td>
+<td><span class="badge badge-confidence conf-strong" title="strong consensus"><span class="badge-icon">●</span>Strong</span></td>
+<td><span class="badge badge-weather" title="Weather makes scoring notably easier"><span class="badge-icon">↑</span>Easier</span></td>
+<td></td>
+</tr>
 
-<span class="icon weather-strong" title="Weather makes scoring notably easier">↑</span>
+<tr>
+<td style="white-space:nowrap"><span class="g-head">STL @ LAA</span></td>
+<td style="white-space:nowrap">10:10pm</td>
+<td class="num">
+5.0–5.0
+</td>
+<td><span class="badge badge-confidence conf-strong" title="strong consensus"><span class="badge-icon">●</span>Strong</span></td>
+<td><span class="badge badge-weather" title="Weather makes scoring a bit easier"><span class="badge-icon">↑</span>Easier</span></td>
+<td></td>
+</tr>
 
-</span>
-</p><p>
+<tr>
+<td style="white-space:nowrap"><span class="g-head">MIN @ CLE</span></td>
+<td style="white-space:nowrap">6:40 pm</td>
+<td class="num">
+<strong>MIN</strong> 4.4–3.6
+</td>
+<td><span class="badge badge-confidence conf-strong" title="strong consensus"><span class="badge-icon">●</span>Strong</span></td>
+<td><span class="badge badge-weather" title="Weather makes scoring a bit harder"><span class="badge-icon">↓</span>Harder</span></td>
+<td><span class="badge badge-flag" title="Model total differs notably from the market number">≠ Differs from market</span></td>
+</tr>
 
-<span class="g-row">
-<span class="g-head">STL @ LAA</span> <span class="g-time">10:10pm</span>
-<span class="icon conf-strong" title="strong consensus">●</span>
+<tr>
+<td style="white-space:nowrap"><span class="g-head">ATH @ ARI</span></td>
+<td style="white-space:nowrap">9:40 pm</td>
+<td class="num">
+<strong>ARI</strong> 4.3–5.1
+</td>
+<td><span class="badge badge-confidence conf-strong" title="strong consensus"><span class="badge-icon">●</span>Strong</span></td>
+<td><span class="badge badge-weather" title="Weather close to a neutral effect on scoring"><span class="badge-icon">—</span>Neutral</span></td>
+<td><span class="badge badge-flag" title="Model total differs notably from the market number">≠ Differs from market</span></td>
+</tr>
 
-  <span class="g-score">5.0–5.0</span>
+<tr>
+<td style="white-space:nowrap"><span class="g-head">MIA @ HOU</span></td>
+<td style="white-space:nowrap">8:10 pm</td>
+<td class="num">
+4.4–4.4
+</td>
+<td><span class="badge badge-confidence conf-fair" title="fairly confident pick"><span class="badge-icon">◐</span>Fairly confident</span></td>
+<td><span class="badge badge-weather" title="Weather makes scoring a bit harder"><span class="badge-icon">↓</span>Harder</span></td>
+<td></td>
+</tr>
 
-<span class="icon weather-light" title="Weather makes scoring a bit easier">↑</span>
+<tr>
+<td style="white-space:nowrap"><span class="g-head">PIT @ NYY</span></td>
+<td style="white-space:nowrap">7:05 pm</td>
+<td class="num">
+3.7–3.7
+</td>
+<td><span class="badge badge-confidence conf-fair" title="fairly confident pick"><span class="badge-icon">◐</span>Fairly confident</span></td>
+<td><span class="badge badge-weather" title="Weather makes scoring notably harder"><span class="badge-icon">↓</span>Harder</span></td>
+<td></td>
+</tr>
 
-</span>
-</p><p>
+<tr>
+<td style="white-space:nowrap"><span class="g-head">CHW @ TEX</span></td>
+<td style="white-space:nowrap">8:05 pm</td>
+<td class="num">
+<strong>TEX</strong> 3.3–4.9
+</td>
+<td><span class="badge badge-confidence conf-fair" title="fairly confident pick"><span class="badge-icon">◐</span>Fairly confident</span></td>
+<td><span class="badge badge-weather" title="Weather makes scoring notably harder"><span class="badge-icon">↓</span>Harder</span></td>
+<td></td>
+</tr>
 
-<span class="g-row">
-<span class="g-head">MIN @ CLE</span> <span class="g-time">6:40 pm</span>
-<span class="icon conf-strong" title="strong consensus">●</span>
-
-  <span class="g-score">MIN 4.4–3.6</span>
-
-<span class="icon weather-light" title="Weather makes scoring a bit harder">↓</span>
-<span class="icon total-flag" title="Model total differs notably from the market number">🎯</span>
-</span>
-</p><p>
-
-<span class="g-row">
-<span class="g-head">ATH @ ARI</span> <span class="g-time">9:40 pm</span>
-<span class="icon conf-strong" title="strong consensus">●</span>
-
-  <span class="g-score">ARI 4.3–5.1</span>
-
-
-<span class="icon total-flag" title="Model total differs notably from the market number">🎯</span>
-</span>
-</p><p>
-
-<span class="g-row">
-<span class="g-head">MIA @ HOU</span> <span class="g-time">8:10 pm</span>
-<span class="icon conf-fair" title="fairly confident pick">◐</span>
-
-  <span class="g-score">4.4–4.4</span>
-
-<span class="icon weather-light" title="Weather makes scoring a bit harder">↓</span>
-
-</span>
-</p><p>
-
-<span class="g-row">
-<span class="g-head">PIT @ NYY</span> <span class="g-time">7:05 pm</span>
-<span class="icon conf-fair" title="fairly confident pick">◐</span>
-
-  <span class="g-score">3.7–3.7</span>
-
-<span class="icon weather-strong" title="Weather makes scoring notably harder">↓</span>
-
-</span>
-</p><p>
-
-<span class="g-row">
-<span class="g-head">CHW @ TEX</span> <span class="g-time">8:05 pm</span>
-<span class="icon conf-fair" title="fairly confident pick">◐</span>
-
-  <span class="g-score">TEX 3.3–4.9</span>
-
-<span class="icon weather-strong" title="Weather makes scoring notably harder">↓</span>
-
-</span>
-</p><p>
-
-<span class="g-row">
-<span class="g-head">LAD @ PHI</span> <span class="g-time">7:10 pm</span>
-<span class="icon conf-fair" title="fairly confident pick">◐</span>
-
-  <span class="g-score">4.9–4.9</span>
-
-<span class="icon weather-strong" title="Weather makes scoring notably easier">↑</span>
-<span class="icon total-flag" title="Model total differs notably from the market number">🎯</span>
-</span>
-</p>
-
-
-<div class="toss-up-line"><span class="kicker">Less clear tonight</span><p>
-
-<span class="g-row">
-<span class="g-head">SDP @ ATL</span> <span class="g-time">7:15 pm</span>
-<span class="icon conf-mixed" title="mixed signals">⚠</span>
-
-  <span class="g-score">SDP 5.4–4.7</span>
-
-<span class="icon weather-light" title="Weather makes scoring a bit harder">↓</span>
-
-</span>
-</p><p>
-
-<span class="g-row">
-<span class="g-head">WSN @ COL</span> <span class="g-time">8:40 pm</span>
-<span class="icon conf-mixed" title="mixed signals">⚠</span>
-
-  <span class="g-score">COL 5.5–5.7</span>
-
-<span class="icon weather-strong" title="Weather makes scoring notably easier">↑</span>
-
-</span>
-</p><p>
-
-<span class="g-row">
-<span class="g-head">TBR @ TOR</span> <span class="g-time">7:07 pm</span>
-<span class="icon conf-mixed" title="mixed signals">⚠</span>
-
-  <span class="g-score">TOR 3.8–4.9</span>
+<tr>
+<td style="white-space:nowrap"><span class="g-head">LAD @ PHI</span></td>
+<td style="white-space:nowrap">7:10 pm</td>
+<td class="num">
+4.9–4.9
+</td>
+<td><span class="badge badge-confidence conf-fair" title="fairly confident pick"><span class="badge-icon">◐</span>Fairly confident</span></td>
+<td><span class="badge badge-weather" title="Weather makes scoring notably easier"><span class="badge-icon">↑</span>Easier</span></td>
+<td><span class="badge badge-flag" title="Model total differs notably from the market number">≠ Differs from market</span></td>
+</tr>
 
 
+<tr class="section-row"><td colspan="6">Less clear tonight</td></tr>
 
-</span>
-</p><p>
+<tr>
+<td style="white-space:nowrap"><span class="g-head">SDP @ ATL</span></td>
+<td style="white-space:nowrap">7:15 pm</td>
+<td class="num">
+<strong>SDP</strong> 5.4–4.7
+</td>
+<td><span class="badge badge-confidence conf-mixed" title="mixed signals"><span class="badge-icon">⚠</span>Mixed</span></td>
+<td><span class="badge badge-weather" title="Weather makes scoring a bit harder"><span class="badge-icon">↓</span>Harder</span></td>
+<td></td>
+</tr>
 
-<span class="g-row">
-<span class="g-head">SFG @ KCR</span> <span class="g-time">7:40 pm</span>
-<span class="icon conf-mixed" title="mixed signals">⚠</span>
+<tr>
+<td style="white-space:nowrap"><span class="g-head">WSN @ COL</span></td>
+<td style="white-space:nowrap">8:40 pm</td>
+<td class="num">
+<strong>COL</strong> 5.5–5.7
+</td>
+<td><span class="badge badge-confidence conf-mixed" title="mixed signals"><span class="badge-icon">⚠</span>Mixed</span></td>
+<td><span class="badge badge-weather" title="Weather makes scoring notably easier"><span class="badge-icon">↑</span>Easier</span></td>
+<td></td>
+</tr>
 
-  <span class="g-score">SFG 5.6–5.5</span>
+<tr>
+<td style="white-space:nowrap"><span class="g-head">TBR @ TOR</span></td>
+<td style="white-space:nowrap">7:07 pm</td>
+<td class="num">
+<strong>TOR</strong> 3.8–4.9
+</td>
+<td><span class="badge badge-confidence conf-mixed" title="mixed signals"><span class="badge-icon">⚠</span>Mixed</span></td>
+<td><span class="badge badge-weather" title="Weather close to a neutral effect on scoring"><span class="badge-icon">—</span>Neutral</span></td>
+<td></td>
+</tr>
 
-<span class="icon weather-strong" title="Weather makes scoring notably easier">↑</span>
+<tr>
+<td style="white-space:nowrap"><span class="g-head">SFG @ KCR</span></td>
+<td style="white-space:nowrap">7:40 pm</td>
+<td class="num">
+<strong>SFG</strong> 5.6–5.5
+</td>
+<td><span class="badge badge-confidence conf-mixed" title="mixed signals"><span class="badge-icon">⚠</span>Mixed</span></td>
+<td><span class="badge badge-weather" title="Weather makes scoring notably easier"><span class="badge-icon">↑</span>Easier</span></td>
+<td></td>
+</tr>
 
-</span>
-</p></div>
+
+</tbody>
+</table></div>
 
 
 </div>
@@ -551,11 +576,11 @@
 
 <tr><td style="font-weight:600; white-space:nowrap">DET @ CHC</td>
   <td style="white-space:nowrap"><strong>DET</strong><br><span class="num" style="font-size:12px;color:var(--muted)">6.2–5.7</span></td>
-  <td><div class="flag-line"><span class="dot"></span><span class="flag-text"><span class="tag-mini">The two models disagree with each other</span><span class="detail-main">DRatings picks the home team, MoundEdge&#39;s BPP sim picks the away team; DRatings projects 8.3 total runs, BPP projects 11.9 (off by 3.6)</span></span></div><div class="flag-line"><span class="dot"></span><span class="flag-text"><span class="tag-mini">Public bets and public money don&#39;t agree</span><span class="detail-main">ML DET: 24-point gap between % of bets and % of money; ML CHC: 24-point gap between % of bets and % of money</span></span></div><div class="flag-line"><span class="dot"></span><span class="flag-text"><span class="tag-mini">Weather/ballpark will change scoring a lot</span><span class="detail-main">makes scoring notably easier (+13% simulated effect)</span></span></div></td></tr>
+  <td><div class="flag-line"><span class="dot"></span><span class="flag-text"><span class="tag-mini">The two models disagree with each other</span><span class="detail-main">DRatings picks the home team, MoundEdge&#39;s BPP sim picks the away team; DRatings projects 8.4 total runs, BPP projects 11.9 (off by 3.5)</span></span></div><div class="flag-line"><span class="dot"></span><span class="flag-text"><span class="tag-mini">Public bets and public money don&#39;t agree</span><span class="detail-main">ML DET: 24-point gap between % of bets and % of money; ML CHC: 24-point gap between % of bets and % of money</span></span></div><div class="flag-line"><span class="dot"></span><span class="flag-text"><span class="tag-mini">Weather/ballpark will change scoring a lot</span><span class="detail-main">makes scoring notably easier (+13% simulated effect)</span></span></div></td></tr>
 
 <tr><td style="font-weight:600; white-space:nowrap">WSN @ COL</td>
   <td style="white-space:nowrap"><strong>COL</strong><br><span class="num" style="font-size:12px;color:var(--muted)">5.5–5.7</span></td>
-  <td><div class="flag-line"><span class="dot"></span><span class="flag-text"><span class="tag-mini">The two models disagree with each other</span><span class="detail-main">DRatings picks the away team, MoundEdge&#39;s BPP sim picks the home team; DRatings projects 12.7 total runs, BPP projects 11.2 (off by 1.5)</span></span></div><div class="flag-line"><span class="dot"></span><span class="flag-text"><span class="tag-mini">Public bets and public money don&#39;t agree</span><span class="detail-main">ML WSN: 21-point gap between % of bets and % of money; ML COL: 21-point gap between % of bets and % of money</span></span></div><div class="flag-line"><span class="dot"></span><span class="flag-text"><span class="tag-mini">Weather/ballpark will change scoring a lot</span><span class="detail-main">makes scoring notably easier (+31% simulated effect)</span></span></div></td></tr>
+  <td><div class="flag-line"><span class="dot"></span><span class="flag-text"><span class="tag-mini">The two models disagree with each other</span><span class="detail-main">DRatings picks the away team, MoundEdge&#39;s BPP sim picks the home team; DRatings projects 12.6 total runs, BPP projects 11.2 (off by 1.4)</span></span></div><div class="flag-line"><span class="dot"></span><span class="flag-text"><span class="tag-mini">Public bets and public money don&#39;t agree</span><span class="detail-main">ML WSN: 21-point gap between % of bets and % of money; ML COL: 21-point gap between % of bets and % of money</span></span></div><div class="flag-line"><span class="dot"></span><span class="flag-text"><span class="tag-mini">Weather/ballpark will change scoring a lot</span><span class="detail-main">makes scoring notably easier (+31% simulated effect)</span></span></div></td></tr>
 
 <tr><td style="font-weight:600; white-space:nowrap">STL @ LAA</td>
   <td style="white-space:nowrap">even<br><span class="num" style="font-size:12px;color:var(--muted)">5.0–5.0</span></td>
@@ -753,7 +778,7 @@
 
 <tr>
   <td style="font-weight:600; white-space:nowrap">DET @ CHC</td>
-  <td class="num">8.3</td>
+  <td class="num">8.4</td>
   <td class="num">11.9</td>
   <td class="num">10.9</td>
   <td class="num">11.5</td>
@@ -863,7 +888,7 @@
 
 <tr>
   <td style="font-weight:600; white-space:nowrap">WSN @ COL</td>
-  <td class="num">12.7</td>
+  <td class="num">12.6</td>
   <td class="num">11.2</td>
   <td class="num">12.8</td>
   <td class="num">12.0</td>
@@ -885,7 +910,7 @@
 
 <tr>
   <td style="font-weight:600; white-space:nowrap">CIN @ SEA</td>
-  <td class="num">7.2</td>
+  <td class="num">7.5</td>
   <td class="num">8.0</td>
   <td class="num">7.4</td>
   <td class="num">7.5</td>
@@ -995,7 +1020,7 @@
 
 <tr>
   <td style="font-weight:600; white-space:nowrap">DET @ CHC</td>
-  <td class="num">4.0–4.3</td>
+  <td class="num">4.1–4.3</td>
   <td>CHC (52.3%)</td>
   <td class="num">5.7–5.2</td>
   <td class="num">6.2–5.7</td>
@@ -1013,7 +1038,7 @@
 
 <tr>
   <td style="font-weight:600; white-space:nowrap">WSN @ COL</td>
-  <td class="num">6.6–6.1</td>
+  <td class="num">6.5–6.0</td>
   <td>WSN (55.3%)</td>
   <td class="num">7.0–5.8</td>
   <td class="num">5.5–5.7</td>
@@ -1031,7 +1056,7 @@
 
 <tr>
   <td style="font-weight:600; white-space:nowrap">CIN @ SEA</td>
-  <td class="num">3.5–3.8</td>
+  <td class="num">3.6–3.9</td>
   <td>SEA (52.7%)</td>
   <td class="num">3.5–4.0</td>
   <td class="num">3.7–4.3</td>
