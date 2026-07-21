@@ -15,7 +15,7 @@ from zoneinfo import ZoneInfo
 
 from mlb_daily.analysis.build import build_report_data
 from mlb_daily.fetch import dratings, moundedge, reddit, sportsbettingdime
-from mlb_daily.report.render import render_report
+from mlb_daily.report.render import render_artifact_fragment, render_report
 
 ET = ZoneInfo("America/New_York")
 OUTPUT_DIR = Path(__file__).resolve().parent / "docs"
@@ -61,14 +61,17 @@ def main():
     report_data["sbd_status_note"] = sbd_status.note
 
     html = render_report(report_data, generated_at)
+    fragment_html = render_artifact_fragment(report_data, generated_at)
 
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     dated_path = OUTPUT_DIR / f"{today_iso}.html"
     index_path = OUTPUT_DIR / "index.html"
+    fragment_path = OUTPUT_DIR / "artifact_fragment.html"
     dated_path.write_text(html, encoding="utf-8")
     index_path.write_text(html, encoding="utf-8")
+    fragment_path.write_text(fragment_html, encoding="utf-8")
 
-    print(f"Wrote {dated_path} and {index_path}")
+    print(f"Wrote {dated_path}, {index_path}, and {fragment_path}")
 
 
 if __name__ == "__main__":
