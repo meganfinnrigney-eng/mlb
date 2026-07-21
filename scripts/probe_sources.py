@@ -27,8 +27,6 @@ REDDIT_HEADERS = {
     "User-Agent": "mlb-daily-tracker/1.0 (personal project; by u/unknown)",
 }
 
-SNIPPET_CHARS = 2500
-
 
 def hr(title):
     print("\n" + "=" * 100)
@@ -36,77 +34,140 @@ def hr(title):
     print("=" * 100)
 
 
-def probe_html(label, url, headers=BROWSER_HEADERS):
-    hr(f"{label}: {url}")
+def get(url, headers=BROWSER_HEADERS):
     try:
         r = requests.get(url, headers=headers, timeout=20)
     except Exception as e:
         print(f"REQUEST FAILED: {e}")
         return None
     print(f"status={r.status_code}  content-type={r.headers.get('content-type')}  bytes={len(r.content)}")
-    if r.status_code != 200:
-        print(r.text[:1000])
-        return r
+    return r
 
+
+def print_window(text, marker, before=200, after=3000, label=""):
+    idx = text.find(marker)
+    if idx == -1:
+        print(f"[marker {marker!r} not found]")
+        return
+    lo = max(0, idx - before)
+    print(f"--- window around {marker!r} {label} ---")
+    print(text[lo: idx + after])
+
+
+def probe_sbd():
+    hr("SBD: full-page scan for wp-json refs, odds tables, data attrs")
+    r = get("https://www.sportsbettingdime.com/mlb/public-betting-trends/")
+    if r is None or r.status_code != 200:
+        return
     text = r.text
 
-    # Look for embedded JSON blobs (Next.js/Nuxt/Wordpress REST hints, etc.)
-    markers = ["__NEXT_DATA__", "__NUXT__", "__INITIAL_STATE__", "application/ld+json", "window.__", "/wp-json/"]
-    found = [m for m in markers if m in text]
-    print(f"embedded-data markers found: {found or 'none'}")
+    wp_json_refs = sorted(set(re.findall(r'https?://[^\s"\']*wp-json[^\s"\']*', text)))
+    print(f"wp-json URLs referenced ({len(wp_json_refs)}):")
+    for u in wp_json_refs[:15]:
+        print(" ", u)
 
-    table_count = len(re.findall(r"<table", text, re.I))
-    print(f"<table> tag count: {table_count}")
+    # data- attributes often carry API endpoints / game ids for JS widgets
+    data_attrs = sorted(set(re.findall(r'data-[a-z-]+="[^"]{0,120}"', text)))[:40]
+    print(f"\nsample data-* attributes ({len(data_attrs)} shown):")
+    for a in data_attrs:
+        print(" ", a)
 
-    script_json_blocks = re.findall(r'<script[^>]+type="application/(?:ld\+)?json"[^>]*>(.*?)</script>', text, re.S)
-    print(f"<script type=json> blocks found: {len(script_json_blocks)}")
-    for i, block in enumerate(script_json_blocks[:2]):
-        print(f"--- json block {i} (first 800 chars) ---")
-        print(block.strip()[:800])
+    print_window(text, "<table", before=100, after=4000, label="(the one <table> on the page)")
 
-    print(f"--- raw HTML snippet (first {SNIPPET_CHARS} chars) ---")
-    print(text[:SNIPPET_CHARS])
-    return r
+    # look for script src bundles that might be the widget doing the AJAX call
+    scripts = sorted(set(re.findall(r'<script[^>]+src="([^"]+)"', text)))
+    print(f"\n<script src> tags ({len(scripts)}):")
+    for s in scripts[:30]:
+        print(" ", s)
+
+    # common class name guesses for betting split rows
+    for cls in ["matchup", "betting", "split", "trend-row", "public-betting", "money", "handle"]:
+        count = len(re.findall(rf'class="[^"]*{cls}[^"]*"', text, re.I))
+        if count:
+            print(f'elements with class containing "{cls}": {count}')
 
 
-def probe_json(label, url, headers=REDDIT_HEADERS):
-    hr(f"{label}: {url}")
-    try:
-        r = requests.get(url, headers=headers, timeout=20)
-    except Exception as e:
-        print(f"REQUEST FAILED: {e}")
-        return None
-    print(f"status={r.status_code}  content-type={r.headers.get('content-type')}  bytes={len(r.content)}")
-    if r.status_code != 200:
-        print(r.text[:1000])
-        return r
-    try:
-        data = r.json()
-    except Exception as e:
-        print(f"JSON PARSE FAILED: {e}")
-        print(r.text[:SNIPPET_CHARS])
-        return r
-    print(f"--- json (first {SNIPPET_CHARS} chars, pretty) ---")
-    print(json.dumps(data, indent=2)[:SNIPPET_CHARS])
-    return r
+def probe_dratings():
+    hr("DRatings: table content + JS bundle API search")
+    r = get("https://www.dratings.com/predictor/mlb-baseball-predictions/")
+    if r is None or r.status_code != 200:
+        return
+    text = r.text
+    print_window(text, "<table", before=50, after=4000, label="(first table)")
+
+    # find the main JS bundle URL and inspect it for API base / fetch calls
+    m = re.search(r'<script src="(/assets/main__main\.[^"]+\.js)"', text)
+    if not m:
+        print("main JS bundle not found via regex")
+        return
+    js_url = "https://www.dratings.com" + m.group(1)
+    print(f"\nfetching JS bundle: {js_url}")
+    r2 = get(js_url)
+    if r2 is None or r2.status_code != 200:
+        return
+    js = r2.text
+    api_urls = sorted(set(re.findall(r'https?://(?:app\.)?dratings\.com/[a-zA-Z0-9_/.-]*api[a-zA-Z0-9_/.-]*', js)))
+    print(f"api-ish URLs found in bundle ({len(api_urls)}):")
+    for u in api_urls[:20]:
+        print(" ", u)
+    generic_urls = sorted(set(re.findall(r'https?://app\.dratings\.com/[a-zA-Z0-9_/.-]+', js)))
+    print(f"\napp.dratings.com URLs found in bundle ({len(generic_urls)}):")
+    for u in generic_urls[:30]:
+        print(" ", u)
+
+
+def probe_moundedge():
+    hr("MoundEdge: section headers + first full game card")
+    r = get("https://moundedge.github.io/MLB-Summaries/")
+    if r is None or r.status_code != 200:
+        return
+    text = r.text
+
+    titles = re.findall(r'class="ptitle">([^<]+)<', text)
+    subs = re.findall(r'class="psub">(.*?)</div>', text, re.S)
+    print(f"page title(s): {titles}")
+    print(f"page subtitle(s) (raw): {[s[:300] for s in subs]}")
+
+    sec_headers = re.findall(r'class="sec"[^>]*>(.*?)<', text)
+    print(f"\nsection header labels found ({len(sec_headers)}): {sec_headers[:40]}")
+
+    print_window(text, 'class="game"', before=0, after=6000, label="(first full game card)")
+
+
+def probe_reddit():
+    hr("Reddit: retry with slightly different endpoints / headers")
+    for sub, q in [("sportsbook", "MLB daily thread"), ("baseball", "daily discussion")]:
+        url = f"https://www.reddit.com/r/{sub}/search.json?q={q.replace(' ', '%20')}&restrict_sr=1&sort=new"
+        print(f"\n-- r/{sub} --")
+        r = get(url, headers=REDDIT_HEADERS)
+        if r is None:
+            continue
+        print(f"status={r.status_code}")
+        if r.status_code == 200:
+            try:
+                data = r.json()
+                print(json.dumps(data, indent=2)[:2000])
+            except Exception as e:
+                print(f"json parse failed: {e}")
+        else:
+            print(r.text[:300])
+
+    # also try the old.reddit.com host, sometimes treated differently by the WAF
+    print("\n-- old.reddit.com r/sportsbook --")
+    r = get(
+        "https://old.reddit.com/r/sportsbook/search.json?q=MLB%20daily%20thread&restrict_sr=1&sort=new",
+        headers=REDDIT_HEADERS,
+    )
+    if r is not None:
+        print(f"status={r.status_code}")
+        print(r.text[:1500])
 
 
 def main():
-    # 1. SportsBettingDime public betting trends
-    probe_html("sportsbettingdime", "https://www.sportsbettingdime.com/mlb/public-betting-trends/")
-    probe_html("sportsbettingdime robots.txt", "https://www.sportsbettingdime.com/robots.txt")
-
-    # 2. DRatings — both the "completed" URL given and the likely upcoming/today page
-    probe_html("dratings (completed/3, as given)", "https://www.dratings.com/predictor/mlb-baseball-predictions/completed/3")
-    probe_html("dratings (base predictor page, likely upcoming)", "https://www.dratings.com/predictor/mlb-baseball-predictions/")
-
-    # 3. MoundEdge summaries site
-    probe_html("moundedge landing page", "https://moundedge.github.io/MLB-Summaries/")
-
-    # 4. Reddit — search endpoint, then (if we can guess an id) the thread endpoint.
-    probe_json("reddit r/sportsbook search", "https://www.reddit.com/r/sportsbook/search.json?q=MLB%20daily%20thread&restrict_sr=1&sort=new")
-    probe_json("reddit r/baseball search", "https://www.reddit.com/r/baseball/search.json?q=daily%20discussion&restrict_sr=1&sort=new")
-
+    probe_sbd()
+    probe_dratings()
+    probe_moundedge()
+    probe_reddit()
     print("\n\nDONE.")
 
 
