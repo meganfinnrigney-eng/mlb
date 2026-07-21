@@ -73,11 +73,35 @@
 
   /* scorecard-style annotation dots, not badges */
   .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 7px;
-    background: var(--accent); flex-shrink: 0; position: relative; top: -1px; }
+    background: var(--accent); flex-shrink: 0; position: relative; top: 5px; }
   .dot-quiet { background: var(--line); }
-  .flag-line { display: flex; align-items: flex-start; margin: 3px 0; }
-  .flag-text strong { font-weight: 700; }
-  .flag-text span.detail { display: block; color: var(--muted); font-size: 12px; margin-top: 1px; }
+  .flag-line { display: flex; align-items: flex-start; margin: 7px 0; }
+  .flag-text { display: block; }
+  .flag-text .tag-mini { display: block; font-size: 10px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.05em; color: var(--muted); margin-bottom: 2px; }
+  .flag-text .detail-main { display: block; color: var(--ink); font-size: 13.5px; }
+
+  .prediction-line { font-size: 15px; margin: 6px 0 2px; }
+  .prediction-line .src { color: var(--muted); font-size: 11.5px; font-weight: 400; text-transform: uppercase; letter-spacing: 0.03em; }
+  .no-prediction { color: var(--muted); font-style: italic; font-size: 13px; }
+
+  .weather-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin: 10px 0 8px; }
+  .weather-tile { border: 1px solid var(--line); border-radius: 5px; padding: 12px 13px; }
+  .weather-tile .wt-matchup { font-weight: 700; font-size: 13px; margin-bottom: 6px; }
+  .weather-tile .wt-main { display: flex; align-items: baseline; gap: 8px; }
+  .weather-tile .wt-icon { font-size: 22px; line-height: 1; }
+  .weather-tile .wt-temp { font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .weather-tile .wt-cond { color: var(--muted); font-size: 12.5px; }
+  .weather-tile .wt-wind { color: var(--muted); font-size: 12px; margin-top: 4px; }
+  .weather-tile .wt-effect { font-size: 12.5px; margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--line); }
+
+  .glossary dt { font-weight: 700; }
+  .glossary dl { display: grid; grid-template-columns: 110px 1fr; gap: 7px 14px; margin: 0; font-size: 13px; }
+
+  .sources { list-style: none; margin: 0; padding: 0; }
+  .sources li { padding: 8px 0; border-bottom: 1px solid var(--line); }
+  .sources li:last-child { border-bottom: none; }
+  .sources .src-name { font-weight: 700; display: inline-block; min-width: 150px; }
 
   .verdict { display: flex; align-items: center; font-weight: 600; }
   .verdict.no { color: var(--ink); }
@@ -111,26 +135,35 @@
 <div class="disclaimer-strip">Personal-learning report comparing model projections to market/public data. No betting units, stake sizing, or recommended plays anywhere in this report.{% if r.slate_subtitle %} · {{ r.slate_subtitle }}{% endif %}</div>
 
 <div class="eyebrow"><span class="label cond">Most Notable Games</span><span class="rule"></span></div>
+{% macro prediction_line(m) %}
+{% if m.prediction_away is not none %}
+<div class="prediction-line"><strong>{% if m.prediction_winner and m.prediction_winner != 'tie' %}{{ m.prediction_winner }} favored{% else %}Even matchup{% endif %}</strong> — predicted score: {{ m.away_abbrev }} {{ "%.1f"|format(m.prediction_away) }}, {{ m.home_abbrev }} {{ "%.1f"|format(m.prediction_home) }} <span class="src">({{ m.prediction_source }})</span></div>
+{% else %}
+<div class="no-prediction">No prediction available for this game.</div>
+{% endif %}
+{% endmacro %}
 {% if r.most_flagged %}
 <div class="headline-game">
-  <div class="tag cond">Most flagged — {{ r.most_flagged.flags|length }} triggers</div>
+  <div class="tag cond">Most flagged — {{ r.most_flagged.flags|length }} things worth a second look</div>
   <div class="matchup">{{ r.most_flagged.away_abbrev }} @ {{ r.most_flagged.home_abbrev }}</div>
+  {{ prediction_line(r.most_flagged) }}
   <div style="margin-top:10px">
   {% for f in r.most_flagged.flags %}
-  <div class="flag-line"><span class="dot"></span><span class="flag-text"><strong>{{ f.label }}</strong><span class="detail">{{ f.detail }}</span></span></div>
+  <div class="flag-line"><span class="dot"></span><span class="flag-text"><span class="tag-mini">{{ f.label }}</span><span class="detail-main">{{ f.detail }}</span></span></div>
   {% endfor %}
   </div>
 </div>
 {% endif %}
-<div class="disclaimer-strip" style="margin:0 0 6px">Thresholds: total gap &gt; {{ r.thresholds.total_gap }} runs · BPP/DRatings disagreement &gt; {{ r.thresholds.bpp_disagreement }} runs · split divergence &gt; {{ r.thresholds.split_divergence }} pts · pitcher split &gt; {{ r.thresholds.pitcher_split }} ERA · weather net ≥ {{ r.thresholds.weather_net }}%.</div>
+<div class="disclaimer-strip" style="margin:0 0 6px">A game gets flagged when at least one of these trips: models expect a different total than the market (off by &gt;{{ r.thresholds.total_gap }} runs) · the two models disagree · public bets and public money disagree by &gt;{{ r.thresholds.split_divergence }} points · a starter is off their normal form by &gt;{{ r.thresholds.pitcher_split }} ERA · weather/park effect is large (≥{{ r.thresholds.weather_net }}%) · MoundEdge's own trend arrow looks inconsistent. See "Glossary" below for any unfamiliar terms.</div>
 <div class="table-wrap"><table>
-<thead><tr><th>Matchup</th><th>Flags</th></tr></thead>
+<thead><tr><th>Matchup</th><th>Prediction</th><th>Why it's flagged</th></tr></thead>
 <tbody>
 {% for m in r.notable_games %}
 <tr><td class="cond" style="font-weight:700; white-space:nowrap">{{ m.away_abbrev }} @ {{ m.home_abbrev }}</td>
-  <td>{% for f in m.flags %}<div class="flag-line"><span class="dot"></span><span class="flag-text"><strong>{{ f.label }}</strong><span class="detail">{{ f.detail }}</span></span></div>{% endfor %}</td></tr>
+  <td style="white-space:nowrap">{% if m.prediction_away is not none %}{% if m.prediction_winner and m.prediction_winner != 'tie' %}<strong>{{ m.prediction_winner }}</strong>{% else %}even{% endif %}<br><span class="num" style="font-size:12px;color:var(--muted)">{{ "%.1f"|format(m.prediction_away) }}–{{ "%.1f"|format(m.prediction_home) }}</span>{% else %}—{% endif %}</td>
+  <td>{% for f in m.flags %}<div class="flag-line"><span class="dot"></span><span class="flag-text"><span class="tag-mini">{{ f.label }}</span><span class="detail-main">{{ f.detail }}</span></span></div>{% endfor %}</td></tr>
 {% else %}
-<tr><td colspan="2">No games tripped any notable-game triggers today.</td></tr>
+<tr><td colspan="3">No games tripped any notable-game triggers today.</td></tr>
 {% endfor %}
 </tbody>
 </table></div>
@@ -198,6 +231,22 @@
 <div class="card boxed">Neither the Detroit Tigers nor the Seattle Mariners play today.</div>
 {% endif %}
 
+<div class="eyebrow"><span class="label cond">Weather</span><span class="sub">current conditions and how they're expected to affect scoring</span><span class="rule"></span></div>
+<div class="weather-grid">
+{% for m in r.games %}
+{% if m.moundedge and m.moundedge.temp_f is not none %}
+<div class="weather-tile">
+  <div class="wt-matchup">{{ m.away_abbrev }} @ {{ m.home_abbrev }}</div>
+  <div class="wt-main"><span class="wt-icon">{{ m.weather_icon }}</span><span class="wt-temp">{{ m.moundedge.temp_f }}°F</span></div>
+  <div class="wt-cond">{{ m.moundedge.conditions }}{% if m.moundedge.wind_mph is not none %} · wind {{ m.moundedge.wind_mph }} mph {{ m.moundedge.wind_dir }}{% endif %}</div>
+  <div class="wt-effect">{{ m.weather_plain|capitalize }}{% if m.moundedge.park_factor_text %} · park: {{ m.moundedge.park_factor_text }}{% endif %}</div>
+</div>
+{% endif %}
+{% else %}
+<div class="no-prediction">No weather data available today.</div>
+{% endfor %}
+</div>
+
 <div class="eyebrow"><span class="label cond">Today's Slate</span><span class="rule"></span></div>
 <div class="table-wrap"><table>
 <thead><tr><th>Matchup</th><th>Time</th><th>Venue</th><th>Away Pitcher</th><th>Home Pitcher</th></tr></thead>
@@ -235,10 +284,14 @@
 </tbody>
 </table></div>
 {% else %}
-<div class="card boxed">Reddit sentiment unavailable today. {{ r.reddit.note if r.reddit else "" }}</div>
+<div class="card boxed">
+Reddit sentiment isn't available today. Reddit blocks most automated requests outright — even from well-behaved scripts with a proper User-Agent — so this section will often be empty; it's not a bug in this report, and there's no way to make Reddit reliably allow it without switching to their official OAuth API (which this project deliberately avoids).
+<div style="margin-top:8px; font-size:12px; color:var(--muted)">Technical detail: {{ r.reddit.note if r.reddit else "" }}</div>
+</div>
 {% endif %}
 
 <div class="eyebrow"><span class="label cond">Model Predictions</span><span class="rule"></span></div>
+<div class="disclaimer-strip">Three independent projections per game — they won't always agree with each other, which is normal and part of the point of tracking them.</div>
 <div class="table-wrap"><table>
 <thead><tr><th>Matchup</th><th class="num">DRatings</th><th>Winner</th><th class="num">MoundEdge Model</th><th class="num">BPP sim</th><th>BPP winner</th></tr></thead>
 <tbody>
@@ -257,8 +310,33 @@
 
 <div class="eyebrow"><span class="label cond">How to Scan a Slate</span><span class="rule"></span></div>
 <div class="card boxed">
-<strong>Routine game:</strong> DRatings and BPP agree on the winner, totals sit close to market, betting splits move together, starters are near their season norms, and there's no extreme weather/park effect. Nothing here needs a second look.<br><br>
-<strong>Notable game:</strong> one or more of the six checks above trips. Notable doesn't mean "bet this" — it means there's more disagreement between sources than usual, which is exactly the kind of case worth comparing against the actual final score afterward.
+<strong>Routine game:</strong> the two models agree on the winner, totals sit close to the market number, betting splits move together, starting pitchers are near their normal form, and there's no extreme weather/park effect. Nothing here needs a second look.<br><br>
+<strong>Notable game:</strong> one or more of the checks in the first section above trips. Notable doesn't mean "bet this" — it means there's more disagreement between sources than usual, which is exactly the kind of case worth comparing against the actual final score afterward.
 </div>
+
+<div class="eyebrow"><span class="label cond">Glossary</span><span class="sub">jargon used above, in plain English</span><span class="rule"></span></div>
+<div class="card boxed glossary">
+<dl>
+  <dt>ERA</dt><dd>Earned run average — average runs a pitcher allows per 9 innings. Lower is better.</dd>
+  <dt>xERA / xFIP</dt><dd>"Expected" versions of ERA that try to strip out luck/defense — same idea, lower is better.</dd>
+  <dt>K/9</dt><dd>Strikeouts per 9 innings, for a pitcher. Higher usually means more dominant stuff.</dd>
+  <dt>wRC+</dt><dd>A hitting stat where 100 = league-average offense. 120 means 20% better than average; 80 means 20% worse.</dd>
+  <dt>OPS</dt><dd>On-base plus slugging — a quick overall measure of a hitter's production. Higher is better.</dd>
+  <dt>ISO / K%</dt><dd>ISO = raw power (extra bases per at-bat). K% = how often a hitter strikes out — lower is generally better for the hitter.</dd>
+  <dt>BPP</dt><dd>MoundEdge's simulation-based projection — it runs the matchup many times and averages the outcomes, as opposed to a single-formula model.</dd>
+  <dt>Moneyline</dt><dd>A bet on which team simply wins the game, no point spread involved.</dd>
+  <dt>Total / Over-Under</dt><dd>A bet on whether the combined final score of both teams will be above or below a set number.</dd>
+  <dt>Bets% vs money%</dt><dd>% of individual bets placed on a side vs. % of total dollars wagered on it. When these two disagree a lot, it usually means a small number of large bettors are on the opposite side of the general public.</dd>
+  <dt>Home/road split</dt><dd>How much better or worse a pitcher performs at home vs. on the road, compared to their season average.</dd>
+</dl>
+</div>
+
+<div class="eyebrow"><span class="label cond">Sources</span><span class="rule"></span></div>
+<ul class="sources">
+{% for name, url in r.source_urls.items() %}
+<li><span class="src-name">{{ name }}</span><a href="{{ url }}" target="_blank" rel="noopener">{{ url }}</a></li>
+{% endfor %}
+<li><span class="src-name">Reddit</span>{% if r.reddit and r.reddit.available and r.reddit.thread_url %}<a href="{{ r.reddit.thread_url }}" target="_blank" rel="noopener">{{ r.reddit.thread_url }}</a>{% else %}not fetched today — Reddit blocks most automated requests outright (confirmed: a 403 "blocked due to network policy" response, not just rate-limiting), so this section is often empty. Pasting the daily thread's text into <code>mlb_daily/data/reddit_manual_&lt;date&gt;.txt</code> before the next run will fill it in.{% endif %}</li>
+</ul>
 
 <div class="final-note">Personal learning project: compares model/market/public-sentiment data to actual outcomes over time. No betting units, stake sizing, or recommended plays are included or implied anywhere in this report.</div>

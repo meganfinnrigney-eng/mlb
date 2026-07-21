@@ -16,6 +16,46 @@ PITCHER_SPLIT_THRESHOLD = 1.0      # ERA: contextual (home/road) ERA vs season E
 WEATHER_NET_THRESHOLD = 8.0        # percent: BPP net weather/park effect (trigger e)
 SPOTLIGHT_TEAMS = {"DET", "SEA"}
 
+SOURCE_URLS = {
+    "SportsBettingDime": "https://www.sportsbettingdime.com/mlb/public-betting-trends/",
+    "DRatings": "https://www.dratings.com/predictor/mlb-baseball-predictions/",
+    "MoundEdge": "https://moundedge.github.io/MLB-Summaries/",
+}
+
+_CONDITION_ICONS = [
+    (("clear", "sunny"), "☀️"),
+    (("partly",), "⛅"),
+    (("cloud", "overcast"), "☁️"),
+    (("thunder", "storm"), "⛈️"),
+    (("rain", "shower", "drizzle"), "🌧️"),
+    (("snow", "flurr"), "❄️"),
+    (("fog", "mist", "haze"), "🌫️"),
+    (("wind",), "💨"),
+]
+
+
+def _weather_icon(conditions):
+    text = (conditions or "").lower()
+    for keywords, icon in _CONDITION_ICONS:
+        if any(k in text for k in keywords):
+            return icon
+    return "🌤️"
+
+
+def _weather_plain(net_pct):
+    """Translate MoundEdge's 'BPP net %' into plain English, weather-app style."""
+    if net_pct is None:
+        return "unknown effect on scoring"
+    if net_pct >= 8:
+        return "makes scoring notably easier"
+    if net_pct >= 3:
+        return "makes scoring a bit easier"
+    if net_pct <= -8:
+        return "makes scoring notably harder"
+    if net_pct <= -3:
+        return "makes scoring a bit harder"
+    return "close to a neutral effect on scoring"
+
 
 @dataclass
 class Flag:
@@ -39,6 +79,15 @@ class Matchup:
     moundedge: object = None
     reddit_away: object = None
     reddit_home: object = None
+
+    # best-available projected score, for showing "the actual prediction" up front
+    prediction_source: str = ""
+    prediction_away: float | None = None
+    prediction_home: float | None = None
+    prediction_winner: str | None = None
+
+    weather_icon: str = "🌤️"
+    weather_plain: str = ""
 
     flags: list = field(default_factory=list)
 
@@ -75,8 +124,8 @@ def _check_total_gap(m):
     gap = abs(model_total - market_total)
     if gap > TOTAL_GAP_THRESHOLD:
         return Flag(
-            "a", "Model vs market total gap",
-            f"Model total {model_total:.1f} vs market total {market_total:.1f} (gap {gap:.1f})",
+            "a", "Models expect a different total than the betting market",
+            f"Model total {model_total:.1f} runs vs. market total {market_total:.1f} runs (off by {gap:.1f})",
         )
     return None
 
@@ -95,13 +144,13 @@ def _check_model_disagreement(m):
     if winner_disagree or (total_gap is not None and total_gap > BPP_DISAGREEMENT_THRESHOLD):
         parts = []
         if winner_disagree:
-            parts.append(f"DRatings favors {dr_winner}, BPP favors {bpp_winner}")
+            parts.append(f"DRatings picks the {dr_winner} team, MoundEdge's BPP sim picks the {bpp_winner} team")
         if total_gap is not None and total_gap > BPP_DISAGREEMENT_THRESHOLD:
             parts.append(
-                f"DRatings total {m.dratings.total_projected_runs:.1f} vs BPP total "
-                f"{m.moundedge.bpp_total:.1f} (gap {total_gap:.1f})"
+                f"DRatings projects {m.dratings.total_projected_runs:.1f} total runs, BPP projects "
+                f"{m.moundedge.bpp_total:.1f} (off by {total_gap:.1f})"
             )
-        return Flag("b", "DRatings vs BPP disagreement", "; ".join(parts))
+        return Flag("b", "The two models disagree with each other", "; ".join(parts))
     return None
 
 
@@ -121,8 +170,8 @@ def _check_split_divergence(m):
 
     flagged = [(label, gap) for label, gap in gaps if gap > SPLIT_DIVERGENCE_THRESHOLD]
     if flagged:
-        detail = "; ".join(f"{label} bets/money gap {gap:.0f}pts" for label, gap in flagged)
-        return Flag("c", "Lopsided bets% vs money% split", detail)
+        detail = "; ".join(f"{label}: {gap:.0f}-point gap between % of bets and % of money" for label, gap in flagged)
+        return Flag("c", "Public bets and public money don't agree", detail)
     return None
 
 
@@ -146,7 +195,7 @@ def _check_pitcher_split(m):
                 f"{me.home_pitcher_era_szn:.2f} ({gap:+.2f})"
             )
     if findings:
-        return Flag("d", "Extreme starter home/road split", "; ".join(findings))
+        return Flag("d", "Starting pitcher is far from their normal form", "; ".join(findings))
     return None
 
 
@@ -155,7 +204,10 @@ def _check_weather(m):
     if me is None or me.weather_net_pct is None:
         return None
     if abs(me.weather_net_pct) >= WEATHER_NET_THRESHOLD:
-        return Flag("e", "Extreme weather/park effect", f"BPP net {me.weather_net_pct:+.0f}%")
+        return Flag(
+            "e", "Weather/ballpark will change scoring a lot",
+            f"{_weather_plain(me.weather_net_pct)} ({me.weather_net_pct:+.0f}% simulated effect)",
+        )
     return None
 
 
@@ -184,7 +236,7 @@ def _check_trend_contradiction(m):
             if stat and _trend_stat_contradicts(stat, higher_is_better):
                 findings.append(f"{abbrev} {side_label} trend arrow vs L30/season numbers ({stat.l30} vs {stat.szn})")
     if findings:
-        return Flag("f", "Trend arrow contradicts underlying stats", "; ".join(findings))
+        return Flag("f", "MoundEdge's trend arrow looks inconsistent", "; ".join(findings))
     return None
 
 
@@ -222,6 +274,23 @@ def _build_matchups(dr_games, me_games, reddit_result):
         if reddit_result and reddit_result.available:
             m.reddit_away = reddit_result.mentions.get(away_ab)
             m.reddit_home = reddit_result.mentions.get(home_ab)
+
+        # best-available projected score: prefer the BPP simulation, then MoundEdge's
+        # own "Model", then DRatings - whichever is actually populated for this game
+        if me and me.bpp_away_runs is not None:
+            m.prediction_source, m.prediction_away, m.prediction_home = "BPP sim", me.bpp_away_runs, me.bpp_home_runs
+        elif me and me.model_away_runs is not None:
+            m.prediction_source, m.prediction_away, m.prediction_home = "Model", me.model_away_runs, me.model_home_runs
+        elif dr and dr.away_projected_runs is not None:
+            m.prediction_source, m.prediction_away, m.prediction_home = "DRatings", dr.away_projected_runs, dr.home_projected_runs
+        if m.prediction_away is not None and m.prediction_home is not None:
+            m.prediction_winner = away_ab if m.prediction_away > m.prediction_home else (
+                home_ab if m.prediction_home > m.prediction_away else "tie"
+            )
+
+        if me:
+            m.weather_icon = _weather_icon(me.conditions)
+            m.weather_plain = _weather_plain(me.weather_net_pct)
 
         for check in ALL_CHECKS:
             flag = check(m)
@@ -325,6 +394,7 @@ def build_report_data(dr_games, me_games, reddit_result, today_iso, today_displa
         "totals_disagreements": totals_disagreements,
         "spotlight_games": spotlight_games,
         "reddit": reddit_result,
+        "source_urls": SOURCE_URLS,
         "thresholds": {
             "total_gap": TOTAL_GAP_THRESHOLD,
             "bpp_disagreement": BPP_DISAGREEMENT_THRESHOLD,

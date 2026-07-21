@@ -59,6 +59,10 @@ class MoundEdgeGame:
     weather_text: str = ""
     park_factor_text: str = ""
     weather_net_pct: float | None = None
+    temp_f: int | None = None
+    conditions: str = ""
+    wind_mph: int | None = None
+    wind_dir: str = ""
     away_pitcher_home_era: float | None = None
     away_pitcher_road_era: float | None = None
     home_pitcher_home_era: float | None = None
@@ -197,6 +201,15 @@ def _parse_game(game_div):
         game.weather_net_pct = float(net_m.group(1)) if net_m else None
         park_m = re.search(r"Park:\s*([^·]+)", game.weather_text)
         game.park_factor_text = _clean(park_m.group(1)) if park_m else ""
+
+        temp_m = re.search(r"(-?\d+)°,\s*([A-Za-z ]+?)\s*·", game.weather_text)
+        if temp_m:
+            game.temp_f = int(temp_m.group(1))
+            game.conditions = temp_m.group(2).strip()
+        wind_m = re.search(r"Wind\s+(\d+)\s+([A-Z]+)", game.weather_text)
+        if wind_m:
+            game.wind_mph = int(wind_m.group(1))
+            game.wind_dir = wind_m.group(2)
 
     # Starting Pitchers table + narrative home/road split paragraphs
     sp_sec = _section_div(game_div, "Starting Pitchers")
