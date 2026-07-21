@@ -23,6 +23,18 @@ sizing, or recommended plays anywhere.**
 4. **Reddit** — today's MLB daily discussion thread, via the
    unauthenticated `.json` endpoints (no OAuth app registration needed).
 
+## Reading it daily
+
+The live report is published as a Claude Artifact:
+**https://claude.ai/code/artifact/cc53d3a4-0284-4b9e-adec-df02706e6765**
+
+A Claude Code Remote Routine ("MLB Daily Analysis — Artifact Refresh", cron
+`30 11 * * *`) fires 30 minutes after the GitHub Actions job, pulls the
+freshly-generated `docs/artifact_fragment.html`, and redeploys it to that
+same URL, so the link never changes. `docs/index.html` (the full HTML page,
+not the artifact fragment) is still generated too and works as a plain
+GitHub Pages site if you'd rather host it that way instead/as well.
+
 ## How it runs
 
 `.github/workflows/daily-report.yml` runs `main.py` once a day (11:00 UTC,
