@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MLB Daily Analysis — {{ r.date_display }}</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+         max-width: 1100px; margin: 0 auto; padding: 16px 20px 60px; line-height: 1.45; }
+  h1 { font-size: 22px; margin-bottom: 2px; }
+  .subtitle { color: #777; font-size: 13px; margin-bottom: 28px; }
+  h2 { font-size: 17px; border-bottom: 2px solid #ccc; padding-bottom: 4px; margin-top: 40px; }
+  h3 { font-size: 14px; margin-bottom: 4px; }
+  table { border-collapse: collapse; width: 100%; margin: 10px 0 20px; font-size: 13px; }
+  th, td { border: 1px solid #ccc; padding: 5px 8px; text-align: left; vertical-align: top; }
+  th { background: rgba(127,127,127,.15); font-weight: 600; }
+  tr.flagged { background: rgba(230, 160, 0, .12); }
+  tr.disagree { background: rgba(220, 60, 60, .10); }
+  .muted { color: #888; font-size: 12px; }
+  .pill { display: inline-block; padding: 1px 7px; border-radius: 10px; font-size: 11px;
+          background: rgba(127,127,127,.2); margin: 1px 2px 1px 0; }
+  .flag-list { margin: 0; padding-left: 18px; font-size: 12px; }
+  .spotlight { border: 2px solid #4a7dbf; border-radius: 8px; padding: 14px 16px; margin-bottom: 30px; }
+  .spotlight h2 { border: none; margin-top: 0; }
+  .note { background: rgba(127,127,127,.08); border-left: 3px solid #999; padding: 8px 12px; font-size: 13px; margin: 10px 0; }
+  .disclaimer { margin-top: 50px; padding-top: 14px; border-top: 1px solid #ccc; font-size: 12px; color: #888; }
+  code { font-size: 12px; }
+  .snippet { font-style: italic; color: #666; }
+</style>
+</head>
+<body>
+
+<h1>MLB Daily Analysis — {{ r.date_display }}</h1>
+<div class="subtitle">
+  Generated {{ generated_at }}. Personal-learning report comparing model projections to market/public data.
+  No betting units, stake sizing, or recommended plays anywhere in this report.
+  {% if r.slate_subtitle %}<br>MoundEdge slate note: {{ r.slate_subtitle }}{% endif %}
+</div>
+
+<!-- Section 10: Tigers/Mariners spotlight -->
+{% if r.spotlight_games %}
+<div class="spotlight">
+<h2>🎯 Tigers / Mariners Spotlight</h2>
+{% for m in r.spotlight_games %}
+  <h3>{{ m.away_abbrev }} @ {{ m.home_abbrev }}{% if m.game_time %} — {{ m.game_time }}{% endif %}</h3>
+  <table>
+    <tr><th>Model projected score (DRatings)</th>
+      <td>{% if m.dratings %}{{ m.away_abbrev }} {{ "%.1f"|format(m.dratings.away_projected_runs) if m.dratings.away_projected_runs is not none else "—" }}
+          – {{ m.home_abbrev }} {{ "%.1f"|format(m.dratings.home_projected_runs) if m.dratings.home_projected_runs is not none else "—" }}{% else %}—{% endif %}</td></tr>
+    <tr><th>BPP sim projected score (MoundEdge)</th>
+      <td>{% if m.moundedge and m.moundedge.bpp_away_runs is not none %}{{ m.away_abbrev }} {{ "%.1f"|format(m.moundedge.bpp_away_runs) }}
+          – {{ m.home_abbrev }} {{ "%.1f"|format(m.moundedge.bpp_home_runs) }}{% else %}—{% endif %}</td></tr>
+    <tr><th>Betting split (bets% / money%)</th>
+      <td>{% if m.moundedge and m.moundedge.split_ml_away_bets is not none %}
+          {{ m.away_abbrev }} {{ m.moundedge.split_ml_away_bets|round|int }}%/{{ m.moundedge.split_ml_away_money|round|int }}%
+          · {{ m.home_abbrev }} {{ m.moundedge.split_ml_home_bets|round|int }}%/{{ m.moundedge.split_ml_home_money|round|int }}%
+          {% else %}—{% endif %}</td></tr>
+    <tr><th>Reddit sentiment</th>
+      <td>
+        {% if m.reddit_away %}{{ m.away_abbrev }}: {{ m.reddit_away.count }} mention(s){% if m.reddit_away.snippets %} — <span class="snippet">"{{ m.reddit_away.snippets[0] }}"</span>{% endif %}<br>{% endif %}
+        {% if m.reddit_home %}{{ m.home_abbrev }}: {{ m.reddit_home.count }} mention(s){% if m.reddit_home.snippets %} — <span class="snippet">"{{ m.reddit_home.snippets[0] }}"</span>{% endif %}{% endif %}
+        {% if not m.reddit_away and not m.reddit_home %}no mentions found{% endif %}
+      </td></tr>
+    {% set align = (r.alignment_rows | selectattr("matchup", "equalto", m) | first) %}
+    <tr><th>Alignment</th><td>
+      {% if align %}
+        {% if align.agree %}✅ model, betting split{% if align.reddit_direction %}, and Reddit{% endif %} point the same direction{% else %}⚠️ directions conflict — model: {{ align.model_direction or "n/a" }}, split: {{ align.split_direction or "n/a" }}, Reddit: {{ align.reddit_direction or "n/a" }}{% endif %}
+      {% else %}—{% endif %}
+    </td></tr>
+  </table>
+{% endfor %}
+</div>
+{% else %}
+<div class="note"><strong>Detroit Tigers / Seattle Mariners:</strong> neither team plays today.</div>
+{% endif %}
+
+<!-- Section 1: Today's slate -->
+<h2>1. Today's Slate</h2>
+<table>
+<tr><th>Matchup</th><th>Time</th><th>Venue</th><th>Away Pitcher</th><th>Home Pitcher</th></tr>
+{% for m in r.games %}
+<tr>
+  <td>{{ m.away_abbrev }} @ {{ m.home_abbrev }}</td>
+  <td>{{ m.game_time or "—" }}</td>
+  <td>{{ m.venue or "—" }}</td>
+  <td>{{ m.away_pitcher or "—" }}</td>
+  <td>{{ m.home_pitcher or "—" }}</td>
+</tr>
+{% else %}
+<tr><td colspan="5">No games found for today.</td></tr>
+{% endfor %}
+</table>
+
+<!-- Section 2: Source summary -->
+<h2>2. Source Summary</h2>
+<table>
+<tr><th>Source</th><th>What it contains</th></tr>
+<tr><td>SportsBettingDime</td><td>Public betting splits (% money vs % bets per game). Its real numbers are rendered client-side by a JS widget with no public JSON/CSV endpoint, so this report uses MoundEdge's embedded bets%/money% splits instead, which mirror SportsBettingDime's figures. {{ r.sbd_status_note }}</td></tr>
+<tr><td>DRatings</td><td>Model projected score per team, win probability, and best available market moneyline/spread/total across tracked sportsbooks. Plain server-rendered HTML table.</td></tr>
+<tr><td>MoundEdge</td><td>BPP sim projected score (separate from its own "Model" projection), weather/park run-environment effect, starting-pitcher season stats with home/road split commentary, hitting/bullpen trend arrows vs season stats, market lines, and embedded betting splits. Static HTML, richest of the four sources.</td></tr>
+<tr><td>Reddit</td><td>Today's MLB daily discussion thread (r/sportsbook or r/baseball), fetched via the unauthenticated .json endpoint. Recurring team mentions and their stated reasoning, scanned from thread text.</td></tr>
+</table>
+
+<!-- Section 3: Reddit sentiment -->
+<h2>3. Reddit Sentiment</h2>
+{% if r.reddit and r.reddit.available %}
+<div class="muted">Source: {{ r.reddit.source }}. {{ r.reddit.note }}{% if r.reddit.thread_title %} — thread: "{{ r.reddit.thread_title }}"{% endif %}</div>
+<table>
+<tr><th>Team</th><th>Mentions</th><th>Example snippet(s)</th></tr>
+{% for abbrev, mention in r.reddit.mentions.items() %}
+<tr><td>{{ abbrev }}</td><td>{{ mention.count }}</td>
+  <td>{% for s in mention.snippets %}<div class="snippet">"{{ s }}"</div>{% endfor %}</td></tr>
+{% else %}
+<tr><td colspan="3">No team mentions found in the thread.</td></tr>
+{% endfor %}
+</table>
+{% else %}
+<div class="note">Reddit sentiment unavailable today. {{ r.reddit.note if r.reddit else "" }}</div>
+{% endif %}
+
+<!-- Section 4: Model predictions table -->
+<h2>4. Model Predictions</h2>
+<table>
+<tr><th>Matchup</th><th>DRatings score</th><th>DRatings winner</th><th>MoundEdge "Model" score</th><th>MoundEdge BPP sim score</th><th>BPP winner</th></tr>
+{% for m in r.games %}
+<tr>
+  <td>{{ m.away_abbrev }} @ {{ m.home_abbrev }}</td>
+  <td>{% if m.dratings and m.dratings.away_projected_runs is not none %}{{ "%.1f"|format(m.dratings.away_projected_runs) }}–{{ "%.1f"|format(m.dratings.home_projected_runs) }}{% else %}—{% endif %}</td>
+  <td>{% if m.dratings and m.dratings.away_win_pct is not none %}{{ m.away_abbrev if m.dratings.away_win_pct > m.dratings.home_win_pct else m.home_abbrev }} ({{ m.dratings.away_win_pct if m.dratings.away_win_pct > m.dratings.home_win_pct else m.dratings.home_win_pct }}%){% else %}—{% endif %}</td>
+  <td>{% if m.moundedge and m.moundedge.model_away_runs is not none %}{{ "%.1f"|format(m.moundedge.model_away_runs) }}–{{ "%.1f"|format(m.moundedge.model_home_runs) }}{% else %}—{% endif %}</td>
+  <td>{% if m.moundedge and m.moundedge.bpp_away_runs is not none %}{{ "%.1f"|format(m.moundedge.bpp_away_runs) }}–{{ "%.1f"|format(m.moundedge.bpp_home_runs) }}{% else %}—{% endif %}</td>
+  <td>{% if m.moundedge and m.moundedge.bpp_away_runs is not none %}{{ m.away_abbrev if m.moundedge.bpp_away_runs > m.moundedge.bpp_home_runs else m.home_abbrev }}{% else %}—{% endif %}</td>
+</tr>
+{% endfor %}
+</table>
+
+<!-- Section 5: How to scan a slate -->
+<h2>5. How to Scan a Slate</h2>
+<div class="note">
+<strong>Routine game:</strong> DRatings and BPP agree on the winner and their totals are close together, the model total sits near the market total, betting splits (bets% vs money%) move together, and starting pitchers are pitching close to their season norms with no extreme weather/park effect. Nothing here needs a second look.<br><br>
+<strong>Notable game:</strong> one or more of the six checks below trips — the models disagree, the model and market total diverge, the betting public and the money are pulling in different directions, a starter is well outside their seasonal form in this game's context (home/road), the park/weather effect is unusually large, or MoundEdge's own trend arrow contradicts the numbers next to it. Notable doesn't mean "bet this" — it means there's more disagreement between sources than usual, which is exactly the kind of case worth comparing against the actual final score afterward.
+</div>
+
+<!-- Section 6: Notable-game flags -->
+<h2>6. Notable-Game Flags</h2>
+<div class="muted">
+Thresholds: total gap &gt; {{ r.thresholds.total_gap }} runs · BPP/DRatings disagreement &gt; {{ r.thresholds.bpp_disagreement }} runs ·
+split divergence &gt; {{ r.thresholds.split_divergence }} pts · pitcher split &gt; {{ r.thresholds.pitcher_split }} ERA · weather net ≥ {{ r.thresholds.weather_net }}%.
+</div>
+<table>
+<tr><th>Matchup</th><th>Flags</th></tr>
+{% for m in r.notable_games %}
+<tr class="flagged">
+  <td>{{ m.away_abbrev }} @ {{ m.home_abbrev }}</td>
+  <td><ul class="flag-list">{% for f in m.flags %}<li><strong>{{ f.label }}</strong> — {{ f.detail }}</li>{% endfor %}</ul></td>
+</tr>
+{% else %}
+<tr><td colspan="2">No games tripped any notable-game triggers today.</td></tr>
+{% endfor %}
+</table>
+
+<!-- Section 7: Most-flagged game -->
+<h2>7. Most-Flagged Game</h2>
+{% if r.most_flagged %}
+<div class="note">
+  <strong>{{ r.most_flagged.away_abbrev }} @ {{ r.most_flagged.home_abbrev }}</strong> — {{ r.most_flagged.flags|length }} flag(s):
+  <ul class="flag-list">{% for f in r.most_flagged.flags %}<li><strong>{{ f.label }}</strong> — {{ f.detail }}</li>{% endfor %}</ul>
+</div>
+{% else %}
+<div class="note">No flagged games today.</div>
+{% endif %}
+
+<!-- Section 8: Alignment check -->
+<h2>8. Alignment Check</h2>
+<div class="muted">Model direction vs betting-split direction vs Reddit sentiment, per game. Rows in red disagree.</div>
+<table>
+<tr><th>Matchup</th><th>Model favors</th><th>Split (money%) favors</th><th>Reddit favors</th><th>Agree?</th></tr>
+{% for row in r.alignment_rows %}
+<tr class="{{ 'disagree' if not row.agree else '' }}">
+  <td>{{ row.matchup.away_abbrev }} @ {{ row.matchup.home_abbrev }}</td>
+  <td>{{ row.model_direction or "—" }}</td>
+  <td>{{ row.split_direction or "—" }}</td>
+  <td>{{ row.reddit_direction or "—" }}</td>
+  <td>{{ "yes" if row.agree else "NO" }}</td>
+</tr>
+{% endfor %}
+</table>
+
+<!-- Section 9: Totals-specific alignment -->
+<h2>9. Totals Alignment (Over/Under)</h2>
+<div class="muted">Only flagged games shown. Market total is the actual current O/U line.</div>
+<table>
+<tr><th>Matchup</th><th>DRatings total</th><th>BPP total</th><th>MoundEdge Model total</th><th>Market total</th><th>Model lean</th><th>Split lean</th><th>Agree?</th></tr>
+{% for row in r.totals_rows %}
+<tr class="{{ 'disagree' if not row.agree else '' }}">
+  <td>{{ row.matchup.away_abbrev }} @ {{ row.matchup.home_abbrev }}</td>
+  <td>{{ "%.1f"|format(row.dratings_total) if row.dratings_total is not none else "—" }}</td>
+  <td>{{ "%.1f"|format(row.bpp_total) if row.bpp_total is not none else "—" }}</td>
+  <td>{{ "%.1f"|format(row.model_total) if row.model_total is not none else "—" }}</td>
+  <td>{{ row.market_total if row.market_total is not none else "—" }}</td>
+  <td>{{ row.model_lean or "—" }}</td>
+  <td>{{ row.split_lean or "—" }}</td>
+  <td>{{ "yes" if row.agree else "NO" }}</td>
+</tr>
+{% else %}
+<tr><td colspan="8">No flagged games to show totals alignment for.</td></tr>
+{% endfor %}
+</table>
+
+<div class="disclaimer">
+  Personal learning project: compares model/market/public-sentiment data to actual outcomes over time.
+  No betting units, stake sizing, or recommended plays are included or implied anywhere in this report.
+</div>
+
+</body>
+</html>
