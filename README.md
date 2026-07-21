@@ -30,16 +30,18 @@ before first pitch) via GitHub Actions `schedule`, and on-demand via
 `workflow_dispatch`. It writes `docs/<date>.html` and `docs/index.html` and
 commits them back to the repository.
 
-**Scheduled workflows only fire from the repository's default branch** —
-once this is merged to `main`, the daily run starts automatically. Until
-then, trigger it manually from the Actions tab (`workflow_dispatch`) to test
-it.
+**Scheduled workflows only fire from the repository's default branch.**
+`claude/mlb-daily-analysis-573rh3` is that default branch (this repo had no
+commits before this project), so the daily cron is already active - no
+merge needed. If you later rename the default branch, move this workflow
+file along with it.
 
 ### Enabling GitHub Pages (one-time, manual)
 
 To browse the report at a URL instead of viewing raw HTML files in the repo:
-Settings → Pages → Source: "Deploy from a branch" → Branch: `main`, folder:
-`/docs`.
+Settings → Pages → Source: "Deploy from a branch" → Branch:
+`claude/mlb-daily-analysis-573rh3` (or whatever the default branch is named
+at the time), folder: `/docs`.
 
 ## Reddit fallback
 
