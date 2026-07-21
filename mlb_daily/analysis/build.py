@@ -7,7 +7,7 @@ recommendations of any kind (no stakes, no "plays").
 
 from dataclasses import dataclass, field
 
-from mlb_daily.teams import abbrev_from_name
+from mlb_daily.teams import abbrev_from_name, full_name
 
 TOTAL_GAP_THRESHOLD = 1.0          # runs: model total vs market total (trigger a)
 BPP_DISAGREEMENT_THRESHOLD = 1.0   # runs: DRatings vs BPP total disagreement (trigger b)
@@ -116,6 +116,7 @@ class Matchup:
     prediction_away: float | None = None
     prediction_home: float | None = None
     prediction_winner: str | None = None
+    prediction_winner_name: str | None = None
 
     weather_icon: str = "🌤️"
     weather_plain: str = ""
@@ -308,8 +309,8 @@ def _build_matchups(dr_games, me_games, reddit_result):
         m = Matchup(away_abbrev=away_ab, home_abbrev=home_ab)
         m.dratings = dr
         m.moundedge = me
-        m.away_name = dr.away_team if dr else (me.away.record and away_ab) or away_ab
-        m.home_name = dr.home_team if dr else home_ab
+        m.away_name = full_name(away_ab)
+        m.home_name = full_name(home_ab)
         m.game_time = me.game_time if me else ""
         m.venue = me.venue if me else ""
         m.away_pitcher = (me.away.pitcher_name if me and me.away.pitcher_name else (dr.away_pitcher if dr else ""))
@@ -331,6 +332,7 @@ def _build_matchups(dr_games, me_games, reddit_result):
             m.prediction_winner = away_ab if m.prediction_away > m.prediction_home else (
                 home_ab if m.prediction_home > m.prediction_away else "tie"
             )
+            m.prediction_winner_name = full_name(m.prediction_winner) if m.prediction_winner != "tie" else None
 
         if me:
             m.weather_icon = _weather_icon(me.conditions)

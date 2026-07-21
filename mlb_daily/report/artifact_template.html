@@ -175,7 +175,7 @@
 </style>
 
 {% macro score_line(m) %}
-{% if m.prediction_away is not none %}{% if m.prediction_winner and m.prediction_winner != 'tie' %}<strong>{{ m.prediction_winner }}</strong> {% endif %}{{ "%.1f"|format(m.prediction_away) }}–{{ "%.1f"|format(m.prediction_home) }}{% else %}<span class="muted">no prediction</span>{% endif %}
+{% if m.prediction_away is not none %}{% if m.prediction_winner_name %}<strong>{{ m.prediction_winner_name }}</strong> {% endif %}{{ "%.1f"|format(m.prediction_away) }}–{{ "%.1f"|format(m.prediction_home) }}{% else %}<span class="muted">no prediction</span>{% endif %}
 {% endmacro %}
 
 {% macro badges(m) %}
@@ -187,7 +187,7 @@
 
 {% macro game_row(m) %}
 <tr>
-<td style="white-space:nowrap"><span class="g-head">{{ m.away_abbrev }} @ {{ m.home_abbrev }}</span></td>
+<td><span class="g-head">{{ m.away_name }} @ {{ m.home_name }}</span></td>
 <td style="white-space:nowrap">{{ m.game_time or "—" }}</td>
 <td class="num">{{ score_line(m) }}</td>
 <td>{% set p = m.prose %}{% if p %}<span class="badge badge-confidence conf-{{ p.icon_class }}" title="{{ p.label }}"><span class="badge-icon">{{ p.icon }}</span>{{ p.badge }}</span>{% endif %}</td>
@@ -213,7 +213,7 @@
   <div class="kicker">Tigers / Mariners</div>
   {% for m in r.spotlight_games %}
   <div class="callout-game">
-    <div class="g-row"><span class="g-head">{{ m.away_abbrev }} @ {{ m.home_abbrev }}</span>{% if m.game_time %} <span class="g-time">{{ m.game_time }}</span>{% endif %}</div>
+    <div class="g-row"><span class="g-head">{{ m.away_name }} @ {{ m.home_name }}</span>{% if m.game_time %} <span class="g-time">{{ m.game_time }}</span>{% endif %}</div>
     <div class="cg-score">{{ score_line(m) }}</div>
     <div class="cg-badges">{{ badges(m) }}</div>
   </div>
@@ -231,7 +231,7 @@
   <div class="conviction-box">
     <div class="kicker">Highest conviction tonight</div>
     <div class="callout-game">
-      <div class="g-row"><span class="g-head">{{ hc.matchup.away_abbrev }} @ {{ hc.matchup.home_abbrev }}</span>{% if hc.matchup.game_time %} <span class="g-time">{{ hc.matchup.game_time }}</span>{% endif %}</div>
+      <div class="g-row"><span class="g-head">{{ hc.matchup.away_name }} @ {{ hc.matchup.home_name }}</span>{% if hc.matchup.game_time %} <span class="g-time">{{ hc.matchup.game_time }}</span>{% endif %}</div>
       <div class="cg-score">{{ score_line(hc.matchup) }}</div>
       <div class="cg-badges">{{ badges(hc.matchup) }}</div>
       <div class="cg-note">{% if hc.reddit_direction_team %}Reddit chatter leans the same way too. {% endif %}That's about as much agreement across sources as you'll find on tonight's slate.</div>

@@ -59,3 +59,46 @@ def abbrev_from_name(name):
         if nickname.lower() in name.lower():
             return NICKNAME_TO_ABBREV[nickname]
     return None
+
+
+# City/market + nickname, for readers who don't know the three-letter codes.
+# The Athletics play without a home-city name as of their move away from
+# Oakland, hence no city prefix there - "Athletics" is their full official name.
+ABBREV_TO_FULL_NAME = {
+    "ARI": "Arizona Diamondbacks",
+    "ATL": "Atlanta Braves",
+    "BAL": "Baltimore Orioles",
+    "BOS": "Boston Red Sox",
+    "CHC": "Chicago Cubs",
+    "CHW": "Chicago White Sox",
+    "CIN": "Cincinnati Reds",
+    "CLE": "Cleveland Guardians",
+    "COL": "Colorado Rockies",
+    "DET": "Detroit Tigers",
+    "HOU": "Houston Astros",
+    "KCR": "Kansas City Royals",
+    "LAA": "Los Angeles Angels",
+    "LAD": "Los Angeles Dodgers",
+    "MIA": "Miami Marlins",
+    "MIL": "Milwaukee Brewers",
+    "MIN": "Minnesota Twins",
+    "NYM": "New York Mets",
+    "NYY": "New York Yankees",
+    "ATH": "Athletics",
+    "PHI": "Philadelphia Phillies",
+    "PIT": "Pittsburgh Pirates",
+    "SDP": "San Diego Padres",
+    "SEA": "Seattle Mariners",
+    "SFG": "San Francisco Giants",
+    "STL": "St. Louis Cardinals",
+    "TBR": "Tampa Bay Rays",
+    "TEX": "Texas Rangers",
+    "TOR": "Toronto Blue Jays",
+    "WSN": "Washington Nationals",
+}
+
+
+def full_name(abbrev):
+    """City + nickname for an abbreviation (e.g. "DET" -> "Detroit Tigers"),
+    falling back to the abbreviation itself for anything unrecognized."""
+    return ABBREV_TO_FULL_NAME.get(abbrev, abbrev)
