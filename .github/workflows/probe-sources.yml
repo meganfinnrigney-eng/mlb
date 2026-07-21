@@ -1,0 +1,22 @@
+name: Probe Sources
+
+# One-off / manual reconnaissance workflow. Not the daily report job.
+# Run manually (workflow_dispatch) to dump the raw structure of each data
+# source into the job log so parsers can be designed against real data,
+# since the dev sandbox used to build this repo cannot reach these hosts.
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install deps
+        run: pip install requests
+      - name: Probe sources
+        run: python scripts/probe_sources.py
