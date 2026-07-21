@@ -15,11 +15,24 @@ from zoneinfo import ZoneInfo
 
 from mlb_daily.analysis.build import build_report_data
 from mlb_daily.fetch import dratings, moundedge, reddit, sportsbettingdime
+from mlb_daily.report import fonts
 from mlb_daily.report.render import render_artifact_fragment, render_report
 
 ET = ZoneInfo("America/New_York")  # MLB slates are organized by US Eastern date
 PT = ZoneInfo("America/Los_Angeles")  # "generated at" is shown in Pacific time
 OUTPUT_DIR = Path(__file__).resolve().parent / "docs"
+FONT_CACHE_PATH = Path(__file__).resolve().parent / "mlb_daily" / "report" / "inline_fonts.cache.css"
+
+
+def _inline_font_css():
+    """Cached so the ~150KB of embedded woff2 data isn't re-fetched every
+    single day - Oswald/Inter don't change. Delete the cache file to force
+    a re-fetch (e.g. if the font weights used here ever change)."""
+    if FONT_CACHE_PATH.exists():
+        return FONT_CACHE_PATH.read_text(encoding="utf-8")
+    css = fonts.build_inline_font_css()
+    FONT_CACHE_PATH.write_text(css, encoding="utf-8")
+    return css
 
 
 def _fetch_safe(label, fn, default):
@@ -61,8 +74,12 @@ def main():
     report_data = build_report_data(dr_games, me_games, reddit_result, today_iso, today_display, slate_subtitle)
     report_data["sbd_status_note"] = sbd_status.note
 
+    inline_font_css = _fetch_safe("Google Fonts (Oswald/Inter)", _inline_font_css, "")
+    if inline_font_css:
+        print(f"Inline fonts: {len(inline_font_css) // 1024}KB embedded")
+
     html = render_report(report_data, generated_at)
-    fragment_html = render_artifact_fragment(report_data, generated_at)
+    fragment_html = render_artifact_fragment(report_data, generated_at, inline_font_css)
 
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     dated_path = OUTPUT_DIR / f"{today_iso}.html"

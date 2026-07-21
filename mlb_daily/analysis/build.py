@@ -15,6 +15,7 @@ SPLIT_DIVERGENCE_THRESHOLD = 15.0  # percentage points: bets% vs money% (trigger
 PITCHER_SPLIT_THRESHOLD = 1.0      # ERA: contextual (home/road) ERA vs season ERA (trigger d)
 WEATHER_NET_THRESHOLD = 8.0        # percent: BPP net weather/park effect (trigger e)
 SPOTLIGHT_TEAMS = {"DET", "SEA"}
+TOSS_UP_THRESHOLD = 15.0           # confidence score below this reads as "not much consensus"
 
 SOURCE_URLS = {
     "SportsBettingDime": "https://www.sportsbettingdime.com/mlb/public-betting-trends/",
@@ -88,6 +89,11 @@ class Matchup:
 
     weather_icon: str = "🌤️"
     weather_plain: str = ""
+    weather_notable: bool = False
+
+    # set after alignment_rows is computed - {model_direction, split_direction,
+    # reddit_direction, agree, confidence_score, confidence_label}, see _alignment_for_game
+    alignment: object = None
 
     flags: list = field(default_factory=list)
 
@@ -291,6 +297,7 @@ def _build_matchups(dr_games, me_games, reddit_result):
         if me:
             m.weather_icon = _weather_icon(me.conditions)
             m.weather_plain = _weather_plain(me.weather_net_pct)
+            m.weather_notable = me.weather_net_pct is not None and abs(me.weather_net_pct) >= 3
 
         for check in ALL_CHECKS:
             flag = check(m)
@@ -324,23 +331,32 @@ def _alignment_for_game(m):
 
     directions = [d for d in (model_dir, split_dir, reddit_dir) if d]
     agree = len(set(directions)) <= 1 if directions else True
-    return {
+
+    def _team(direction):
+        return {"away": m.away_abbrev, "home": m.home_abbrev, "tie": "tie"}.get(direction)
+
+    row = {
         "matchup": m,
         "model_direction": model_dir,
         "split_direction": split_dir,
         "reddit_direction": reddit_dir,
+        # same directions, resolved to the actual team abbreviation for prose use
+        "model_direction_team": _team(model_dir),
+        "split_direction_team": _team(split_dir),
+        "reddit_direction_team": _team(reddit_dir),
         "agree": agree,
     }
+    row["confidence_score"] = _confidence_score(row)
+    row["confidence_label"] = _confidence_label(row["confidence_score"], row["agree"])
+    return row
 
 
-def _conviction_score(row):
-    """Ranks aligned games (model, betting money, and Reddit all pointing the
-    same way) by how strong the agreement is - more corroborating signals
-    first, then by how lopsided those signals are."""
+def _confidence_score(row):
+    """How strong the model/betting-money signals are, regardless of whether
+    they agree - used to sort and group games in the prose section (and for
+    the toss-up threshold). A separate, signal-count-weighted score
+    (_conviction_score) is used just for picking the headline game."""
     m = row["matchup"]
-    signals = [d for d in (row["model_direction"], row["split_direction"], row["reddit_direction"]) if d]
-    signal_count = len(signals)
-
     model_margin = 0.0
     if m.dratings and m.dratings.away_win_pct is not None:
         model_margin = abs(m.dratings.away_win_pct - m.dratings.home_win_pct)
@@ -349,7 +365,23 @@ def _conviction_score(row):
     if m.moundedge and m.moundedge.split_ml_away_money is not None:
         split_margin = abs(m.moundedge.split_ml_away_money - m.moundedge.split_ml_home_money)
 
-    return signal_count * 1000 + model_margin + split_margin
+    return model_margin + split_margin
+
+
+def _confidence_label(score, agree):
+    if not agree or score < TOSS_UP_THRESHOLD:
+        return "not much consensus"
+    if score >= 40:
+        return "strong consensus"
+    return "fairly confident pick"
+
+
+def _conviction_score(row):
+    """Headline-selection score: prefers more independent corroborating
+    signals (model + betting money + Reddit all agreeing) over just one
+    strong signal, then breaks ties by _confidence_score."""
+    signals = [d for d in (row["model_direction"], row["split_direction"], row["reddit_direction"]) if d]
+    return len(signals) * 1000 + _confidence_score(row)
 
 
 def _totals_alignment_for_game(m):
@@ -393,6 +425,11 @@ def build_report_data(dr_games, me_games, reddit_result, today_iso, today_displa
     alignment_rows = sorted((_alignment_for_game(m) for m in matchups), key=lambda row: row["agree"])
     alignment_disagreements = [row for row in alignment_rows if not row["agree"]]
 
+    # attach each game's alignment/confidence data directly to the Matchup so
+    # templates can read m.alignment.* without a separate lookup
+    for row in alignment_rows:
+        row["matchup"].alignment = row
+
     # headline: the game with the strongest agreement across model/money/Reddit,
     # not the game with the most disagreement (that's the flags table below)
     aligned_rows = [
@@ -407,6 +444,22 @@ def build_report_data(dr_games, me_games, reddit_result, today_iso, today_displa
     totals_disagreements = [row for row in totals_rows if not row["agree"]]
 
     spotlight_games = [m for m in matchups if m.away_abbrev in SPOTLIGHT_TEAMS or m.home_abbrev in SPOTLIGHT_TEAMS]
+    spotlight_keys = {(m.away_abbrev, m.home_abbrev) for m in spotlight_games}
+    headline_key = (
+        (highest_conviction["matchup"].away_abbrev, highest_conviction["matchup"].home_abbrev)
+        if highest_conviction else None
+    )
+    highest_conviction_is_spotlight = headline_key in spotlight_keys if headline_key else False
+
+    # everything not already covered by the spotlight or the headline callout,
+    # ranked most- to least-confident for the "rest of the slate" prose
+    rest_of_slate = sorted(
+        (m for m in matchups if (m.away_abbrev, m.home_abbrev) not in spotlight_keys and (m.away_abbrev, m.home_abbrev) != headline_key),
+        key=lambda m: m.alignment["confidence_score"] if m.alignment else 0,
+        reverse=True,
+    )
+    rest_clear_games = [m for m in rest_of_slate if m.alignment and m.alignment["confidence_score"] >= TOSS_UP_THRESHOLD]
+    rest_toss_up_games = [m for m in rest_of_slate if not (m.alignment and m.alignment["confidence_score"] >= TOSS_UP_THRESHOLD)]
 
     return {
         "date_iso": today_iso,
@@ -416,6 +469,9 @@ def build_report_data(dr_games, me_games, reddit_result, today_iso, today_displa
         "notable_games": notable_games,
         "most_flagged": most_flagged,
         "highest_conviction": highest_conviction,
+        "highest_conviction_is_spotlight": highest_conviction_is_spotlight,
+        "rest_clear_games": rest_clear_games,
+        "rest_toss_up_games": rest_toss_up_games,
         "alignment_rows": alignment_rows,
         "alignment_disagreements": alignment_disagreements,
         "totals_rows": totals_rows,

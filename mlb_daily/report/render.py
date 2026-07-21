@@ -18,7 +18,9 @@ def render_report(report_data, generated_at):
     return _env().get_template("template.html").render(r=report_data, generated_at=generated_at)
 
 
-def render_artifact_fragment(report_data, generated_at):
+def render_artifact_fragment(report_data, generated_at, inline_font_css=""):
     """Content-only fragment (no <html>/<head>/<body>) for publishing as a
     Claude Artifact - see mlb_daily/report/artifact_template.html."""
-    return _env().get_template("artifact_template.html").render(r=report_data, generated_at=generated_at)
+    return _env().get_template("artifact_template.html").render(
+        r=report_data, generated_at=generated_at, inline_font_css=inline_font_css
+    )

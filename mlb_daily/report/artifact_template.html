@@ -1,64 +1,97 @@
 <title>MLB Daily Analysis — {{ r.date_display }}</title>
 <style>
+{{ inline_font_css }}
+
   :root {
     --bg:#f7f5f0; --bg-alt:#efeae0; --ink:#1a1d1b; --muted:#6b6559;
-    --line:#dcd5c4; --accent:#1e4d3c; --accent-soft:rgba(30,77,60,0.10);
-    --tigers-navy:#0c2340; --tigers-orange:#fa4616;
-    --mariners-navy:#0c2c56; --mariners-teal:#005c5c;
+    --line:#dcd5c4; --accent:#a8622e; --accent-tint:rgba(168,98,46,0.045);
+    --font-display: 'Oswald', 'Arial Narrow', 'Helvetica Neue Condensed', sans-serif;
+    --font-body: 'Inter', -apple-system, 'Segoe UI', Roboto, sans-serif;
   }
   @media (prefers-color-scheme: dark) {
     :root {
       --bg:#15140f; --bg-alt:#1e1c15; --ink:#eeeadf; --muted:#a29c8c;
-      --line:#39352a; --accent:#7fc9a8; --accent-soft:rgba(127,201,168,0.14);
-      --tigers-navy:#5b7ba8; --tigers-orange:#ff8a5c;
-      --mariners-navy:#6f93c9; --mariners-teal:#3ba3a3;
+      --line:#39352a; --accent:#d99b6c; --accent-tint:rgba(217,155,108,0.07);
     }
   }
   :root[data-theme="dark"] {
     --bg:#15140f; --bg-alt:#1e1c15; --ink:#eeeadf; --muted:#a29c8c;
-    --line:#39352a; --accent:#7fc9a8; --accent-soft:rgba(127,201,168,0.14);
-    --tigers-navy:#5b7ba8; --tigers-orange:#ff8a5c;
-    --mariners-navy:#6f93c9; --mariners-teal:#3ba3a3;
+    --line:#39352a; --accent:#d99b6c; --accent-tint:rgba(217,155,108,0.07);
   }
   :root[data-theme="light"] {
     --bg:#f7f5f0; --bg-alt:#efeae0; --ink:#1a1d1b; --muted:#6b6559;
-    --line:#dcd5c4; --accent:#1e4d3c; --accent-soft:rgba(30,77,60,0.10);
-    --tigers-navy:#0c2340; --tigers-orange:#fa4616;
-    --mariners-navy:#0c2c56; --mariners-teal:#005c5c;
+    --line:#dcd5c4; --accent:#a8622e; --accent-tint:rgba(168,98,46,0.045);
   }
 
   * { box-sizing: border-box; }
   html, body { background: var(--bg); }
   body {
     color: var(--ink);
-    font-family: -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    max-width: 900px; margin: 0 auto; padding: 26px 20px 80px;
-    line-height: 1.5; font-size: 14.5px;
+    font-family: var(--font-body);
+    max-width: 880px; margin: 0 auto; padding: 26px 20px 80px;
+    line-height: 1.55; font-size: 15px;
     animation: fade-in 0.4s ease-out both;
   }
   @keyframes fade-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
   @media (prefers-reduced-motion: reduce) { body { animation: none; } }
 
-  .cond {
-    font-family: "Arial Narrow", "Roboto Condensed", "Helvetica Neue Condensed", Oswald, sans-serif;
-    font-stretch: condensed;
-  }
   .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
   td, th { font-variant-numeric: tabular-nums; }
+  strong { font-weight: 600; }
 
+  /* ---------- masthead ---------- */
   .masthead { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px;
-    border-bottom: 3px solid var(--ink); padding-bottom: 14px; margin-bottom: 4px; flex-wrap: wrap; }
-  .masthead h1 { margin: 0; font-size: 27px; font-weight: 800; letter-spacing: 0.01em;
-    text-transform: uppercase; text-wrap: balance; }
+    border-bottom: 3px solid var(--ink); padding-bottom: 14px; margin-bottom: 6px; flex-wrap: wrap; }
+  .masthead h1 { margin: 0; font-family: var(--font-display); font-size: 28px; font-weight: 700;
+    letter-spacing: 0.01em; text-transform: uppercase; text-wrap: balance; }
   .masthead .meta { text-align: right; color: var(--muted); font-size: 12px; line-height: 1.6; }
   .masthead .meta strong { display: block; color: var(--ink); font-size: 13px; font-weight: 600; }
-  .disclaimer-strip { color: var(--muted); font-size: 12px; margin: 10px 0 32px; }
+  .disclaimer-strip { color: var(--muted); font-size: 12.5px; margin: 8px 0 30px; }
 
-  .eyebrow { margin: 40px 0 12px; }
-  .eyebrow .label { font-size: 11.5px; font-weight: 800; letter-spacing: 0.09em; text-transform: uppercase;
-    color: var(--ink); }
-  .eyebrow .sub { color: var(--muted); font-size: 11.5px; margin-left: 8px; letter-spacing: 0.01em; text-transform: none; font-weight: 400; }
-  .eyebrow .rule { display: block; height: 1px; background: var(--ink); margin-top: 6px; opacity: 0.7; }
+  /* ---------- section labels ---------- */
+  .eyebrow { margin: 36px 0 14px; }
+  .eyebrow .label { font-family: var(--font-display); font-size: 20px; font-weight: 700;
+    letter-spacing: 0.01em; text-transform: uppercase; color: var(--ink); }
+  .eyebrow .sub { display: block; color: var(--muted); font-size: 12.5px; font-family: var(--font-body);
+    font-weight: 400; margin-top: 2px; }
+  .eyebrow .rule { display: block; height: 1px; background: var(--ink); margin-top: 8px; opacity: 0.7; }
+  .deep-dive .eyebrow .label { font-size: 15px; }
+
+  /* ---------- prose (Tonight in Plain English) ---------- */
+  .prose p { margin: 0 0 14px; font-size: 15px; }
+  .g-head { font-family: var(--font-display); font-weight: 700; letter-spacing: 0.01em; }
+  .g-time { color: var(--muted); font-size: 13px; font-weight: 400; font-family: var(--font-body); }
+
+  .spotlight-box { background: var(--accent-tint); border-left: 3px solid var(--accent);
+    border-radius: 0 4px 4px 0; padding: 16px 20px; margin-bottom: 22px; }
+  .spotlight-box .kicker { font-family: var(--font-display); font-size: 11.5px; font-weight: 700;
+    letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+  .spotlight-box p:last-child { margin-bottom: 0; }
+
+  .conviction-box { border: 1px solid var(--ink); border-radius: 4px; padding: 16px 20px; margin-bottom: 22px; }
+  .conviction-box .kicker { font-family: var(--font-display); font-size: 11.5px; font-weight: 700;
+    letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+  .conviction-box p:last-child { margin-bottom: 0; }
+  .also-note { font-size: 13.5px; color: var(--muted); margin: 0 0 22px; }
+
+  .toss-up-line { font-size: 13.5px; color: var(--muted); margin: 18px 0 0; padding-top: 14px; border-top: 1px solid var(--line); }
+  .toss-up-line .kicker { font-family: var(--font-display); font-size: 11px; font-weight: 700;
+    letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin-right: 6px; }
+
+  .divider { border: none; border-top: 1px solid var(--line); margin: 46px 0 8px; }
+
+  /* ---------- deep dive ---------- */
+  details.deep-dive summary { font-family: var(--font-display); font-size: 15px; font-weight: 700;
+    letter-spacing: 0.03em; text-transform: uppercase; cursor: pointer; padding: 14px 0; color: var(--ink); }
+  details.deep-dive summary::marker { color: var(--muted); }
+  details.deep-dive summary .hint { font-family: var(--font-body); text-transform: none; font-weight: 400;
+    color: var(--muted); font-size: 12.5px; letter-spacing: normal; margin-left: 8px; }
+
+  .jump-nav { display: flex; flex-wrap: wrap; gap: 6px 0; margin: 10px 0 6px; padding: 12px 14px;
+    background: var(--bg-alt); border-radius: 5px; font-size: 12.5px; }
+  .jump-nav a { color: var(--ink); text-decoration: none; padding: 2px 10px; border-right: 1px solid var(--line); }
+  .jump-nav a:last-child { border-right: none; }
+  .jump-nav a:hover { color: var(--accent); }
 
   .card { padding: 2px 0 4px; font-size: 13.5px; }
   .card.boxed { background: var(--bg-alt); border: 1px solid var(--line); border-radius: 3px; padding: 14px 16px; }
@@ -66,19 +99,20 @@
   .table-wrap { overflow-x: auto; margin: 4px 0 8px; }
   table { border-collapse: collapse; width: 100%; font-size: 13.2px; }
   th, td { padding: 9px 10px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--line); }
-  thead th { font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em;
+  thead th { font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em;
     color: var(--muted); border-bottom: 1px solid var(--ink); white-space: nowrap; }
   tbody tr:hover { background: var(--bg-alt); }
   tbody tr:last-child td { border-bottom: 1px solid var(--line); }
 
-  /* scorecard-style annotation dots, not badges */
+  /* the ONE accent color: flag trigger labels, "Conflict" verdicts, and the
+     Tigers/Mariners border/tint above - nowhere else */
   .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 7px;
     background: var(--accent); flex-shrink: 0; position: relative; top: 5px; }
   .dot-quiet { background: var(--line); }
   .flag-line { display: flex; align-items: flex-start; margin: 7px 0; }
   .flag-text { display: block; }
   .flag-text .tag-mini { display: block; font-size: 10px; font-weight: 700; text-transform: uppercase;
-    letter-spacing: 0.05em; color: var(--muted); margin-bottom: 2px; }
+    letter-spacing: 0.05em; color: var(--accent); margin-bottom: 2px; }
   .flag-text .detail-main { display: block; color: var(--ink); font-size: 13.5px; }
 
   .prediction-line { font-size: 15px; margin: 6px 0 2px; }
@@ -87,162 +121,124 @@
 
   .weather-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin: 10px 0 8px; }
   .weather-tile { border: 1px solid var(--line); border-radius: 5px; padding: 12px 13px; }
-  .weather-tile .wt-matchup { font-weight: 700; font-size: 13px; margin-bottom: 6px; }
+  .weather-tile .wt-matchup { font-family: var(--font-display); font-weight: 700; font-size: 13px; margin-bottom: 6px; }
   .weather-tile .wt-main { display: flex; align-items: baseline; gap: 8px; }
   .weather-tile .wt-icon { font-size: 22px; line-height: 1; }
   .weather-tile .wt-temp { font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; }
   .weather-tile .wt-cond { color: var(--muted); font-size: 12.5px; }
-  .weather-tile .wt-wind { color: var(--muted); font-size: 12px; margin-top: 4px; }
   .weather-tile .wt-effect { font-size: 12.5px; margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--line); }
 
-  .glossary dt { font-weight: 700; }
+  .glossary dt { font-weight: 600; }
   .glossary dl { display: grid; grid-template-columns: 110px 1fr; gap: 7px 14px; margin: 0; font-size: 13px; }
 
   .sources { list-style: none; margin: 0; padding: 0; }
   .sources li { padding: 8px 0; border-bottom: 1px solid var(--line); }
   .sources li:last-child { border-bottom: none; }
-  .sources .src-name { font-weight: 700; display: inline-block; min-width: 150px; }
+  .sources .src-name { font-weight: 600; display: inline-block; min-width: 150px; }
 
   .verdict { display: flex; align-items: center; font-weight: 600; }
-  .verdict.no { color: var(--ink); }
+  .verdict.no { color: var(--accent); }
   .verdict.yes { color: var(--muted); font-weight: 400; }
-
-  .headline-game { padding: 14px 0 6px; border-bottom: 1px solid var(--line); margin-bottom: 18px; }
-  .headline-game .tag { font-size: 10.5px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase;
-    color: var(--accent); margin-bottom: 4px; }
-  .headline-game .matchup { font-size: 19px; font-weight: 700; }
-
-  .spotlight { border: 1px solid var(--ink); border-radius: 4px; padding: 4px 20px 14px; margin-bottom: 12px; }
-  .spotlight .game-box { padding: 14px 0; }
-  .spotlight .game-box + .game-box { border-top: 1px solid var(--line); }
-  .spotlight .team-row { display: flex; align-items: baseline; gap: 8px; margin-bottom: 10px; }
-  .spotlight .team-row .swatch { width: 4px; height: 15px; display: inline-block; border-radius: 1px; }
-  .spotlight h3 { margin: 0; font-size: 16px; font-weight: 700; }
-  .spotlight .time { color: var(--muted); font-size: 12px; font-weight: 400; }
-  .spotlight dl { display: grid; grid-template-columns: 160px 1fr; gap: 6px 14px; margin: 0; font-size: 13px; }
-  .spotlight dt { color: var(--muted); }
-  .spotlight dd { margin: 0; }
 
   .snippet { font-style: italic; color: var(--muted); }
   a { color: var(--ink); }
   .final-note { margin-top: 50px; padding-top: 16px; border-top: 1px solid var(--line); font-size: 12px; color: var(--muted); }
 </style>
 
+{% macro game_sentence(m) %}
+{% set a = m.alignment %}
+<span class="g-head">{{ m.away_abbrev }} @ {{ m.home_abbrev }}</span>{% if m.game_time %} <span class="g-time">({{ m.game_time }})</span>{% endif %}:
+{% if m.prediction_away is not none %}
+  {% if m.prediction_winner and m.prediction_winner != 'tie' %}
+    {% set winner_name = m.away_name if m.prediction_winner == m.away_abbrev else m.home_name %}
+    Model favors {{ winner_name }} {{ "%.1f"|format(m.prediction_away) }}–{{ "%.1f"|format(m.prediction_home) }}
+  {% else %}
+    models see this as an even matchup ({{ "%.1f"|format(m.prediction_away) }}–{{ "%.1f"|format(m.prediction_home) }})
+  {% endif %}
+  {% if a and a.split_direction_team %}
+    {% if a.split_direction_team == m.prediction_winner %}, and the betting money agrees{% else %}, though the betting money leans the other way{% endif %}
+  {% endif %}
+  {% if a %} — {{ a.confidence_label }}{% endif %}.
+{% else %}
+  no prediction available for this game yet.
+{% endif %}
+{% if m.weather_notable %} Weather-wise, it {{ m.weather_plain }} tonight.{% endif %}
+{% if 'a' in m.flag_codes %} The model total also looks notably different from the market number.{% endif %}
+{% endmacro %}
+
 <div class="masthead">
-  <h1 class="cond">MLB Daily Analysis</h1>
+  <h1>MLB Daily Analysis</h1>
   <div class="meta">{{ r.date_display }}<strong>Published {{ generated_at }}</strong></div>
 </div>
 <div class="disclaimer-strip">Personal-learning report comparing model projections to market/public data. No betting units, stake sizing, or recommended plays anywhere in this report.{% if r.slate_subtitle %} · {{ r.slate_subtitle }}{% endif %}</div>
 
-<div class="eyebrow"><span class="label cond">Highest Conviction</span><span class="sub">the game where the model, the betting money, and Reddit (when available) all point the same way</span><span class="rule"></span></div>
-{% macro prediction_line(m) %}
-{% if m.prediction_away is not none %}
-<div class="prediction-line"><strong>{% if m.prediction_winner and m.prediction_winner != 'tie' %}{{ m.prediction_winner }} favored{% else %}Even matchup{% endif %}</strong> — predicted score: {{ m.away_abbrev }} {{ "%.1f"|format(m.prediction_away) }}, {{ m.home_abbrev }} {{ "%.1f"|format(m.prediction_home) }} <span class="src">({{ m.prediction_source }})</span></div>
-{% else %}
-<div class="no-prediction">No prediction available for this game.</div>
-{% endif %}
-{% endmacro %}
-{% if r.highest_conviction %}
-{% set hc = r.highest_conviction %}
-<div class="headline-game">
-  <div class="tag cond">
-    {% set parts = [] %}
-    {% if hc.model_direction %}{% set _ = parts.append("Model") %}{% endif %}
-    {% if hc.split_direction %}{% set _ = parts.append("betting money") %}{% endif %}
-    {% if hc.reddit_direction %}{% set _ = parts.append("Reddit") %}{% endif %}
-    {{ parts|join(" + ") }} all favor the {{ hc.model_direction or hc.split_direction or hc.reddit_direction }} team
-  </div>
-  <div class="matchup">{{ hc.matchup.away_abbrev }} @ {{ hc.matchup.home_abbrev }}</div>
-  {{ prediction_line(hc.matchup) }}
-  <div style="margin-top:10px; font-size:13.5px">
-    {% if hc.model_direction %}<div class="flag-line"><span class="dot dot-quiet"></span><span class="flag-text"><span class="detail-main">Model favors the {{ hc.model_direction }} team{% if hc.matchup.dratings and hc.matchup.dratings.away_win_pct is not none %} ({{ hc.matchup.dratings.away_win_pct if hc.matchup.dratings.away_win_pct > hc.matchup.dratings.home_win_pct else hc.matchup.dratings.home_win_pct }}% win probability){% endif %}</span></span></div>{% endif %}
-    {% if hc.split_direction %}<div class="flag-line"><span class="dot dot-quiet"></span><span class="flag-text"><span class="detail-main">Betting money favors the {{ hc.split_direction }} team{% if hc.matchup.moundedge and hc.matchup.moundedge.split_ml_away_money is not none %} ({{ [hc.matchup.moundedge.split_ml_away_money, hc.matchup.moundedge.split_ml_home_money]|max|round|int }}% of money){% endif %}</span></span></div>{% endif %}
-    {% if hc.reddit_direction %}<div class="flag-line"><span class="dot dot-quiet"></span><span class="flag-text"><span class="detail-main">Reddit sentiment leans toward the {{ hc.reddit_direction }} team</span></span></div>{% endif %}
-  </div>
-</div>
-{% else %}
-<div class="card boxed">No game shows full agreement across model, betting money, and Reddit today — every game has at least one source pointing a different way.</div>
-{% endif %}
+<div class="eyebrow"><span class="label">Tonight, in Plain English</span><span class="rule"></span></div>
+<div class="prose">
 
-<div class="eyebrow"><span class="label cond">Where Sources Disagree</span><span class="sub">games that tripped at least one of the six checks below</span><span class="rule"></span></div>
-<div class="disclaimer-strip" style="margin:0 0 6px">A game gets flagged when at least one of these trips: models expect a different total than the market (off by &gt;{{ r.thresholds.total_gap }} runs) · the two models disagree · public bets and public money disagree by &gt;{{ r.thresholds.split_divergence }} points · a starter is off their normal form by &gt;{{ r.thresholds.pitcher_split }} ERA · weather/park effect is large (≥{{ r.thresholds.weather_net }}%) · MoundEdge's own trend arrow looks inconsistent. See "Glossary" below for any unfamiliar terms.</div>
-<div class="table-wrap"><table>
-<thead><tr><th>Matchup</th><th>Prediction</th><th>Why it's flagged</th></tr></thead>
-<tbody>
-{% for m in r.notable_games %}
-<tr><td class="cond" style="font-weight:700; white-space:nowrap">{{ m.away_abbrev }} @ {{ m.home_abbrev }}</td>
-  <td style="white-space:nowrap">{% if m.prediction_away is not none %}{% if m.prediction_winner and m.prediction_winner != 'tie' %}<strong>{{ m.prediction_winner }}</strong>{% else %}even{% endif %}<br><span class="num" style="font-size:12px;color:var(--muted)">{{ "%.1f"|format(m.prediction_away) }}–{{ "%.1f"|format(m.prediction_home) }}</span>{% else %}—{% endif %}</td>
-  <td>{% for f in m.flags %}<div class="flag-line"><span class="dot"></span><span class="flag-text"><span class="tag-mini">{{ f.label }}</span><span class="detail-main">{{ f.detail }}</span></span></div>{% endfor %}</td></tr>
-{% else %}
-<tr><td colspan="3">No games tripped any notable-game triggers today.</td></tr>
-{% endfor %}
-</tbody>
-</table></div>
-
-<div class="eyebrow"><span class="label cond">Alignment Check</span><span class="sub">model vs. betting split vs. Reddit, disagreements first</span><span class="rule"></span></div>
-<div class="table-wrap"><table>
-<thead><tr><th>Matchup</th><th>Model favors</th><th>Split favors</th><th>Reddit favors</th><th>Verdict</th></tr></thead>
-<tbody>
-{% for row in r.alignment_rows %}
-<tr>
-  <td class="cond" style="font-weight:700; white-space:nowrap">{{ row.matchup.away_abbrev }} @ {{ row.matchup.home_abbrev }}</td>
-  <td>{{ row.model_direction or "—" }}</td>
-  <td>{{ row.split_direction or "—" }}</td>
-  <td>{{ row.reddit_direction or "—" }}</td>
-  <td>{% if row.agree %}<span class="verdict yes"><span class="dot dot-quiet"></span>Aligned</span>{% else %}<span class="verdict no"><span class="dot"></span>Conflict</span>{% endif %}</td>
-</tr>
-{% endfor %}
-</tbody>
-</table></div>
-
-<div class="eyebrow"><span class="label cond">Totals Alignment</span><span class="sub">over/under only, flagged games, disagreements first</span><span class="rule"></span></div>
-<div class="table-wrap"><table>
-<thead><tr><th>Matchup</th><th class="num">DRatings</th><th class="num">BPP</th><th class="num">Model</th><th class="num">Market</th><th>Model lean</th><th>Split lean</th><th>Verdict</th></tr></thead>
-<tbody>
-{% for row in r.totals_rows %}
-<tr>
-  <td class="cond" style="font-weight:700; white-space:nowrap">{{ row.matchup.away_abbrev }} @ {{ row.matchup.home_abbrev }}</td>
-  <td class="num">{{ "%.1f"|format(row.dratings_total) if row.dratings_total is not none else "—" }}</td>
-  <td class="num">{{ "%.1f"|format(row.bpp_total) if row.bpp_total is not none else "—" }}</td>
-  <td class="num">{{ "%.1f"|format(row.model_total) if row.model_total is not none else "—" }}</td>
-  <td class="num">{{ row.market_total if row.market_total is not none else "—" }}</td>
-  <td>{{ row.model_lean or "—" }}</td>
-  <td>{{ row.split_lean or "—" }}</td>
-  <td>{% if row.agree %}<span class="verdict yes"><span class="dot dot-quiet"></span>Aligned</span>{% else %}<span class="verdict no"><span class="dot"></span>Conflict</span>{% endif %}</td>
-</tr>
-{% else %}
-<tr><td colspan="8">No flagged games to show totals alignment for.</td></tr>
-{% endfor %}
-</tbody>
-</table></div>
-
-<div class="eyebrow"><span class="label cond">Tigers / Mariners Spotlight</span><span class="rule"></span></div>
 {% if r.spotlight_games %}
-<div class="spotlight">
-  {% for m in r.spotlight_games %}
-  <div class="game-box">
-    {% set spotlight_team = m.away_abbrev if m.away_abbrev in ('DET', 'SEA') else m.home_abbrev %}
-    <div class="team-row">
-      <span class="swatch" style="background:{% if spotlight_team == 'DET' %}var(--tigers-orange){% else %}var(--mariners-teal){% endif %}"></span>
-      <h3>{{ m.away_abbrev }} <span style="color:var(--muted); font-weight:400">@</span> {{ m.home_abbrev }}</h3>
-      {% if m.game_time %}<span class="time">{{ m.game_time }}</span>{% endif %}
-    </div>
-    <dl>
-      <dt>Model score (DRatings)</dt><dd class="num" style="text-align:left">{% if m.dratings and m.dratings.away_projected_runs is not none %}{{ m.away_abbrev }} {{ "%.1f"|format(m.dratings.away_projected_runs) }} – {{ m.home_abbrev }} {{ "%.1f"|format(m.dratings.home_projected_runs) }}{% else %}—{% endif %}</dd>
-      <dt>BPP sim score (MoundEdge)</dt><dd class="num" style="text-align:left">{% if m.moundedge and m.moundedge.bpp_away_runs is not none %}{{ m.away_abbrev }} {{ "%.1f"|format(m.moundedge.bpp_away_runs) }} – {{ m.home_abbrev }} {{ "%.1f"|format(m.moundedge.bpp_home_runs) }}{% else %}—{% endif %}</dd>
-      <dt>Betting split (bets%/money%)</dt><dd class="num" style="text-align:left">{% if m.moundedge and m.moundedge.split_ml_away_bets is not none %}{{ m.away_abbrev }} {{ m.moundedge.split_ml_away_bets|round|int }}/{{ m.moundedge.split_ml_away_money|round|int }} · {{ m.home_abbrev }} {{ m.moundedge.split_ml_home_bets|round|int }}/{{ m.moundedge.split_ml_home_money|round|int }}{% else %}—{% endif %}</dd>
-      <dt>Reddit sentiment</dt><dd>{% if m.reddit_away %}{{ m.away_abbrev }}: {{ m.reddit_away.count }} mention(s){% if m.reddit_away.snippets %} — <span class="snippet">"{{ m.reddit_away.snippets[0] }}"</span>{% endif %}<br>{% endif %}{% if m.reddit_home %}{{ m.home_abbrev }}: {{ m.reddit_home.count }} mention(s){% if m.reddit_home.snippets %} — <span class="snippet">"{{ m.reddit_home.snippets[0] }}"</span>{% endif %}{% endif %}{% if not m.reddit_away and not m.reddit_home %}no mentions found{% endif %}</dd>
-      {% set align = (r.alignment_rows | selectattr("matchup", "equalto", m) | first) %}
-      <dt>Alignment</dt><dd>{% if align %}{% if align.agree %}<span class="verdict yes"><span class="dot dot-quiet"></span>Aligned</span>{% else %}<span class="verdict no"><span class="dot"></span>Conflict — model: {{ align.model_direction or "n/a" }} · split: {{ align.split_direction or "n/a" }} · Reddit: {{ align.reddit_direction or "n/a" }}</span>{% endif %}{% else %}—{% endif %}</dd>
-    </dl>
-  </div>
-  {% endfor %}
+<div class="spotlight-box">
+  <div class="kicker">Tigers / Mariners</div>
+  {% for m in r.spotlight_games %}<p>{{ game_sentence(m) }}</p>{% endfor %}
 </div>
 {% else %}
-<div class="card boxed">Neither the Detroit Tigers nor the Seattle Mariners play today.</div>
+<div class="also-note">Neither the Detroit Tigers nor the Seattle Mariners play today.</div>
 {% endif %}
 
-<div class="eyebrow"><span class="label cond">Weather</span><span class="sub">current conditions and how they're expected to affect scoring</span><span class="rule"></span></div>
+{% if r.highest_conviction %}
+  {% if r.highest_conviction_is_spotlight %}
+  <div class="also-note">Today's highest-conviction game is also a Tigers/Mariners game — see above.</div>
+  {% else %}
+  {% set hc = r.highest_conviction %}
+  <div class="conviction-box">
+    <div class="kicker">Highest conviction tonight</div>
+    <p>{{ game_sentence(hc.matchup) }}
+    {% if hc.reddit_direction_team %} Reddit chatter leans the same way too.{% endif %}
+    That's about as much agreement across sources as you'll find on tonight's slate.</p>
+  </div>
+  {% endif %}
+{% else %}
+<div class="also-note">No game shows full agreement across model, betting money, and Reddit today.</div>
+{% endif %}
+
+{% for m in r.rest_clear_games %}<p>{{ game_sentence(m) }}</p>{% endfor %}
+
+{% if r.rest_toss_up_games %}
+<div class="toss-up-line"><span class="kicker">Less clear tonight</span>{% for m in r.rest_toss_up_games %}{{ m.away_abbrev }} @ {{ m.home_abbrev }}{% if not loop.last %}, {% endif %}{% endfor %} — not much consensus among the sources.</div>
+{% endif %}
+
+</div>
+
+<hr class="divider">
+
+<details class="deep-dive">
+<summary>Show full data <span class="hint">— every table, all six flag checks, sources</span></summary>
+
+<div class="jump-nav">
+  <a href="#dd-slate">Slate</a>
+  <a href="#dd-weather">Weather</a>
+  <a href="#dd-flags">Flags</a>
+  <a href="#dd-alignment">Alignment</a>
+  <a href="#dd-totals">Totals</a>
+  <a href="#dd-predictions">Predictions</a>
+  <a href="#dd-sources-summary">Source summary</a>
+  <a href="#dd-reddit">Reddit</a>
+  <a href="#dd-glossary">Glossary</a>
+  <a href="#dd-sources">Sources</a>
+</div>
+
+<div class="eyebrow" id="dd-slate"><span class="label">Today's Slate</span><span class="rule"></span></div>
+<div class="table-wrap"><table>
+<thead><tr><th>Matchup</th><th>Time</th><th>Venue</th><th>Away Pitcher</th><th>Home Pitcher</th></tr></thead>
+<tbody>
+{% for m in r.games %}
+<tr><td style="font-weight:600; white-space:nowrap">{{ m.away_abbrev }} @ {{ m.home_abbrev }}</td><td>{{ m.game_time or "—" }}</td><td>{{ m.venue or "—" }}</td><td>{{ m.away_pitcher or "—" }}</td><td>{{ m.home_pitcher or "—" }}</td></tr>
+{% else %}
+<tr><td colspan="5">No games found for today.</td></tr>
+{% endfor %}
+</tbody>
+</table></div>
+
+<div class="eyebrow" id="dd-weather"><span class="label">Weather</span><span class="sub">current conditions and how they're expected to affect scoring</span><span class="rule"></span></div>
 <div class="weather-grid">
 {% for m in r.games %}
 {% if m.moundedge and m.moundedge.temp_f is not none %}
@@ -258,19 +254,77 @@
 {% endfor %}
 </div>
 
-<div class="eyebrow"><span class="label cond">Today's Slate</span><span class="rule"></span></div>
+<div class="eyebrow" id="dd-flags"><span class="label">Where Sources Disagree</span><span class="sub">games that tripped at least one of the six checks below</span><span class="rule"></span></div>
+<div class="disclaimer-strip" style="margin:0 0 6px">A game gets flagged when at least one of these trips: models expect a different total than the market (off by &gt;{{ r.thresholds.total_gap }} runs) · the two models disagree · public bets and public money disagree by &gt;{{ r.thresholds.split_divergence }} points · a starter is off their normal form by &gt;{{ r.thresholds.pitcher_split }} ERA · weather/park effect is large (≥{{ r.thresholds.weather_net }}%) · MoundEdge's own trend arrow looks inconsistent. See "Glossary" below for any unfamiliar terms.</div>
 <div class="table-wrap"><table>
-<thead><tr><th>Matchup</th><th>Time</th><th>Venue</th><th>Away Pitcher</th><th>Home Pitcher</th></tr></thead>
+<thead><tr><th>Matchup</th><th>Prediction</th><th>Why it's flagged</th></tr></thead>
 <tbody>
-{% for m in r.games %}
-<tr><td class="cond" style="font-weight:700; white-space:nowrap">{{ m.away_abbrev }} @ {{ m.home_abbrev }}</td><td>{{ m.game_time or "—" }}</td><td>{{ m.venue or "—" }}</td><td>{{ m.away_pitcher or "—" }}</td><td>{{ m.home_pitcher or "—" }}</td></tr>
+{% for m in r.notable_games %}
+<tr><td style="font-weight:600; white-space:nowrap">{{ m.away_abbrev }} @ {{ m.home_abbrev }}</td>
+  <td style="white-space:nowrap">{% if m.prediction_away is not none %}{% if m.prediction_winner and m.prediction_winner != 'tie' %}<strong>{{ m.prediction_winner }}</strong>{% else %}even{% endif %}<br><span class="num" style="font-size:12px;color:var(--muted)">{{ "%.1f"|format(m.prediction_away) }}–{{ "%.1f"|format(m.prediction_home) }}</span>{% else %}—{% endif %}</td>
+  <td>{% for f in m.flags %}<div class="flag-line"><span class="dot"></span><span class="flag-text"><span class="tag-mini">{{ f.label }}</span><span class="detail-main">{{ f.detail }}</span></span></div>{% endfor %}</td></tr>
 {% else %}
-<tr><td colspan="5">No games found for today.</td></tr>
+<tr><td colspan="3">No games tripped any notable-game triggers today.</td></tr>
 {% endfor %}
 </tbody>
 </table></div>
 
-<div class="eyebrow"><span class="label cond">Source Summary</span><span class="rule"></span></div>
+<div class="eyebrow" id="dd-alignment"><span class="label">Alignment Check</span><span class="sub">model vs. betting split vs. Reddit, disagreements first</span><span class="rule"></span></div>
+<div class="table-wrap"><table>
+<thead><tr><th>Matchup</th><th>Model favors</th><th>Split favors</th><th>Reddit favors</th><th>Verdict</th></tr></thead>
+<tbody>
+{% for row in r.alignment_rows %}
+<tr>
+  <td style="font-weight:600; white-space:nowrap">{{ row.matchup.away_abbrev }} @ {{ row.matchup.home_abbrev }}</td>
+  <td>{{ row.model_direction or "—" }}</td>
+  <td>{{ row.split_direction or "—" }}</td>
+  <td>{{ row.reddit_direction or "—" }}</td>
+  <td>{% if row.agree %}<span class="verdict yes"><span class="dot dot-quiet"></span>Aligned</span>{% else %}<span class="verdict no"><span class="dot"></span>Conflict</span>{% endif %}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table></div>
+
+<div class="eyebrow" id="dd-totals"><span class="label">Totals Alignment</span><span class="sub">over/under only, flagged games, disagreements first</span><span class="rule"></span></div>
+<div class="table-wrap"><table>
+<thead><tr><th>Matchup</th><th class="num">DRatings</th><th class="num">BPP</th><th class="num">Model</th><th class="num">Market</th><th>Model lean</th><th>Split lean</th><th>Verdict</th></tr></thead>
+<tbody>
+{% for row in r.totals_rows %}
+<tr>
+  <td style="font-weight:600; white-space:nowrap">{{ row.matchup.away_abbrev }} @ {{ row.matchup.home_abbrev }}</td>
+  <td class="num">{{ "%.1f"|format(row.dratings_total) if row.dratings_total is not none else "—" }}</td>
+  <td class="num">{{ "%.1f"|format(row.bpp_total) if row.bpp_total is not none else "—" }}</td>
+  <td class="num">{{ "%.1f"|format(row.model_total) if row.model_total is not none else "—" }}</td>
+  <td class="num">{{ row.market_total if row.market_total is not none else "—" }}</td>
+  <td>{{ row.model_lean or "—" }}</td>
+  <td>{{ row.split_lean or "—" }}</td>
+  <td>{% if row.agree %}<span class="verdict yes"><span class="dot dot-quiet"></span>Aligned</span>{% else %}<span class="verdict no"><span class="dot"></span>Conflict</span>{% endif %}</td>
+</tr>
+{% else %}
+<tr><td colspan="8">No flagged games to show totals alignment for.</td></tr>
+{% endfor %}
+</tbody>
+</table></div>
+
+<div class="eyebrow" id="dd-predictions"><span class="label">Model Predictions</span><span class="rule"></span></div>
+<div class="disclaimer-strip">Three independent projections per game — they won't always agree with each other, which is normal and part of the point of tracking them.</div>
+<div class="table-wrap"><table>
+<thead><tr><th>Matchup</th><th class="num">DRatings</th><th>Winner</th><th class="num">MoundEdge Model</th><th class="num">BPP sim</th><th>BPP winner</th></tr></thead>
+<tbody>
+{% for m in r.games %}
+<tr>
+  <td style="font-weight:600; white-space:nowrap">{{ m.away_abbrev }} @ {{ m.home_abbrev }}</td>
+  <td class="num">{% if m.dratings and m.dratings.away_projected_runs is not none %}{{ "%.1f"|format(m.dratings.away_projected_runs) }}–{{ "%.1f"|format(m.dratings.home_projected_runs) }}{% else %}—{% endif %}</td>
+  <td>{% if m.dratings and m.dratings.away_win_pct is not none %}{{ m.away_abbrev if m.dratings.away_win_pct > m.dratings.home_win_pct else m.home_abbrev }} ({{ m.dratings.away_win_pct if m.dratings.away_win_pct > m.dratings.home_win_pct else m.dratings.home_win_pct }}%){% else %}—{% endif %}</td>
+  <td class="num">{% if m.moundedge and m.moundedge.model_away_runs is not none %}{{ "%.1f"|format(m.moundedge.model_away_runs) }}–{{ "%.1f"|format(m.moundedge.model_home_runs) }}{% else %}—{% endif %}</td>
+  <td class="num">{% if m.moundedge and m.moundedge.bpp_away_runs is not none %}{{ "%.1f"|format(m.moundedge.bpp_away_runs) }}–{{ "%.1f"|format(m.moundedge.bpp_home_runs) }}{% else %}—{% endif %}</td>
+  <td>{% if m.moundedge and m.moundedge.bpp_away_runs is not none %}{{ m.away_abbrev if m.moundedge.bpp_away_runs > m.moundedge.bpp_home_runs else m.home_abbrev }}{% else %}—{% endif %}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table></div>
+
+<div class="eyebrow" id="dd-sources-summary"><span class="label">Source Summary</span><span class="rule"></span></div>
 <div class="table-wrap"><table>
 <thead><tr><th>Source</th><th>What it contains</th></tr></thead>
 <tbody>
@@ -281,7 +335,7 @@
 </tbody>
 </table></div>
 
-<div class="eyebrow"><span class="label cond">Reddit Sentiment</span><span class="rule"></span></div>
+<div class="eyebrow" id="dd-reddit"><span class="label">Reddit Sentiment</span><span class="rule"></span></div>
 {% if r.reddit and r.reddit.available %}
 <div class="disclaimer-strip">Source: {{ r.reddit.source }}. {{ r.reddit.note }}{% if r.reddit.thread_title %} — thread: "{{ r.reddit.thread_title }}"{% endif %}</div>
 <div class="table-wrap"><table>
@@ -302,31 +356,13 @@ Reddit sentiment isn't available today. Reddit blocks most automated requests ou
 </div>
 {% endif %}
 
-<div class="eyebrow"><span class="label cond">Model Predictions</span><span class="rule"></span></div>
-<div class="disclaimer-strip">Three independent projections per game — they won't always agree with each other, which is normal and part of the point of tracking them.</div>
-<div class="table-wrap"><table>
-<thead><tr><th>Matchup</th><th class="num">DRatings</th><th>Winner</th><th class="num">MoundEdge Model</th><th class="num">BPP sim</th><th>BPP winner</th></tr></thead>
-<tbody>
-{% for m in r.games %}
-<tr>
-  <td class="cond" style="font-weight:700; white-space:nowrap">{{ m.away_abbrev }} @ {{ m.home_abbrev }}</td>
-  <td class="num">{% if m.dratings and m.dratings.away_projected_runs is not none %}{{ "%.1f"|format(m.dratings.away_projected_runs) }}–{{ "%.1f"|format(m.dratings.home_projected_runs) }}{% else %}—{% endif %}</td>
-  <td>{% if m.dratings and m.dratings.away_win_pct is not none %}{{ m.away_abbrev if m.dratings.away_win_pct > m.dratings.home_win_pct else m.home_abbrev }} ({{ m.dratings.away_win_pct if m.dratings.away_win_pct > m.dratings.home_win_pct else m.dratings.home_win_pct }}%){% else %}—{% endif %}</td>
-  <td class="num">{% if m.moundedge and m.moundedge.model_away_runs is not none %}{{ "%.1f"|format(m.moundedge.model_away_runs) }}–{{ "%.1f"|format(m.moundedge.model_home_runs) }}{% else %}—{% endif %}</td>
-  <td class="num">{% if m.moundedge and m.moundedge.bpp_away_runs is not none %}{{ "%.1f"|format(m.moundedge.bpp_away_runs) }}–{{ "%.1f"|format(m.moundedge.bpp_home_runs) }}{% else %}—{% endif %}</td>
-  <td>{% if m.moundedge and m.moundedge.bpp_away_runs is not none %}{{ m.away_abbrev if m.moundedge.bpp_away_runs > m.moundedge.bpp_home_runs else m.home_abbrev }}{% else %}—{% endif %}</td>
-</tr>
-{% endfor %}
-</tbody>
-</table></div>
-
-<div class="eyebrow"><span class="label cond">How to Scan a Slate</span><span class="rule"></span></div>
+<div class="eyebrow"><span class="label">How to Scan a Slate</span><span class="rule"></span></div>
 <div class="card boxed">
 <strong>Routine game:</strong> the two models agree on the winner, totals sit close to the market number, betting splits move together, starting pitchers are near their normal form, and there's no extreme weather/park effect. Nothing here needs a second look.<br><br>
-<strong>Notable game:</strong> one or more of the checks in the first section above trips. Notable doesn't mean "bet this" — it means there's more disagreement between sources than usual, which is exactly the kind of case worth comparing against the actual final score afterward.
+<strong>Notable game:</strong> one or more of the checks in the flags table above trips. Notable doesn't mean "bet this" — it means there's more disagreement between sources than usual, which is exactly the kind of case worth comparing against the actual final score afterward.
 </div>
 
-<div class="eyebrow"><span class="label cond">Glossary</span><span class="sub">jargon used above, in plain English</span><span class="rule"></span></div>
+<div class="eyebrow" id="dd-glossary"><span class="label">Glossary</span><span class="sub">jargon used above, in plain English</span><span class="rule"></span></div>
 <div class="card boxed glossary">
 <dl>
   <dt>ERA</dt><dd>Earned run average — average runs a pitcher allows per 9 innings. Lower is better.</dd>
@@ -343,7 +379,7 @@ Reddit sentiment isn't available today. Reddit blocks most automated requests ou
 </dl>
 </div>
 
-<div class="eyebrow"><span class="label cond">Sources</span><span class="rule"></span></div>
+<div class="eyebrow" id="dd-sources"><span class="label">Sources</span><span class="rule"></span></div>
 <ul class="sources">
 {% for name, url in r.source_urls.items() %}
 <li><span class="src-name">{{ name }}</span><a href="{{ url }}" target="_blank" rel="noopener">{{ url }}</a></li>
@@ -352,3 +388,5 @@ Reddit sentiment isn't available today. Reddit blocks most automated requests ou
 </ul>
 
 <div class="final-note">Personal learning project: compares model/market/public-sentiment data to actual outcomes over time. No betting units, stake sizing, or recommended plays are included or implied anywhere in this report.</div>
+
+</details>
