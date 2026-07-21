@@ -300,6 +300,9 @@ def fetch_today_games(timeout=20):
 
     games = []
     for game_div in soup.select("div.game"):
+        game_id = game_div.get("id", "")
+        if not re.match(r"g-[A-Z]+-[A-Z]+$", game_id):
+            continue  # not a real matchup card (malformed/placeholder id)
         try:
             game = _parse_game(game_div)
             game.slate_subtitle = slate_subtitle

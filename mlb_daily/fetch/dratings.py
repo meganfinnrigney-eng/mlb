@@ -89,7 +89,9 @@ def fetch_today_games(timeout=20):
     if table is None:
         raise ValueError("DRatings: could not locate the upcoming-games table")
 
-    header_cells = [_clean(th.get_text()) for th in table.select("thead th")]
+    # get_text(" ") so multi-word headers split across <br> (e.g. "Total<br>Runs")
+    # collapse to "Total Runs" instead of "TotalRuns"
+    header_cells = [_clean(th.get_text(" ")) for th in table.select("thead th")]
     col_index = {name.lower(): i for i, name in enumerate(header_cells)}
 
     def col(cells, name, default=None):
@@ -123,7 +125,7 @@ def fetch_today_games(timeout=20):
                     away_runs, home_runs = _first_number(parts[0]), _first_number(parts[1])
 
             total_cell = col(cells, "total runs")
-            total_runs = _first_number(total_cell.get_text()) if total_cell is not None else None
+            total_runs = _first_number(total_cell.get_text(" ")) if total_cell is not None else None
 
             ou_cell = col(cells, "best o/u")
             market_total = _market_total_from_ou_cell(ou_cell)

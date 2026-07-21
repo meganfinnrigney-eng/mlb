@@ -3,19 +3,23 @@ sentiment scanner and the cross-source game matcher (DRatings uses full team
 names, MoundEdge uses abbreviations - matching on nickname is more robust
 than exact full-name string matching)."""
 
+
+# Abbreviations match MoundEdge's convention (the richest source, and the
+# one whose game-card ids anchor the cross-source join) - notably KCR, SDP,
+# SFG, TBR, WSN, CHW rather than the shorter forms other sites sometimes use.
 TEAMS = [
     ("Diamondbacks", "ARI", ["D-backs"]),
     ("Braves", "ATL", []),
     ("Orioles", "BAL", []),
     ("Red Sox", "BOS", []),
     ("Cubs", "CHC", []),
-    ("White Sox", "CWS", []),
+    ("White Sox", "CHW", ["CWS"]),
     ("Reds", "CIN", []),
     ("Guardians", "CLE", []),
     ("Rockies", "COL", []),
     ("Tigers", "DET", []),
     ("Astros", "HOU", []),
-    ("Royals", "KC", []),
+    ("Royals", "KCR", ["KC"]),
     ("Angels", "LAA", []),
     ("Dodgers", "LAD", []),
     ("Marlins", "MIA", []),
@@ -26,14 +30,14 @@ TEAMS = [
     ("Athletics", "ATH", ["A's"]),
     ("Phillies", "PHI", []),
     ("Pirates", "PIT", []),
-    ("Padres", "SD", []),
+    ("Padres", "SDP", ["SD"]),
     ("Mariners", "SEA", []),
-    ("Giants", "SF", []),
+    ("Giants", "SFG", ["SF"]),
     ("Cardinals", "STL", []),
-    ("Rays", "TB", []),
+    ("Rays", "TBR", ["TB"]),
     ("Rangers", "TEX", []),
     ("Blue Jays", "TOR", []),
-    ("Nationals", "WSH", []),
+    ("Nationals", "WSN", ["WSH"]),
 ]
 
 NICKNAME_TO_ABBREV = {}

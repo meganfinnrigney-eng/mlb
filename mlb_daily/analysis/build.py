@@ -159,18 +159,15 @@ def _check_weather(m):
     return None
 
 
-_HIGHER_IS_BETTER = {"wrc+": True, "era": False}
-
-
-def _trend_stat_contradicts(stat):
+def _trend_stat_contradicts(stat, higher_is_better):
     """stat: TrendStat with l30/szn/trend. Returns True if the arrow direction
-    doesn't match the arithmetic L30-vs-season comparison (for ERA, lower is
-    better, so an 'up'/improving arrow should correspond to L30 < season)."""
+    doesn't match the arithmetic L30-vs-season comparison, accounting for
+    whether the stat is higher-is-better (wRC+) or lower-is-better (ERA) -
+    for ERA, an L30 *below* season is the improvement and should show 'up'."""
     if stat is None or stat.l30 is None or stat.szn is None or stat.trend not in ("up", "down"):
         return False
-    numerically_up = stat.l30 > stat.szn
-    # for ERA-style stats, lower L30 than season = improving = should show "up" (green)
-    return numerically_up != (stat.trend == "up")
+    improved = (stat.l30 > stat.szn) if higher_is_better else (stat.l30 < stat.szn)
+    return improved != (stat.trend == "up")
 
 
 def _check_trend_contradiction(m):
@@ -178,12 +175,13 @@ def _check_trend_contradiction(m):
     if me is None:
         return None
     findings = []
-    for side_label, side_key, team_abbrev in (("hitting", "hitting_trend", None), ("bullpen", "bullpen_trend", None)):
+    # (section, attr, higher-is-better for this stat)
+    for side_label, side_key, higher_is_better in (("hitting", "hitting_trend", True), ("bullpen", "bullpen_trend", False)):
         trend_map = getattr(me, side_key)
         for side in ("away", "home"):
             stat = trend_map.get(side)
             abbrev = m.away_abbrev if side == "away" else m.home_abbrev
-            if stat and _trend_stat_contradicts(stat):
+            if stat and _trend_stat_contradicts(stat, higher_is_better):
                 findings.append(f"{abbrev} {side_label} trend arrow vs L30/season numbers ({stat.l30} vs {stat.szn})")
     if findings:
         return Flag("f", "Trend arrow contradicts underlying stats", "; ".join(findings))
