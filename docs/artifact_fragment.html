@@ -1,682 +1,731 @@
 <title>MLB Daily Analysis — Monday, July 20, 2026</title>
 <style>
   :root {
-    --bg:#f3f5f2; --surface:#ffffff; --surface-2:#eaeeea; --ink:#1c2620; --muted:#5c6b62;
-    --line:#dbe2dc; --accent:#2f6b52; --accent-ink:#ffffff; --gold:#9a6b28; --good:#2f7d4f; --bad:#a8402b;
+    --bg:#f7f5f0; --bg-alt:#efeae0; --ink:#1a1d1b; --muted:#6b6559;
+    --line:#dcd5c4; --accent:#1e4d3c; --accent-soft:rgba(30,77,60,0.10);
+    --tigers-navy:#0c2340; --tigers-orange:#fa4616;
+    --mariners-navy:#0c2c56; --mariners-teal:#005c5c;
   }
   @media (prefers-color-scheme: dark) {
     :root {
-      --bg:#0f1512; --surface:#161d19; --surface-2:#1d2620; --ink:#e6ece8; --muted:#8fa098;
-      --line:#28322c; --accent:#6fbf95; --accent-ink:#0f1512; --gold:#d9a35d; --good:#6fbf95; --bad:#e08469;
+      --bg:#15140f; --bg-alt:#1e1c15; --ink:#eeeadf; --muted:#a29c8c;
+      --line:#39352a; --accent:#7fc9a8; --accent-soft:rgba(127,201,168,0.14);
+      --tigers-navy:#5b7ba8; --tigers-orange:#ff8a5c;
+      --mariners-navy:#6f93c9; --mariners-teal:#3ba3a3;
     }
   }
   :root[data-theme="dark"] {
-    --bg:#0f1512; --surface:#161d19; --surface-2:#1d2620; --ink:#e6ece8; --muted:#8fa098;
-    --line:#28322c; --accent:#6fbf95; --accent-ink:#0f1512; --gold:#d9a35d; --good:#6fbf95; --bad:#e08469;
+    --bg:#15140f; --bg-alt:#1e1c15; --ink:#eeeadf; --muted:#a29c8c;
+    --line:#39352a; --accent:#7fc9a8; --accent-soft:rgba(127,201,168,0.14);
+    --tigers-navy:#5b7ba8; --tigers-orange:#ff8a5c;
+    --mariners-navy:#6f93c9; --mariners-teal:#3ba3a3;
   }
   :root[data-theme="light"] {
-    --bg:#f3f5f2; --surface:#ffffff; --surface-2:#eaeeea; --ink:#1c2620; --muted:#5c6b62;
-    --line:#dbe2dc; --accent:#2f6b52; --accent-ink:#ffffff; --gold:#9a6b28; --good:#2f7d4f; --bad:#a8402b;
+    --bg:#f7f5f0; --bg-alt:#efeae0; --ink:#1a1d1b; --muted:#6b6559;
+    --line:#dcd5c4; --accent:#1e4d3c; --accent-soft:rgba(30,77,60,0.10);
+    --tigers-navy:#0c2340; --tigers-orange:#fa4616;
+    --mariners-navy:#0c2c56; --mariners-teal:#005c5c;
   }
 
   * { box-sizing: border-box; }
   html, body { background: var(--bg); }
   body {
     color: var(--ink);
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    max-width: 920px; margin: 0 auto; padding: 22px 20px 70px;
+    font-family: -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    max-width: 900px; margin: 0 auto; padding: 26px 20px 80px;
     line-height: 1.5; font-size: 14.5px;
+    animation: fade-in 0.4s ease-out both;
   }
-  .mono { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-variant-numeric: tabular-nums; }
+  @keyframes fade-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+  @media (prefers-reduced-motion: reduce) { body { animation: none; } }
+
+  .cond {
+    font-family: "Arial Narrow", "Roboto Condensed", "Helvetica Neue Condensed", Oswald, sans-serif;
+    font-stretch: condensed;
+  }
+  .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  td, th { font-variant-numeric: tabular-nums; }
 
   .masthead { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px;
-    border-bottom: 3px solid var(--accent); padding-bottom: 12px; margin-bottom: 22px; flex-wrap: wrap; }
-  .masthead h1 { margin: 0; font-size: 24px; font-weight: 800; letter-spacing: -0.01em; text-wrap: balance; }
-  .masthead .meta { text-align: right; color: var(--muted); font-size: 12px; }
-  .masthead .meta .mono { display: block; color: var(--ink); font-size: 13px; }
-  .disclaimer-strip { color: var(--muted); font-size: 12px; margin-bottom: 30px; }
+    border-bottom: 3px solid var(--ink); padding-bottom: 14px; margin-bottom: 4px; flex-wrap: wrap; }
+  .masthead h1 { margin: 0; font-size: 27px; font-weight: 800; letter-spacing: 0.01em;
+    text-transform: uppercase; text-wrap: balance; }
+  .masthead .meta { text-align: right; color: var(--muted); font-size: 12px; line-height: 1.6; }
+  .masthead .meta strong { display: block; color: var(--ink); font-size: 13px; font-weight: 600; }
+  .disclaimer-strip { color: var(--muted); font-size: 12px; margin: 10px 0 32px; }
 
-  .eyebrow { display: flex; align-items: center; gap: 10px; margin: 34px 0 10px; }
-  .eyebrow .label { font-size: 11px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent); white-space: nowrap; }
-  .eyebrow .rule { flex: 1; height: 1px; background: var(--line); }
+  .eyebrow { margin: 40px 0 12px; }
+  .eyebrow .label { font-size: 11.5px; font-weight: 800; letter-spacing: 0.09em; text-transform: uppercase;
+    color: var(--ink); }
+  .eyebrow .sub { color: var(--muted); font-size: 11.5px; margin-left: 8px; letter-spacing: 0.01em; text-transform: none; font-weight: 400; }
+  .eyebrow .rule { display: block; height: 1px; background: var(--ink); margin-top: 6px; opacity: 0.7; }
 
-  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; margin: 10px 0 18px; font-size: 13.5px; }
-  .spotlight { border: 2px solid var(--accent); border-radius: 12px; padding: 16px 18px; margin-bottom: 30px; background: var(--surface); }
-  .spotlight .eyebrow { margin-top: 0; }
-  .spotlight h3 { margin: 18px 0 6px; font-size: 14px; }
-  .spotlight h3:first-of-type { margin-top: 4px; }
+  .card { padding: 2px 0 4px; font-size: 13.5px; }
+  .card.boxed { background: var(--bg-alt); border: 1px solid var(--line); border-radius: 3px; padding: 14px 16px; }
 
-  .table-wrap { overflow-x: auto; margin: 6px 0 20px; border: 1px solid var(--line); border-radius: 8px; }
-  table { border-collapse: collapse; width: 100%; font-size: 13px; }
-  th, td { padding: 7px 10px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--line); }
-  thead th { background: var(--accent); color: var(--accent-ink); font-weight: 700; font-size: 11.5px;
-    text-transform: uppercase; letter-spacing: 0.03em; white-space: nowrap; }
-  tbody tr:nth-child(even) { background: var(--surface-2); }
-  tbody tr:last-child td { border-bottom: none; }
-  td.num, th.num { text-align: right; }
+  .table-wrap { overflow-x: auto; margin: 4px 0 8px; }
+  table { border-collapse: collapse; width: 100%; font-size: 13.2px; }
+  th, td { padding: 9px 10px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--line); }
+  thead th { font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em;
+    color: var(--muted); border-bottom: 1px solid var(--ink); white-space: nowrap; }
+  tbody tr:hover { background: var(--bg-alt); }
+  tbody tr:last-child td { border-bottom: 1px solid var(--line); }
 
-  .pill { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 700;
-    margin: 1px 3px 1px 0; white-space: nowrap; }
-  .pill-gold { background: color-mix(in srgb, var(--gold) 20%, transparent); color: var(--gold); }
-  .pill-bad { background: color-mix(in srgb, var(--bad) 18%, transparent); color: var(--bad); }
-  .pill-good { background: color-mix(in srgb, var(--good) 18%, transparent); color: var(--good); }
-  .flag-detail { color: var(--muted); font-size: 12px; display: block; margin: 2px 0 6px; }
+  /* scorecard-style annotation dots, not badges */
+  .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 7px;
+    background: var(--accent); flex-shrink: 0; position: relative; top: -1px; }
+  .dot-quiet { background: var(--line); }
+  .flag-line { display: flex; align-items: flex-start; margin: 3px 0; }
+  .flag-text strong { font-weight: 700; }
+  .flag-text span.detail { display: block; color: var(--muted); font-size: 12px; margin-top: 1px; }
 
-  .row-disagree { box-shadow: inset 3px 0 0 var(--bad); }
-  .row-flagged { box-shadow: inset 3px 0 0 var(--gold); }
+  .verdict { display: flex; align-items: center; font-weight: 600; }
+  .verdict.no { color: var(--ink); }
+  .verdict.yes { color: var(--muted); font-weight: 400; }
+
+  .headline-game { padding: 14px 0 6px; border-bottom: 1px solid var(--line); margin-bottom: 18px; }
+  .headline-game .tag { font-size: 10.5px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--accent); margin-bottom: 4px; }
+  .headline-game .matchup { font-size: 19px; font-weight: 700; }
+
+  .spotlight { border: 1px solid var(--ink); border-radius: 4px; padding: 4px 20px 14px; margin-bottom: 12px; }
+  .spotlight .game-box { padding: 14px 0; }
+  .spotlight .game-box + .game-box { border-top: 1px solid var(--line); }
+  .spotlight .team-row { display: flex; align-items: baseline; gap: 8px; margin-bottom: 10px; }
+  .spotlight .team-row .swatch { width: 4px; height: 15px; display: inline-block; border-radius: 1px; }
+  .spotlight h3 { margin: 0; font-size: 16px; font-weight: 700; }
+  .spotlight .time { color: var(--muted); font-size: 12px; font-weight: 400; }
+  .spotlight dl { display: grid; grid-template-columns: 160px 1fr; gap: 6px 14px; margin: 0; font-size: 13px; }
+  .spotlight dt { color: var(--muted); }
+  .spotlight dd { margin: 0; }
 
   .snippet { font-style: italic; color: var(--muted); }
-  a { color: var(--accent); }
-  .final-note { margin-top: 46px; padding-top: 14px; border-top: 1px solid var(--line); font-size: 12px; color: var(--muted); }
+  a { color: var(--ink); }
+  .final-note { margin-top: 50px; padding-top: 16px; border-top: 1px solid var(--line); font-size: 12px; color: var(--muted); }
 </style>
 
 <div class="masthead">
-  <h1>⚾ MLB Daily Analysis</h1>
-  <div class="meta">Monday, July 20, 2026<span class="mono">generated 2026-07-20 22:29 EDT</span></div>
+  <h1 class="cond">MLB Daily Analysis</h1>
+  <div class="meta">Monday, July 20, 2026<strong>Published 2026-07-20 19:44 PDT</strong></div>
 </div>
 <div class="disclaimer-strip">Personal-learning report comparing model projections to market/public data. No betting units, stake sizing, or recommended plays anywhere in this report. · Monday, July 20, 2026 · 15-game slate · season stats + last-30-day trends · ▲▼ trend vs season</div>
 
+<div class="eyebrow"><span class="label cond">Most Notable Games</span><span class="rule"></span></div>
+
+<div class="headline-game">
+  <div class="tag cond">Most flagged — 5 triggers</div>
+  <div class="matchup">LAD @ PHI</div>
+  <div style="margin-top:10px">
+  
+  <div class="flag-line"><span class="dot"></span><span class="flag-text"><strong>Model vs market total gap</strong><span class="detail">Model total 9.2 vs market total 8.0 (gap 1.2)</span></span></div>
+  
+  <div class="flag-line"><span class="dot"></span><span class="flag-text"><strong>DRatings vs BPP disagreement</strong><span class="detail">DRatings favors away, BPP favors tie; DRatings total 8.0 vs BPP total 9.8 (gap 1.8)</span></span></div>
+  
+  <div class="flag-line"><span class="dot"></span><span class="flag-text"><strong>Lopsided bets% vs money% split</strong><span class="detail">Total Over bets/money gap 16pts; Total Under bets/money gap 16pts</span></span></div>
+  
+  <div class="flag-line"><span class="dot"></span><span class="flag-text"><strong>Extreme starter home/road split</strong><span class="detail">C. Sanchez home ERA 0.86 vs season 2.62 (-1.76)</span></span></div>
+  
+  <div class="flag-line"><span class="dot"></span><span class="flag-text"><strong>Extreme weather/park effect</strong><span class="detail">BPP net +9%</span></span></div>
+  
+  </div>
+</div>
+
+<div class="disclaimer-strip" style="margin:0 0 6px">Thresholds: total gap &gt; 1.0 runs · BPP/DRatings disagreement &gt; 1.0 runs · split divergence &gt; 15.0 pts · pitcher split &gt; 1.0 ERA · weather net ≥ 8.0%.</div>
+<div class="table-wrap"><table>
+<thead><tr><th>Matchup</th><th>Flags</th></tr></thead>
+<tbody>
+
+<tr><td class="cond" style="font-weight:700; white-space:nowrap">LAD @ PHI</td>
+  <td><div class="flag-line"><span class="dot"></span><span class="flag-text"><strong>Model vs market total gap</strong><span class="detail">Model total 9.2 vs market total 8.0 (gap 1.2)</span></span></div><div class="flag-line"><span class="dot"></span><span class="flag-text"><strong>DRatings vs BPP disagreement</strong><span class="detail">DRatings favors away, BPP favors tie; DRatings total 8.0 vs BPP total 9.8 (gap 1.8)</span></span></div><div class="flag-line"><span class="dot"></span><span class="flag-text"><strong>Lopsided bets% vs money% split</strong><span class="detail">Total Over bets/money gap 16pts; Total Under bets/money gap 16pts</span></span></div><div class="flag-line"><span class="dot"></span><span class="flag-text"><strong>Extreme starter home/road split</strong><span class="detail">C. Sanchez home ERA 0.86 vs season 2.62 (-1.76)</span></span></div><div class="flag-line"><span class="dot"></span><span class="flag-text"><strong>Extreme weather/park effect</strong><span class="detail">BPP net +9%</span></span></div></td></tr>
+
+<tr><td class="cond" style="font-weight:700; white-space:nowrap">SFG @ KCR</td>
+  <td><div class="flag-line"><span class="dot"></span><span class="flag-text"><strong>DRatings vs BPP disagreement</strong><span class="detail">DRatings total 9.6 vs BPP total 11.1 (gap 1.5)</span></span></div><div class="flag-line"><span class="dot"></span><span class="flag-text"><strong>Lopsided bets% vs money% split</strong><span class="detail">ML SFG bets/money gap 19pts; ML KCR bets/money gap 19pts</span></span></div><div class="flag-line"><span class="dot"></span><span class="flag-text"><strong>Extreme starter home/road split</strong><span class="detail">T. McDonald road ERA 3.19 vs season 5.02 (-1.83)</span></span></div><div class="flag-line"><span class="dot"></span><span class="flag-text"><strong>Extreme weather/park effect</strong><span class="detail">BPP net +15%</span></span></div></td></tr>
+
+<tr><td class="cond" style="font-weight:700; white-space:nowrap">PIT @ NYY</td>
+  <td><div class="flag-line"><span class="dot"></span><span class="flag-text"><strong>DRatings vs BPP disagreement</strong><span class="detail">DRatings favors home, BPP favors tie; DRatings total 9.5 vs BPP total 7.4 (gap 2.1)</span></span></div><div class="flag-line"><span class="dot"></span><span class="flag-text"><strong>Lopsided bets% vs money% split</strong><span class="detail">ML PIT bets/money gap 25pts; ML NYY bets/money gap 25pts</span></span></div><div class="flag-line"><span class="dot"></span><span class="flag-text"><strong>Extreme weather/park effect</strong><span class="detail">BPP net -9%</span></span></div></td></tr>
+
+<tr><td class="cond" style="font-weight:700; white-space:nowrap">DET @ CHC</td>
+  <td><div class="flag-line"><span class="dot"></span><span class="flag-text"><strong>DRatings vs BPP disagreement</strong><span class="detail">DRatings favors home, BPP favors away; DRatings total 8.4 vs BPP total 11.9 (gap 3.5)</span></span></div><div class="flag-line"><span class="dot"></span><span class="flag-text"><strong>Lopsided bets% vs money% split</strong><span class="detail">ML DET bets/money gap 24pts; ML CHC bets/money gap 24pts</span></span></div><div class="flag-line"><span class="dot"></span><span class="flag-text"><strong>Extreme weather/park effect</strong><span class="detail">BPP net +13%</span></span></div></td></tr>
+
+<tr><td class="cond" style="font-weight:700; white-space:nowrap">WSN @ COL</td>
+  <td><div class="flag-line"><span class="dot"></span><span class="flag-text"><strong>DRatings vs BPP disagreement</strong><span class="detail">DRatings favors away, BPP favors home; DRatings total 12.8 vs BPP total 11.2 (gap 1.6)</span></span></div><div class="flag-line"><span class="dot"></span><span class="flag-text"><strong>Lopsided bets% vs money% split</strong><span class="detail">ML WSN bets/money gap 21pts; ML COL bets/money gap 21pts</span></span></div><div class="flag-line"><span class="dot"></span><span class="flag-text"><strong>Extreme weather/park effect</strong><span class="detail">BPP net +31%</span></span></div></td></tr>
+
+<tr><td class="cond" style="font-weight:700; white-space:nowrap">STL @ LAA</td>
+  <td><div class="flag-line"><span class="dot"></span><span class="flag-text"><strong>DRatings vs BPP disagreement</strong><span class="detail">DRatings favors home, BPP favors tie</span></span></div><div class="flag-line"><span class="dot"></span><span class="flag-text"><strong>Lopsided bets% vs money% split</strong><span class="detail">ML STL bets/money gap 33pts; ML LAA bets/money gap 33pts</span></span></div></td></tr>
+
+<tr><td class="cond" style="font-weight:700; white-space:nowrap">MIN @ CLE</td>
+  <td><div class="flag-line"><span class="dot"></span><span class="flag-text"><strong>Model vs market total gap</strong><span class="detail">Model total 8.7 vs market total 7.5 (gap 1.2)</span></span></div><div class="flag-line"><span class="dot"></span><span class="flag-text"><strong>DRatings vs BPP disagreement</strong><span class="detail">DRatings favors home, BPP favors away</span></span></div></td></tr>
+
+<tr><td class="cond" style="font-weight:700; white-space:nowrap">TBR @ TOR</td>
+  <td><div class="flag-line"><span class="dot"></span><span class="flag-text"><strong>DRatings vs BPP disagreement</strong><span class="detail">DRatings favors away, BPP favors home; DRatings total 7.3 vs BPP total 8.7 (gap 1.4)</span></span></div><div class="flag-line"><span class="dot"></span><span class="flag-text"><strong>Lopsided bets% vs money% split</strong><span class="detail">ML TBR bets/money gap 45pts; ML TOR bets/money gap 45pts</span></span></div></td></tr>
+
+<tr><td class="cond" style="font-weight:700; white-space:nowrap">BAL @ BOS</td>
+  <td><div class="flag-line"><span class="dot"></span><span class="flag-text"><strong>DRatings vs BPP disagreement</strong><span class="detail">DRatings total 8.8 vs BPP total 9.9 (gap 1.1)</span></span></div><div class="flag-line"><span class="dot"></span><span class="flag-text"><strong>Extreme weather/park effect</strong><span class="detail">BPP net +17%</span></span></div></td></tr>
+
+<tr><td class="cond" style="font-weight:700; white-space:nowrap">CHW @ TEX</td>
+  <td><div class="flag-line"><span class="dot"></span><span class="flag-text"><strong>Lopsided bets% vs money% split</strong><span class="detail">ML CHW bets/money gap 18pts; ML TEX bets/money gap 18pts</span></span></div><div class="flag-line"><span class="dot"></span><span class="flag-text"><strong>Extreme weather/park effect</strong><span class="detail">BPP net -8%</span></span></div></td></tr>
+
+<tr><td class="cond" style="font-weight:700; white-space:nowrap">MIA @ HOU</td>
+  <td><div class="flag-line"><span class="dot"></span><span class="flag-text"><strong>DRatings vs BPP disagreement</strong><span class="detail">DRatings favors away, BPP favors tie</span></span></div><div class="flag-line"><span class="dot"></span><span class="flag-text"><strong>Lopsided bets% vs money% split</strong><span class="detail">Total Over bets/money gap 21pts; Total Under bets/money gap 21pts</span></span></div></td></tr>
+
+<tr><td class="cond" style="font-weight:700; white-space:nowrap">ATH @ ARI</td>
+  <td><div class="flag-line"><span class="dot"></span><span class="flag-text"><strong>Model vs market total gap</strong><span class="detail">Model total 11.2 vs market total 9.5 (gap 1.7)</span></span></div><div class="flag-line"><span class="dot"></span><span class="flag-text"><strong>Lopsided bets% vs money% split</strong><span class="detail">ML ATH bets/money gap 16pts; ML ARI bets/money gap 16pts</span></span></div></td></tr>
+
+<tr><td class="cond" style="font-weight:700; white-space:nowrap">SDP @ ATL</td>
+  <td><div class="flag-line"><span class="dot"></span><span class="flag-text"><strong>DRatings vs BPP disagreement</strong><span class="detail">DRatings favors home, BPP favors away</span></span></div></td></tr>
+
+<tr><td class="cond" style="font-weight:700; white-space:nowrap">NYM @ MIL</td>
+  <td><div class="flag-line"><span class="dot"></span><span class="flag-text"><strong>Lopsided bets% vs money% split</strong><span class="detail">ML NYM bets/money gap 18pts; ML MIL bets/money gap 18pts</span></span></div></td></tr>
+
+<tr><td class="cond" style="font-weight:700; white-space:nowrap">CIN @ SEA</td>
+  <td><div class="flag-line"><span class="dot"></span><span class="flag-text"><strong>Lopsided bets% vs money% split</strong><span class="detail">ML CIN bets/money gap 25pts; ML SEA bets/money gap 25pts</span></span></div></td></tr>
+
+</tbody>
+</table></div>
+
+<div class="eyebrow"><span class="label cond">Alignment Check</span><span class="sub">model vs. betting split vs. Reddit, disagreements first</span><span class="rule"></span></div>
+<div class="table-wrap"><table>
+<thead><tr><th>Matchup</th><th>Model favors</th><th>Split favors</th><th>Reddit favors</th><th>Verdict</th></tr></thead>
+<tbody>
+
+<tr>
+  <td class="cond" style="font-weight:700; white-space:nowrap">STL @ LAA</td>
+  <td>home</td>
+  <td>away</td>
+  <td>—</td>
+  <td><span class="verdict no"><span class="dot"></span>Conflict</span></td>
+</tr>
+
+<tr>
+  <td class="cond" style="font-weight:700; white-space:nowrap">MIN @ CLE</td>
+  <td>home</td>
+  <td>away</td>
+  <td>—</td>
+  <td><span class="verdict no"><span class="dot"></span>Conflict</span></td>
+</tr>
+
+<tr>
+  <td class="cond" style="font-weight:700; white-space:nowrap">PIT @ NYY</td>
+  <td>home</td>
+  <td>away</td>
+  <td>—</td>
+  <td><span class="verdict no"><span class="dot"></span>Conflict</span></td>
+</tr>
+
+<tr>
+  <td class="cond" style="font-weight:700; white-space:nowrap">SFG @ KCR</td>
+  <td>tie</td>
+  <td>home</td>
+  <td>—</td>
+  <td><span class="verdict no"><span class="dot"></span>Conflict</span></td>
+</tr>
+
+<tr>
+  <td class="cond" style="font-weight:700; white-space:nowrap">MIA @ HOU</td>
+  <td>away</td>
+  <td>home</td>
+  <td>—</td>
+  <td><span class="verdict no"><span class="dot"></span>Conflict</span></td>
+</tr>
+
+<tr>
+  <td class="cond" style="font-weight:700; white-space:nowrap">TBR @ TOR</td>
+  <td>away</td>
+  <td>away</td>
+  <td>—</td>
+  <td><span class="verdict yes"><span class="dot dot-quiet"></span>Aligned</span></td>
+</tr>
+
+<tr>
+  <td class="cond" style="font-weight:700; white-space:nowrap">BAL @ BOS</td>
+  <td>home</td>
+  <td>home</td>
+  <td>—</td>
+  <td><span class="verdict yes"><span class="dot dot-quiet"></span>Aligned</span></td>
+</tr>
+
+<tr>
+  <td class="cond" style="font-weight:700; white-space:nowrap">LAD @ PHI</td>
+  <td>away</td>
+  <td>away</td>
+  <td>—</td>
+  <td><span class="verdict yes"><span class="dot dot-quiet"></span>Aligned</span></td>
+</tr>
+
+<tr>
+  <td class="cond" style="font-weight:700; white-space:nowrap">SDP @ ATL</td>
+  <td>home</td>
+  <td>home</td>
+  <td>—</td>
+  <td><span class="verdict yes"><span class="dot dot-quiet"></span>Aligned</span></td>
+</tr>
+
+<tr>
+  <td class="cond" style="font-weight:700; white-space:nowrap">NYM @ MIL</td>
+  <td>home</td>
+  <td>home</td>
+  <td>—</td>
+  <td><span class="verdict yes"><span class="dot dot-quiet"></span>Aligned</span></td>
+</tr>
+
+<tr>
+  <td class="cond" style="font-weight:700; white-space:nowrap">CHW @ TEX</td>
+  <td>home</td>
+  <td>home</td>
+  <td>—</td>
+  <td><span class="verdict yes"><span class="dot dot-quiet"></span>Aligned</span></td>
+</tr>
+
+<tr>
+  <td class="cond" style="font-weight:700; white-space:nowrap">DET @ CHC</td>
+  <td>home</td>
+  <td>home</td>
+  <td>—</td>
+  <td><span class="verdict yes"><span class="dot dot-quiet"></span>Aligned</span></td>
+</tr>
+
+<tr>
+  <td class="cond" style="font-weight:700; white-space:nowrap">WSN @ COL</td>
+  <td>away</td>
+  <td>away</td>
+  <td>—</td>
+  <td><span class="verdict yes"><span class="dot dot-quiet"></span>Aligned</span></td>
+</tr>
+
+<tr>
+  <td class="cond" style="font-weight:700; white-space:nowrap">ATH @ ARI</td>
+  <td>home</td>
+  <td>home</td>
+  <td>—</td>
+  <td><span class="verdict yes"><span class="dot dot-quiet"></span>Aligned</span></td>
+</tr>
+
+<tr>
+  <td class="cond" style="font-weight:700; white-space:nowrap">CIN @ SEA</td>
+  <td>home</td>
+  <td>home</td>
+  <td>—</td>
+  <td><span class="verdict yes"><span class="dot dot-quiet"></span>Aligned</span></td>
+</tr>
+
+</tbody>
+</table></div>
+
+<div class="eyebrow"><span class="label cond">Totals Alignment</span><span class="sub">over/under only, flagged games, disagreements first</span><span class="rule"></span></div>
+<div class="table-wrap"><table>
+<thead><tr><th>Matchup</th><th class="num">DRatings</th><th class="num">BPP</th><th class="num">Model</th><th class="num">Market</th><th>Model lean</th><th>Split lean</th><th>Verdict</th></tr></thead>
+<tbody>
+
+<tr>
+  <td class="cond" style="font-weight:700; white-space:nowrap">SDP @ ATL</td>
+  <td class="num">9.0</td>
+  <td class="num">10.0</td>
+  <td class="num">8.7</td>
+  <td class="num">9.5</td>
+  <td>under</td>
+  <td>over</td>
+  <td><span class="verdict no"><span class="dot"></span>Conflict</span></td>
+</tr>
+
+<tr>
+  <td class="cond" style="font-weight:700; white-space:nowrap">SFG @ KCR</td>
+  <td class="num">9.6</td>
+  <td class="num">11.1</td>
+  <td class="num">11.0</td>
+  <td class="num">10.5</td>
+  <td>over</td>
+  <td>under</td>
+  <td><span class="verdict no"><span class="dot"></span>Conflict</span></td>
+</tr>
+
+<tr>
+  <td class="cond" style="font-weight:700; white-space:nowrap">DET @ CHC</td>
+  <td class="num">8.4</td>
+  <td class="num">11.9</td>
+  <td class="num">10.9</td>
+  <td class="num">11.5</td>
+  <td>under</td>
+  <td>over</td>
+  <td><span class="verdict no"><span class="dot"></span>Conflict</span></td>
+</tr>
+
+<tr>
+  <td class="cond" style="font-weight:700; white-space:nowrap">STL @ LAA</td>
+  <td class="num">9.3</td>
+  <td class="num">10.0</td>
+  <td class="num">9.3</td>
+  <td class="num">8.5</td>
+  <td>over</td>
+  <td>over</td>
+  <td><span class="verdict yes"><span class="dot dot-quiet"></span>Aligned</span></td>
+</tr>
+
+<tr>
+  <td class="cond" style="font-weight:700; white-space:nowrap">MIN @ CLE</td>
+  <td class="num">7.6</td>
+  <td class="num">7.9</td>
+  <td class="num">8.7</td>
+  <td class="num">7.5</td>
+  <td>over</td>
+  <td>over</td>
+  <td><span class="verdict yes"><span class="dot dot-quiet"></span>Aligned</span></td>
+</tr>
+
+<tr>
+  <td class="cond" style="font-weight:700; white-space:nowrap">PIT @ NYY</td>
+  <td class="num">9.5</td>
+  <td class="num">7.4</td>
+  <td class="num">7.9</td>
+  <td class="num">8.0</td>
+  <td>over</td>
+  <td>over</td>
+  <td><span class="verdict yes"><span class="dot dot-quiet"></span>Aligned</span></td>
+</tr>
+
+<tr>
+  <td class="cond" style="font-weight:700; white-space:nowrap">TBR @ TOR</td>
+  <td class="num">7.3</td>
+  <td class="num">8.7</td>
+  <td class="num">8.2</td>
+  <td class="num">7.5</td>
+  <td>over</td>
+  <td>over</td>
+  <td><span class="verdict yes"><span class="dot dot-quiet"></span>Aligned</span></td>
+</tr>
+
+<tr>
+  <td class="cond" style="font-weight:700; white-space:nowrap">BAL @ BOS</td>
+  <td class="num">8.8</td>
+  <td class="num">9.9</td>
+  <td class="num">9.0</td>
+  <td class="num">8.5</td>
+  <td>over</td>
+  <td>over</td>
+  <td><span class="verdict yes"><span class="dot dot-quiet"></span>Aligned</span></td>
+</tr>
+
+<tr>
+  <td class="cond" style="font-weight:700; white-space:nowrap">LAD @ PHI</td>
+  <td class="num">8.0</td>
+  <td class="num">9.8</td>
+  <td class="num">9.2</td>
+  <td class="num">8.0</td>
+  <td>over</td>
+  <td>over</td>
+  <td><span class="verdict yes"><span class="dot dot-quiet"></span>Aligned</span></td>
+</tr>
+
+<tr>
+  <td class="cond" style="font-weight:700; white-space:nowrap">NYM @ MIL</td>
+  <td class="num">9.2</td>
+  <td class="num">9.1</td>
+  <td class="num">8.5</td>
+  <td class="num">7.5</td>
+  <td>over</td>
+  <td>over</td>
+  <td><span class="verdict yes"><span class="dot dot-quiet"></span>Aligned</span></td>
+</tr>
+
+<tr>
+  <td class="cond" style="font-weight:700; white-space:nowrap">CHW @ TEX</td>
+  <td class="num">8.8</td>
+  <td class="num">8.2</td>
+  <td class="num">8.3</td>
+  <td class="num">7.5</td>
+  <td>over</td>
+  <td>over</td>
+  <td><span class="verdict yes"><span class="dot dot-quiet"></span>Aligned</span></td>
+</tr>
+
+<tr>
+  <td class="cond" style="font-weight:700; white-space:nowrap">MIA @ HOU</td>
+  <td class="num">9.6</td>
+  <td class="num">8.7</td>
+  <td class="num">9.3</td>
+  <td class="num">8.5</td>
+  <td>over</td>
+  <td>over</td>
+  <td><span class="verdict yes"><span class="dot dot-quiet"></span>Aligned</span></td>
+</tr>
+
+<tr>
+  <td class="cond" style="font-weight:700; white-space:nowrap">WSN @ COL</td>
+  <td class="num">12.8</td>
+  <td class="num">11.2</td>
+  <td class="num">12.8</td>
+  <td class="num">12.0</td>
+  <td>over</td>
+  <td>over</td>
+  <td><span class="verdict yes"><span class="dot dot-quiet"></span>Aligned</span></td>
+</tr>
+
+<tr>
+  <td class="cond" style="font-weight:700; white-space:nowrap">ATH @ ARI</td>
+  <td class="num">8.8</td>
+  <td class="num">9.4</td>
+  <td class="num">11.2</td>
+  <td class="num">9.5</td>
+  <td>over</td>
+  <td>over</td>
+  <td><span class="verdict yes"><span class="dot dot-quiet"></span>Aligned</span></td>
+</tr>
+
+<tr>
+  <td class="cond" style="font-weight:700; white-space:nowrap">CIN @ SEA</td>
+  <td class="num">7.5</td>
+  <td class="num">8.0</td>
+  <td class="num">7.4</td>
+  <td class="num">7.5</td>
+  <td>over</td>
+  <td>over</td>
+  <td><span class="verdict yes"><span class="dot dot-quiet"></span>Aligned</span></td>
+</tr>
+
+</tbody>
+</table></div>
+
+<div class="eyebrow"><span class="label cond">Tigers / Mariners Spotlight</span><span class="rule"></span></div>
 
 <div class="spotlight">
-  <div class="eyebrow"><span class="label">Tigers / Mariners Spotlight</span><span class="rule"></span></div>
   
-  <h3>DET @ CHC — 8:05 pm</h3>
-  <div class="table-wrap"><table>
-    <tr><th>Model score (DRatings)</th>
-      <td class="mono">DET 4.3 – CHC 4.6</td></tr>
-    <tr><th>BPP sim score (MoundEdge)</th>
-      <td class="mono">DET 6.2 – CHC 5.7</td></tr>
-    <tr><th>Betting split (bets%/money%)</th>
-      <td class="mono">DET 34/10 · CHC 66/90</td></tr>
-    <tr><th>Reddit sentiment</th>
-      <td>no mentions found</td></tr>
+  <div class="game-box">
     
-    <tr><th>Alignment</th><td><span class="pill pill-good">aligned</span></td></tr>
-  </table></div>
+    <div class="team-row">
+      <span class="swatch" style="background:var(--tigers-orange)"></span>
+      <h3>DET <span style="color:var(--muted); font-weight:400">@</span> CHC</h3>
+      <span class="time">8:05 pm</span>
+    </div>
+    <dl>
+      <dt>Model score (DRatings)</dt><dd class="num" style="text-align:left">DET 4.1 – CHC 4.3</dd>
+      <dt>BPP sim score (MoundEdge)</dt><dd class="num" style="text-align:left">DET 6.2 – CHC 5.7</dd>
+      <dt>Betting split (bets%/money%)</dt><dd class="num" style="text-align:left">DET 34/10 · CHC 66/90</dd>
+      <dt>Reddit sentiment</dt><dd>no mentions found</dd>
+      
+      <dt>Alignment</dt><dd><span class="verdict yes"><span class="dot dot-quiet"></span>Aligned</span></dd>
+    </dl>
+  </div>
   
-  <h3>CIN @ SEA — 9:40 pm</h3>
-  <div class="table-wrap"><table>
-    <tr><th>Model score (DRatings)</th>
-      <td class="mono">CIN 3.6 – SEA 3.9</td></tr>
-    <tr><th>BPP sim score (MoundEdge)</th>
-      <td class="mono">CIN 3.7 – SEA 4.3</td></tr>
-    <tr><th>Betting split (bets%/money%)</th>
-      <td class="mono">CIN 18/43 · SEA 82/57</td></tr>
-    <tr><th>Reddit sentiment</th>
-      <td>no mentions found</td></tr>
+  <div class="game-box">
     
-    <tr><th>Alignment</th><td><span class="pill pill-good">aligned</span></td></tr>
-  </table></div>
+    <div class="team-row">
+      <span class="swatch" style="background:var(--mariners-teal)"></span>
+      <h3>CIN <span style="color:var(--muted); font-weight:400">@</span> SEA</h3>
+      <span class="time">9:40 pm</span>
+    </div>
+    <dl>
+      <dt>Model score (DRatings)</dt><dd class="num" style="text-align:left">CIN 3.6 – SEA 3.9</dd>
+      <dt>BPP sim score (MoundEdge)</dt><dd class="num" style="text-align:left">CIN 3.7 – SEA 4.3</dd>
+      <dt>Betting split (bets%/money%)</dt><dd class="num" style="text-align:left">CIN 18/43 · SEA 82/57</dd>
+      <dt>Reddit sentiment</dt><dd>no mentions found</dd>
+      
+      <dt>Alignment</dt><dd><span class="verdict yes"><span class="dot dot-quiet"></span>Aligned</span></dd>
+    </dl>
+  </div>
   
 </div>
 
 
-<div class="eyebrow"><span class="label">1 · Today's Slate</span><span class="rule"></span></div>
+<div class="eyebrow"><span class="label cond">Today's Slate</span><span class="rule"></span></div>
 <div class="table-wrap"><table>
 <thead><tr><th>Matchup</th><th>Time</th><th>Venue</th><th>Away Pitcher</th><th>Home Pitcher</th></tr></thead>
 <tbody>
 
-<tr><td class="mono">STL @ LAA</td><td class="mono">10:10pm</td><td>Angels</td><td>K. Leahy</td><td>J. Soriano</td></tr>
+<tr><td class="cond" style="font-weight:700; white-space:nowrap">STL @ LAA</td><td>10:10pm</td><td>Angels</td><td>K. Leahy</td><td>J. Soriano</td></tr>
 
-<tr><td class="mono">MIN @ CLE</td><td class="mono">6:40 pm</td><td>Progressive</td><td>J. Ryan</td><td>T. Bibee</td></tr>
+<tr><td class="cond" style="font-weight:700; white-space:nowrap">MIN @ CLE</td><td>6:40 pm</td><td>Progressive</td><td>J. Ryan</td><td>T. Bibee</td></tr>
 
-<tr><td class="mono">PIT @ NYY</td><td class="mono">7:05 pm</td><td>Yankee</td><td>B. Ashcraft</td><td>R. Weathers</td></tr>
+<tr><td class="cond" style="font-weight:700; white-space:nowrap">PIT @ NYY</td><td>7:05 pm</td><td>Yankee</td><td>B. Ashcraft</td><td>R. Weathers</td></tr>
 
-<tr><td class="mono">TBR @ TOR</td><td class="mono">7:07 pm</td><td>Rogers Centre</td><td>N. Martinez</td><td>D. Cease</td></tr>
+<tr><td class="cond" style="font-weight:700; white-space:nowrap">TBR @ TOR</td><td>7:07 pm</td><td>Rogers Centre</td><td>N. Martinez</td><td>D. Cease</td></tr>
 
-<tr><td class="mono">BAL @ BOS</td><td class="mono">7:10 pm</td><td>Fenway</td><td>S. Baz</td><td>P. Tolle</td></tr>
+<tr><td class="cond" style="font-weight:700; white-space:nowrap">BAL @ BOS</td><td>7:10 pm</td><td>Fenway</td><td>S. Baz</td><td>P. Tolle</td></tr>
 
-<tr><td class="mono">LAD @ PHI</td><td class="mono">7:10 pm</td><td>Citizens Bank</td><td>E. Sheehan</td><td>C. Sanchez</td></tr>
+<tr><td class="cond" style="font-weight:700; white-space:nowrap">LAD @ PHI</td><td>7:10 pm</td><td>Citizens Bank</td><td>E. Sheehan</td><td>C. Sanchez</td></tr>
 
-<tr><td class="mono">SDP @ ATL</td><td class="mono">7:15 pm</td><td>Truist</td><td>J. Sears</td><td>B. Elder</td></tr>
+<tr><td class="cond" style="font-weight:700; white-space:nowrap">SDP @ ATL</td><td>7:15 pm</td><td>Truist</td><td>J. Sears</td><td>B. Elder</td></tr>
 
-<tr><td class="mono">NYM @ MIL</td><td class="mono">7:40 pm</td><td>American Family</td><td>F. Peralta</td><td>J. Misiorowski</td></tr>
+<tr><td class="cond" style="font-weight:700; white-space:nowrap">NYM @ MIL</td><td>7:40 pm</td><td>American Family</td><td>F. Peralta</td><td>J. Misiorowski</td></tr>
 
-<tr><td class="mono">SFG @ KCR</td><td class="mono">7:40 pm</td><td>Kauffman</td><td>T. McDonald</td><td>M. Wacha</td></tr>
+<tr><td class="cond" style="font-weight:700; white-space:nowrap">SFG @ KCR</td><td>7:40 pm</td><td>Kauffman</td><td>T. McDonald</td><td>M. Wacha</td></tr>
 
-<tr><td class="mono">CHW @ TEX</td><td class="mono">8:05 pm</td><td>Globe Life</td><td>E. Fedde</td><td>J. deGrom</td></tr>
+<tr><td class="cond" style="font-weight:700; white-space:nowrap">CHW @ TEX</td><td>8:05 pm</td><td>Globe Life</td><td>E. Fedde</td><td>J. deGrom</td></tr>
 
-<tr><td class="mono">DET @ CHC</td><td class="mono">8:05 pm</td><td>Wrigley</td><td>J. Flaherty</td><td>J. Taillon</td></tr>
+<tr><td class="cond" style="font-weight:700; white-space:nowrap">DET @ CHC</td><td>8:05 pm</td><td>Wrigley</td><td>J. Flaherty</td><td>J. Taillon</td></tr>
 
-<tr><td class="mono">MIA @ HOU</td><td class="mono">8:10 pm</td><td>Daikin</td><td>J. Junk</td><td>R. Blanco</td></tr>
+<tr><td class="cond" style="font-weight:700; white-space:nowrap">MIA @ HOU</td><td>8:10 pm</td><td>Daikin</td><td>J. Junk</td><td>R. Blanco</td></tr>
 
-<tr><td class="mono">WSN @ COL</td><td class="mono">8:40 pm</td><td>Coors</td><td>A. Alvarez</td><td>K. Freeland</td></tr>
+<tr><td class="cond" style="font-weight:700; white-space:nowrap">WSN @ COL</td><td>8:40 pm</td><td>Coors</td><td>A. Alvarez</td><td>K. Freeland</td></tr>
 
-<tr><td class="mono">ATH @ ARI</td><td class="mono">9:40 pm</td><td>Chase</td><td>J. Springs</td><td>M. Bratt</td></tr>
+<tr><td class="cond" style="font-weight:700; white-space:nowrap">ATH @ ARI</td><td>9:40 pm</td><td>Chase</td><td>J. Springs</td><td>M. Bratt</td></tr>
 
-<tr><td class="mono">CIN @ SEA</td><td class="mono">9:40 pm</td><td>T-Mobile</td><td>A. Abbott</td><td>G. Kirby</td></tr>
+<tr><td class="cond" style="font-weight:700; white-space:nowrap">CIN @ SEA</td><td>9:40 pm</td><td>T-Mobile</td><td>A. Abbott</td><td>G. Kirby</td></tr>
 
 </tbody>
 </table></div>
 
-<div class="eyebrow"><span class="label">2 · Source Summary</span><span class="rule"></span></div>
+<div class="eyebrow"><span class="label cond">Source Summary</span><span class="rule"></span></div>
 <div class="table-wrap"><table>
 <thead><tr><th>Source</th><th>What it contains</th></tr></thead>
 <tbody>
-<tr><td>SportsBettingDime</td><td>Public betting splits (% money vs % bets per game). Real numbers are rendered client-side by a JS widget with no public JSON/CSV endpoint, so this report uses MoundEdge's embedded bets%/money% splits instead, which mirror SportsBettingDime's figures.</td></tr>
-<tr><td>DRatings</td><td>Model projected score per team, win probability, and best available market moneyline/spread/total across tracked sportsbooks.</td></tr>
-<tr><td>MoundEdge</td><td>BPP sim projected score (separate from its own "Model" projection), weather/park run-environment effect, starting-pitcher splits, hitting/bullpen trend arrows vs season stats, market lines, and embedded betting splits.</td></tr>
-<tr><td>Reddit</td><td>Today's MLB daily discussion thread, fetched via the unauthenticated .json endpoint. Recurring team mentions and their stated reasoning.</td></tr>
+<tr><td style="white-space:nowrap">SportsBettingDime</td><td>Public betting splits (% money vs % bets per game). Real numbers are rendered client-side by a JS widget with no public JSON/CSV endpoint, so this report uses MoundEdge's embedded bets%/money% splits instead, which mirror SportsBettingDime's figures.</td></tr>
+<tr><td style="white-space:nowrap">DRatings</td><td>Model projected score per team, win probability, and best available market moneyline/spread/total across tracked sportsbooks.</td></tr>
+<tr><td style="white-space:nowrap">MoundEdge</td><td>BPP sim projected score (separate from its own "Model" projection), weather/park run-environment effect, starting-pitcher splits, hitting/bullpen trend arrows vs season stats, market lines, and embedded betting splits.</td></tr>
+<tr><td style="white-space:nowrap">Reddit</td><td>Today's MLB daily discussion thread, fetched via the unauthenticated .json endpoint. Recurring team mentions and their stated reasoning.</td></tr>
 </tbody>
 </table></div>
 
-<div class="eyebrow"><span class="label">3 · Reddit Sentiment</span><span class="rule"></span></div>
+<div class="eyebrow"><span class="label cond">Reddit Sentiment</span><span class="rule"></span></div>
 
-<div class="card">Reddit sentiment unavailable today. live fetch failed (403 Client Error: Blocked for url: https://www.reddit.com/r/sportsbook/search.json?q=MLB%20daily%20thread&amp;restrict_sr=1&amp;sort=new&amp;limit=10) and no manual paste found at mlb_daily/data/reddit_manual_2026-07-20.txt - to include Reddit sentiment today, paste the daily thread&#39;s text into that file and re-run the workflow.</div>
+<div class="card boxed">Reddit sentiment unavailable today. live fetch failed (403 Client Error: Blocked for url: https://www.reddit.com/r/sportsbook/search.json?q=MLB%20daily%20thread&amp;restrict_sr=1&amp;sort=new&amp;limit=10) and no manual paste found at mlb_daily/data/reddit_manual_2026-07-20.txt - to include Reddit sentiment today, paste the daily thread&#39;s text into that file and re-run the workflow.</div>
 
 
-<div class="eyebrow"><span class="label">4 · Model Predictions</span><span class="rule"></span></div>
+<div class="eyebrow"><span class="label cond">Model Predictions</span><span class="rule"></span></div>
 <div class="table-wrap"><table>
 <thead><tr><th>Matchup</th><th class="num">DRatings</th><th>Winner</th><th class="num">MoundEdge Model</th><th class="num">BPP sim</th><th>BPP winner</th></tr></thead>
 <tbody>
 
 <tr>
-  <td class="mono">STL @ LAA</td>
-  <td class="mono num">4.5–4.8</td>
-  <td class="mono">LAA (53.6%)</td>
-  <td class="mono num">4.6–4.7</td>
-  <td class="mono num">5.0–5.0</td>
-  <td class="mono">LAA</td>
+  <td class="cond" style="font-weight:700; white-space:nowrap">STL @ LAA</td>
+  <td class="num">4.5–4.9</td>
+  <td>LAA (53.6%)</td>
+  <td class="num">4.6–4.7</td>
+  <td class="num">5.0–5.0</td>
+  <td>LAA</td>
 </tr>
 
 <tr>
-  <td class="mono">MIN @ CLE</td>
-  <td class="mono num">3.2–4.4</td>
-  <td class="mono">CLE (61.5%)</td>
-  <td class="mono num">4.7–4.0</td>
-  <td class="mono num">4.4–3.6</td>
-  <td class="mono">MIN</td>
+  <td class="cond" style="font-weight:700; white-space:nowrap">MIN @ CLE</td>
+  <td class="num">3.2–4.4</td>
+  <td>CLE (61.5%)</td>
+  <td class="num">4.7–4.0</td>
+  <td class="num">4.4–3.6</td>
+  <td>MIN</td>
 </tr>
 
 <tr>
-  <td class="mono">PIT @ NYY</td>
-  <td class="mono num">4.4–5.1</td>
-  <td class="mono">NYY (56.1%)</td>
-  <td class="mono num">3.9–4.0</td>
-  <td class="mono num">3.7–3.7</td>
-  <td class="mono">NYY</td>
+  <td class="cond" style="font-weight:700; white-space:nowrap">PIT @ NYY</td>
+  <td class="num">4.4–5.1</td>
+  <td>NYY (56.1%)</td>
+  <td class="num">3.9–4.0</td>
+  <td class="num">3.7–3.7</td>
+  <td>NYY</td>
 </tr>
 
 <tr>
-  <td class="mono">TBR @ TOR</td>
-  <td class="mono num">3.8–3.5</td>
-  <td class="mono">TBR (53.5%)</td>
-  <td class="mono num">3.8–4.4</td>
-  <td class="mono num">3.8–4.9</td>
-  <td class="mono">TOR</td>
+  <td class="cond" style="font-weight:700; white-space:nowrap">TBR @ TOR</td>
+  <td class="num">3.8–3.5</td>
+  <td>TBR (53.5%)</td>
+  <td class="num">3.8–4.4</td>
+  <td class="num">3.8–4.9</td>
+  <td>TOR</td>
 </tr>
 
 <tr>
-  <td class="mono">BAL @ BOS</td>
-  <td class="mono num">4.1–4.8</td>
-  <td class="mono">BOS (55.9%)</td>
-  <td class="mono num">4.4–4.6</td>
-  <td class="mono num">4.7–5.1</td>
-  <td class="mono">BOS</td>
+  <td class="cond" style="font-weight:700; white-space:nowrap">BAL @ BOS</td>
+  <td class="num">4.1–4.7</td>
+  <td>BOS (55.9%)</td>
+  <td class="num">4.4–4.6</td>
+  <td class="num">4.7–5.1</td>
+  <td>BOS</td>
 </tr>
 
 <tr>
-  <td class="mono">LAD @ PHI</td>
-  <td class="mono num">4.0–4.0</td>
-  <td class="mono">LAD (50.7%)</td>
-  <td class="mono num">4.6–4.6</td>
-  <td class="mono num">4.9–4.9</td>
-  <td class="mono">PHI</td>
+  <td class="cond" style="font-weight:700; white-space:nowrap">LAD @ PHI</td>
+  <td class="num">4.0–4.0</td>
+  <td>LAD (50.7%)</td>
+  <td class="num">4.6–4.6</td>
+  <td class="num">4.9–4.9</td>
+  <td>PHI</td>
 </tr>
 
 <tr>
-  <td class="mono">SDP @ ATL</td>
-  <td class="mono num">3.6–5.4</td>
-  <td class="mono">ATL (66.9%)</td>
-  <td class="mono num">4.1–4.6</td>
-  <td class="mono num">5.4–4.7</td>
-  <td class="mono">SDP</td>
+  <td class="cond" style="font-weight:700; white-space:nowrap">SDP @ ATL</td>
+  <td class="num">3.6–5.4</td>
+  <td>ATL (66.9%)</td>
+  <td class="num">4.1–4.6</td>
+  <td class="num">5.4–4.7</td>
+  <td>SDP</td>
 </tr>
 
 <tr>
-  <td class="mono">NYM @ MIL</td>
-  <td class="mono num">4.4–5.0</td>
-  <td class="mono">MIL (56.0%)</td>
-  <td class="mono num">3.0–5.4</td>
-  <td class="mono num">3.9–5.2</td>
-  <td class="mono">MIL</td>
+  <td class="cond" style="font-weight:700; white-space:nowrap">NYM @ MIL</td>
+  <td class="num">4.3–4.9</td>
+  <td>MIL (56.0%)</td>
+  <td class="num">3.0–5.4</td>
+  <td class="num">3.9–5.2</td>
+  <td>MIL</td>
 </tr>
 
 <tr>
-  <td class="mono">SFG @ KCR</td>
-  <td class="mono num">4.8–4.8</td>
-  <td class="mono">KCR (50.0%)</td>
-  <td class="mono num">5.8–5.2</td>
-  <td class="mono num">5.6–5.5</td>
-  <td class="mono">SFG</td>
+  <td class="cond" style="font-weight:700; white-space:nowrap">SFG @ KCR</td>
+  <td class="num">4.8–4.8</td>
+  <td>KCR (50.0%)</td>
+  <td class="num">5.8–5.2</td>
+  <td class="num">5.6–5.5</td>
+  <td>SFG</td>
 </tr>
 
 <tr>
-  <td class="mono">CHW @ TEX</td>
-  <td class="mono num">4.1–4.6</td>
-  <td class="mono">TEX (55.1%)</td>
-  <td class="mono num">3.9–4.3</td>
-  <td class="mono num">3.3–4.9</td>
-  <td class="mono">TEX</td>
+  <td class="cond" style="font-weight:700; white-space:nowrap">CHW @ TEX</td>
+  <td class="num">4.1–4.7</td>
+  <td>TEX (55.1%)</td>
+  <td class="num">3.9–4.3</td>
+  <td class="num">3.3–4.9</td>
+  <td>TEX</td>
 </tr>
 
 <tr>
-  <td class="mono">DET @ CHC</td>
-  <td class="mono num">4.3–4.6</td>
-  <td class="mono">CHC (52.3%)</td>
-  <td class="mono num">5.7–5.2</td>
-  <td class="mono num">6.2–5.7</td>
-  <td class="mono">DET</td>
+  <td class="cond" style="font-weight:700; white-space:nowrap">DET @ CHC</td>
+  <td class="num">4.1–4.3</td>
+  <td>CHC (52.3%)</td>
+  <td class="num">5.7–5.2</td>
+  <td class="num">6.2–5.7</td>
+  <td>DET</td>
 </tr>
 
 <tr>
-  <td class="mono">MIA @ HOU</td>
-  <td class="mono num">5.2–4.5</td>
-  <td class="mono">MIA (56.5%)</td>
-  <td class="mono num">4.6–4.6</td>
-  <td class="mono num">4.4–4.4</td>
-  <td class="mono">HOU</td>
+  <td class="cond" style="font-weight:700; white-space:nowrap">MIA @ HOU</td>
+  <td class="num">5.2–4.5</td>
+  <td>MIA (56.5%)</td>
+  <td class="num">4.6–4.6</td>
+  <td class="num">4.4–4.4</td>
+  <td>HOU</td>
 </tr>
 
 <tr>
-  <td class="mono">WSN @ COL</td>
-  <td class="mono num">6.6–6.0</td>
-  <td class="mono">WSN (55.3%)</td>
-  <td class="mono num">7.0–5.8</td>
-  <td class="mono num">5.5–5.7</td>
-  <td class="mono">COL</td>
+  <td class="cond" style="font-weight:700; white-space:nowrap">WSN @ COL</td>
+  <td class="num">6.7–6.1</td>
+  <td>WSN (55.3%)</td>
+  <td class="num">7.0–5.8</td>
+  <td class="num">5.5–5.7</td>
+  <td>COL</td>
 </tr>
 
 <tr>
-  <td class="mono">ATH @ ARI</td>
-  <td class="mono num">3.9–5.0</td>
-  <td class="mono">ARI (60.9%)</td>
-  <td class="mono num">5.5–5.8</td>
-  <td class="mono num">4.3–5.1</td>
-  <td class="mono">ARI</td>
+  <td class="cond" style="font-weight:700; white-space:nowrap">ATH @ ARI</td>
+  <td class="num">3.9–5.0</td>
+  <td>ARI (60.9%)</td>
+  <td class="num">5.5–5.8</td>
+  <td class="num">4.3–5.1</td>
+  <td>ARI</td>
 </tr>
 
 <tr>
-  <td class="mono">CIN @ SEA</td>
-  <td class="mono num">3.6–3.9</td>
-  <td class="mono">SEA (52.7%)</td>
-  <td class="mono num">3.5–4.0</td>
-  <td class="mono num">3.7–4.3</td>
-  <td class="mono">SEA</td>
+  <td class="cond" style="font-weight:700; white-space:nowrap">CIN @ SEA</td>
+  <td class="num">3.6–3.9</td>
+  <td>SEA (52.7%)</td>
+  <td class="num">3.5–4.0</td>
+  <td class="num">3.7–4.3</td>
+  <td>SEA</td>
 </tr>
 
 </tbody>
 </table></div>
 
-<div class="eyebrow"><span class="label">5 · How to Scan a Slate</span><span class="rule"></span></div>
-<div class="card">
+<div class="eyebrow"><span class="label cond">How to Scan a Slate</span><span class="rule"></span></div>
+<div class="card boxed">
 <strong>Routine game:</strong> DRatings and BPP agree on the winner, totals sit close to market, betting splits move together, starters are near their season norms, and there's no extreme weather/park effect. Nothing here needs a second look.<br><br>
-<strong>Notable game:</strong> one or more of the six checks below trips. Notable doesn't mean "bet this" — it means there's more disagreement between sources than usual, which is exactly the kind of case worth comparing against the actual final score afterward.
+<strong>Notable game:</strong> one or more of the six checks above trips. Notable doesn't mean "bet this" — it means there's more disagreement between sources than usual, which is exactly the kind of case worth comparing against the actual final score afterward.
 </div>
-
-<div class="eyebrow"><span class="label">6 · Notable-Game Flags</span><span class="rule"></span></div>
-<div class="disclaimer-strip">Thresholds: total gap &gt; 1.0 runs · BPP/DRatings disagreement &gt; 1.0 runs · split divergence &gt; 15.0 pts · pitcher split &gt; 1.0 ERA · weather net ≥ 8.0%.</div>
-<div class="table-wrap"><table>
-<thead><tr><th>Matchup</th><th>Flags</th></tr></thead>
-<tbody>
-
-<tr class="row-flagged"><td class="mono">STL @ LAA</td>
-  <td><span class="pill pill-gold">DRatings vs BPP disagreement</span><span class="flag-detail">DRatings favors home, BPP favors tie</span><span class="pill pill-gold">Lopsided bets% vs money% split</span><span class="flag-detail">ML STL bets/money gap 33pts; ML LAA bets/money gap 33pts</span></td></tr>
-
-<tr class="row-flagged"><td class="mono">MIN @ CLE</td>
-  <td><span class="pill pill-gold">Model vs market total gap</span><span class="flag-detail">Model total 8.7 vs market total 7.5 (gap 1.2)</span><span class="pill pill-gold">DRatings vs BPP disagreement</span><span class="flag-detail">DRatings favors home, BPP favors away</span></td></tr>
-
-<tr class="row-flagged"><td class="mono">PIT @ NYY</td>
-  <td><span class="pill pill-gold">DRatings vs BPP disagreement</span><span class="flag-detail">DRatings favors home, BPP favors tie; DRatings total 9.5 vs BPP total 7.4 (gap 2.1)</span><span class="pill pill-gold">Lopsided bets% vs money% split</span><span class="flag-detail">ML PIT bets/money gap 25pts; ML NYY bets/money gap 25pts</span><span class="pill pill-gold">Extreme weather/park effect</span><span class="flag-detail">BPP net -9%</span></td></tr>
-
-<tr class="row-flagged"><td class="mono">TBR @ TOR</td>
-  <td><span class="pill pill-gold">DRatings vs BPP disagreement</span><span class="flag-detail">DRatings favors away, BPP favors home; DRatings total 7.3 vs BPP total 8.7 (gap 1.4)</span><span class="pill pill-gold">Lopsided bets% vs money% split</span><span class="flag-detail">ML TBR bets/money gap 45pts; ML TOR bets/money gap 45pts</span></td></tr>
-
-<tr class="row-flagged"><td class="mono">BAL @ BOS</td>
-  <td><span class="pill pill-gold">DRatings vs BPP disagreement</span><span class="flag-detail">DRatings total 8.9 vs BPP total 9.9 (gap 1.0)</span><span class="pill pill-gold">Extreme weather/park effect</span><span class="flag-detail">BPP net +17%</span></td></tr>
-
-<tr class="row-flagged"><td class="mono">LAD @ PHI</td>
-  <td><span class="pill pill-gold">Model vs market total gap</span><span class="flag-detail">Model total 9.2 vs market total 8.0 (gap 1.2)</span><span class="pill pill-gold">DRatings vs BPP disagreement</span><span class="flag-detail">DRatings favors away, BPP favors tie; DRatings total 8.0 vs BPP total 9.8 (gap 1.8)</span><span class="pill pill-gold">Lopsided bets% vs money% split</span><span class="flag-detail">Total Over bets/money gap 16pts; Total Under bets/money gap 16pts</span><span class="pill pill-gold">Extreme starter home/road split</span><span class="flag-detail">C. Sanchez home ERA 0.86 vs season 2.62 (-1.76)</span><span class="pill pill-gold">Extreme weather/park effect</span><span class="flag-detail">BPP net +9%</span></td></tr>
-
-<tr class="row-flagged"><td class="mono">SDP @ ATL</td>
-  <td><span class="pill pill-gold">DRatings vs BPP disagreement</span><span class="flag-detail">DRatings favors home, BPP favors away</span></td></tr>
-
-<tr class="row-flagged"><td class="mono">NYM @ MIL</td>
-  <td><span class="pill pill-gold">Lopsided bets% vs money% split</span><span class="flag-detail">ML NYM bets/money gap 18pts; ML MIL bets/money gap 18pts</span></td></tr>
-
-<tr class="row-flagged"><td class="mono">SFG @ KCR</td>
-  <td><span class="pill pill-gold">DRatings vs BPP disagreement</span><span class="flag-detail">DRatings total 9.6 vs BPP total 11.1 (gap 1.5)</span><span class="pill pill-gold">Lopsided bets% vs money% split</span><span class="flag-detail">ML SFG bets/money gap 19pts; ML KCR bets/money gap 19pts</span><span class="pill pill-gold">Extreme starter home/road split</span><span class="flag-detail">T. McDonald road ERA 3.19 vs season 5.02 (-1.83)</span><span class="pill pill-gold">Extreme weather/park effect</span><span class="flag-detail">BPP net +15%</span></td></tr>
-
-<tr class="row-flagged"><td class="mono">CHW @ TEX</td>
-  <td><span class="pill pill-gold">Lopsided bets% vs money% split</span><span class="flag-detail">ML CHW bets/money gap 18pts; ML TEX bets/money gap 18pts</span><span class="pill pill-gold">Extreme weather/park effect</span><span class="flag-detail">BPP net -8%</span></td></tr>
-
-<tr class="row-flagged"><td class="mono">DET @ CHC</td>
-  <td><span class="pill pill-gold">DRatings vs BPP disagreement</span><span class="flag-detail">DRatings favors home, BPP favors away; DRatings total 8.9 vs BPP total 11.9 (gap 3.0)</span><span class="pill pill-gold">Lopsided bets% vs money% split</span><span class="flag-detail">ML DET bets/money gap 24pts; ML CHC bets/money gap 24pts</span><span class="pill pill-gold">Extreme weather/park effect</span><span class="flag-detail">BPP net +13%</span></td></tr>
-
-<tr class="row-flagged"><td class="mono">MIA @ HOU</td>
-  <td><span class="pill pill-gold">DRatings vs BPP disagreement</span><span class="flag-detail">DRatings favors away, BPP favors tie</span><span class="pill pill-gold">Lopsided bets% vs money% split</span><span class="flag-detail">Total Over bets/money gap 21pts; Total Under bets/money gap 21pts</span></td></tr>
-
-<tr class="row-flagged"><td class="mono">WSN @ COL</td>
-  <td><span class="pill pill-gold">DRatings vs BPP disagreement</span><span class="flag-detail">DRatings favors away, BPP favors home; DRatings total 12.6 vs BPP total 11.2 (gap 1.4)</span><span class="pill pill-gold">Lopsided bets% vs money% split</span><span class="flag-detail">ML WSN bets/money gap 21pts; ML COL bets/money gap 21pts</span><span class="pill pill-gold">Extreme weather/park effect</span><span class="flag-detail">BPP net +31%</span></td></tr>
-
-<tr class="row-flagged"><td class="mono">ATH @ ARI</td>
-  <td><span class="pill pill-gold">Model vs market total gap</span><span class="flag-detail">Model total 11.2 vs market total 9.5 (gap 1.7)</span><span class="pill pill-gold">Lopsided bets% vs money% split</span><span class="flag-detail">ML ATH bets/money gap 16pts; ML ARI bets/money gap 16pts</span></td></tr>
-
-<tr class="row-flagged"><td class="mono">CIN @ SEA</td>
-  <td><span class="pill pill-gold">Lopsided bets% vs money% split</span><span class="flag-detail">ML CIN bets/money gap 25pts; ML SEA bets/money gap 25pts</span></td></tr>
-
-</tbody>
-</table></div>
-
-<div class="eyebrow"><span class="label">7 · Most-Flagged Game</span><span class="rule"></span></div>
-
-<div class="card">
-  <strong class="mono">LAD @ PHI</strong> — 5 flag(s)<br><br>
-  <span class="pill pill-gold">Model vs market total gap</span><span class="flag-detail">Model total 9.2 vs market total 8.0 (gap 1.2)</span><span class="pill pill-gold">DRatings vs BPP disagreement</span><span class="flag-detail">DRatings favors away, BPP favors tie; DRatings total 8.0 vs BPP total 9.8 (gap 1.8)</span><span class="pill pill-gold">Lopsided bets% vs money% split</span><span class="flag-detail">Total Over bets/money gap 16pts; Total Under bets/money gap 16pts</span><span class="pill pill-gold">Extreme starter home/road split</span><span class="flag-detail">C. Sanchez home ERA 0.86 vs season 2.62 (-1.76)</span><span class="pill pill-gold">Extreme weather/park effect</span><span class="flag-detail">BPP net +9%</span>
-</div>
-
-
-<div class="eyebrow"><span class="label">8 · Alignment Check</span><span class="rule"></span></div>
-<div class="disclaimer-strip">Model direction vs betting-split direction vs Reddit sentiment, per game.</div>
-<div class="table-wrap"><table>
-<thead><tr><th>Matchup</th><th>Model favors</th><th>Split favors</th><th>Reddit favors</th><th>Agree?</th></tr></thead>
-<tbody>
-
-<tr class="row-disagree">
-  <td class="mono">STL @ LAA</td>
-  <td class="mono">home</td>
-  <td class="mono">away</td>
-  <td class="mono">—</td>
-  <td><span class="pill pill-bad">no</span></td>
-</tr>
-
-<tr class="row-disagree">
-  <td class="mono">MIN @ CLE</td>
-  <td class="mono">home</td>
-  <td class="mono">away</td>
-  <td class="mono">—</td>
-  <td><span class="pill pill-bad">no</span></td>
-</tr>
-
-<tr class="row-disagree">
-  <td class="mono">PIT @ NYY</td>
-  <td class="mono">home</td>
-  <td class="mono">away</td>
-  <td class="mono">—</td>
-  <td><span class="pill pill-bad">no</span></td>
-</tr>
-
-<tr class="">
-  <td class="mono">TBR @ TOR</td>
-  <td class="mono">away</td>
-  <td class="mono">away</td>
-  <td class="mono">—</td>
-  <td><span class="pill pill-good">yes</span></td>
-</tr>
-
-<tr class="">
-  <td class="mono">BAL @ BOS</td>
-  <td class="mono">home</td>
-  <td class="mono">home</td>
-  <td class="mono">—</td>
-  <td><span class="pill pill-good">yes</span></td>
-</tr>
-
-<tr class="">
-  <td class="mono">LAD @ PHI</td>
-  <td class="mono">away</td>
-  <td class="mono">away</td>
-  <td class="mono">—</td>
-  <td><span class="pill pill-good">yes</span></td>
-</tr>
-
-<tr class="">
-  <td class="mono">SDP @ ATL</td>
-  <td class="mono">home</td>
-  <td class="mono">home</td>
-  <td class="mono">—</td>
-  <td><span class="pill pill-good">yes</span></td>
-</tr>
-
-<tr class="">
-  <td class="mono">NYM @ MIL</td>
-  <td class="mono">home</td>
-  <td class="mono">home</td>
-  <td class="mono">—</td>
-  <td><span class="pill pill-good">yes</span></td>
-</tr>
-
-<tr class="row-disagree">
-  <td class="mono">SFG @ KCR</td>
-  <td class="mono">tie</td>
-  <td class="mono">home</td>
-  <td class="mono">—</td>
-  <td><span class="pill pill-bad">no</span></td>
-</tr>
-
-<tr class="">
-  <td class="mono">CHW @ TEX</td>
-  <td class="mono">home</td>
-  <td class="mono">home</td>
-  <td class="mono">—</td>
-  <td><span class="pill pill-good">yes</span></td>
-</tr>
-
-<tr class="">
-  <td class="mono">DET @ CHC</td>
-  <td class="mono">home</td>
-  <td class="mono">home</td>
-  <td class="mono">—</td>
-  <td><span class="pill pill-good">yes</span></td>
-</tr>
-
-<tr class="row-disagree">
-  <td class="mono">MIA @ HOU</td>
-  <td class="mono">away</td>
-  <td class="mono">home</td>
-  <td class="mono">—</td>
-  <td><span class="pill pill-bad">no</span></td>
-</tr>
-
-<tr class="">
-  <td class="mono">WSN @ COL</td>
-  <td class="mono">away</td>
-  <td class="mono">away</td>
-  <td class="mono">—</td>
-  <td><span class="pill pill-good">yes</span></td>
-</tr>
-
-<tr class="">
-  <td class="mono">ATH @ ARI</td>
-  <td class="mono">home</td>
-  <td class="mono">home</td>
-  <td class="mono">—</td>
-  <td><span class="pill pill-good">yes</span></td>
-</tr>
-
-<tr class="">
-  <td class="mono">CIN @ SEA</td>
-  <td class="mono">home</td>
-  <td class="mono">home</td>
-  <td class="mono">—</td>
-  <td><span class="pill pill-good">yes</span></td>
-</tr>
-
-</tbody>
-</table></div>
-
-<div class="eyebrow"><span class="label">9 · Totals Alignment (Over/Under)</span><span class="rule"></span></div>
-<div class="disclaimer-strip">Only flagged games shown. Market total is the actual current O/U line.</div>
-<div class="table-wrap"><table>
-<thead><tr><th>Matchup</th><th class="num">DRatings</th><th class="num">BPP</th><th class="num">MoundEdge Model</th><th class="num">Market</th><th>Model lean</th><th>Split lean</th><th>Agree?</th></tr></thead>
-<tbody>
-
-<tr class="">
-  <td class="mono">STL @ LAA</td>
-  <td class="mono num">9.3</td>
-  <td class="mono num">10.0</td>
-  <td class="mono num">9.3</td>
-  <td class="mono num">8.5</td>
-  <td class="mono">over</td>
-  <td class="mono">over</td>
-  <td><span class="pill pill-good">yes</span></td>
-</tr>
-
-<tr class="">
-  <td class="mono">MIN @ CLE</td>
-  <td class="mono num">7.6</td>
-  <td class="mono num">7.9</td>
-  <td class="mono num">8.7</td>
-  <td class="mono num">7.5</td>
-  <td class="mono">over</td>
-  <td class="mono">over</td>
-  <td><span class="pill pill-good">yes</span></td>
-</tr>
-
-<tr class="">
-  <td class="mono">PIT @ NYY</td>
-  <td class="mono num">9.5</td>
-  <td class="mono num">7.4</td>
-  <td class="mono num">7.9</td>
-  <td class="mono num">8.0</td>
-  <td class="mono">over</td>
-  <td class="mono">over</td>
-  <td><span class="pill pill-good">yes</span></td>
-</tr>
-
-<tr class="">
-  <td class="mono">TBR @ TOR</td>
-  <td class="mono num">7.3</td>
-  <td class="mono num">8.7</td>
-  <td class="mono num">8.2</td>
-  <td class="mono num">7.5</td>
-  <td class="mono">over</td>
-  <td class="mono">over</td>
-  <td><span class="pill pill-good">yes</span></td>
-</tr>
-
-<tr class="">
-  <td class="mono">BAL @ BOS</td>
-  <td class="mono num">8.9</td>
-  <td class="mono num">9.9</td>
-  <td class="mono num">9.0</td>
-  <td class="mono num">8.5</td>
-  <td class="mono">over</td>
-  <td class="mono">over</td>
-  <td><span class="pill pill-good">yes</span></td>
-</tr>
-
-<tr class="">
-  <td class="mono">LAD @ PHI</td>
-  <td class="mono num">8.0</td>
-  <td class="mono num">9.8</td>
-  <td class="mono num">9.2</td>
-  <td class="mono num">8.0</td>
-  <td class="mono">over</td>
-  <td class="mono">over</td>
-  <td><span class="pill pill-good">yes</span></td>
-</tr>
-
-<tr class="row-disagree">
-  <td class="mono">SDP @ ATL</td>
-  <td class="mono num">9.0</td>
-  <td class="mono num">10.0</td>
-  <td class="mono num">8.7</td>
-  <td class="mono num">9.5</td>
-  <td class="mono">under</td>
-  <td class="mono">over</td>
-  <td><span class="pill pill-bad">no</span></td>
-</tr>
-
-<tr class="">
-  <td class="mono">NYM @ MIL</td>
-  <td class="mono num">9.4</td>
-  <td class="mono num">9.1</td>
-  <td class="mono num">8.5</td>
-  <td class="mono num">7.5</td>
-  <td class="mono">over</td>
-  <td class="mono">over</td>
-  <td><span class="pill pill-good">yes</span></td>
-</tr>
-
-<tr class="row-disagree">
-  <td class="mono">SFG @ KCR</td>
-  <td class="mono num">9.6</td>
-  <td class="mono num">11.1</td>
-  <td class="mono num">11.0</td>
-  <td class="mono num">10.5</td>
-  <td class="mono">over</td>
-  <td class="mono">under</td>
-  <td><span class="pill pill-bad">no</span></td>
-</tr>
-
-<tr class="">
-  <td class="mono">CHW @ TEX</td>
-  <td class="mono num">8.7</td>
-  <td class="mono num">8.2</td>
-  <td class="mono num">8.3</td>
-  <td class="mono num">7.5</td>
-  <td class="mono">over</td>
-  <td class="mono">over</td>
-  <td><span class="pill pill-good">yes</span></td>
-</tr>
-
-<tr class="row-disagree">
-  <td class="mono">DET @ CHC</td>
-  <td class="mono num">8.9</td>
-  <td class="mono num">11.9</td>
-  <td class="mono num">10.9</td>
-  <td class="mono num">11.5</td>
-  <td class="mono">under</td>
-  <td class="mono">over</td>
-  <td><span class="pill pill-bad">no</span></td>
-</tr>
-
-<tr class="">
-  <td class="mono">MIA @ HOU</td>
-  <td class="mono num">9.6</td>
-  <td class="mono num">8.7</td>
-  <td class="mono num">9.3</td>
-  <td class="mono num">8.5</td>
-  <td class="mono">over</td>
-  <td class="mono">over</td>
-  <td><span class="pill pill-good">yes</span></td>
-</tr>
-
-<tr class="">
-  <td class="mono">WSN @ COL</td>
-  <td class="mono num">12.6</td>
-  <td class="mono num">11.2</td>
-  <td class="mono num">12.8</td>
-  <td class="mono num">12.0</td>
-  <td class="mono">over</td>
-  <td class="mono">over</td>
-  <td><span class="pill pill-good">yes</span></td>
-</tr>
-
-<tr class="">
-  <td class="mono">ATH @ ARI</td>
-  <td class="mono num">8.8</td>
-  <td class="mono num">9.4</td>
-  <td class="mono num">11.2</td>
-  <td class="mono num">9.5</td>
-  <td class="mono">over</td>
-  <td class="mono">over</td>
-  <td><span class="pill pill-good">yes</span></td>
-</tr>
-
-<tr class="">
-  <td class="mono">CIN @ SEA</td>
-  <td class="mono num">7.5</td>
-  <td class="mono num">8.0</td>
-  <td class="mono num">7.4</td>
-  <td class="mono num">7.5</td>
-  <td class="mono">over</td>
-  <td class="mono">over</td>
-  <td><span class="pill pill-good">yes</span></td>
-</tr>
-
-</tbody>
-</table></div>
 
 <div class="final-note">Personal learning project: compares model/market/public-sentiment data to actual outcomes over time. No betting units, stake sizing, or recommended plays are included or implied anywhere in this report.</div>
