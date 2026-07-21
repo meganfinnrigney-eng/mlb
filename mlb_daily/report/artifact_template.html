@@ -62,20 +62,26 @@
   .g-row { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 9px; }
   .g-head { font-family: var(--font-display); font-weight: 700; letter-spacing: 0.01em; }
   .g-time { color: var(--muted); font-size: 12.5px; font-weight: 400; font-family: var(--font-body); }
-  .g-score { font-weight: 600; font-variant-numeric: tabular-nums; }
-  .g-score.muted { font-weight: 400; color: var(--muted); font-style: italic; }
+  .muted { font-weight: 400; color: var(--muted); font-style: italic; }
 
-  .icon { display: inline-block; font-size: 14px; line-height: 1; }
-  .conf-strong { color: var(--accent); font-weight: 700; }
-  .conf-fair { color: var(--accent); opacity: 0.55; }
-  .conf-mixed { color: var(--accent); }
-  .conf-tossup { color: var(--muted); }
-  .weather-strong { color: var(--ink); font-weight: 700; }
-  .weather-light { color: var(--muted); font-size: 11px; }
-  .total-flag { font-size: 12.5px; }
+  /* status badges: icon + word together, always legible on their own -
+     color is reserved for the two things that should visually pop
+     (Mixed confidence, Differs-from-market total); everything else stays
+     calm/neutral so routine games don't compete for attention. No emoji
+     glyphs are used in badges - only plain Unicode symbols with reliable
+     text-glyph fallback, to avoid the tofu-box rendering risk emoji can hit. */
+  .badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px;
+    border-radius: 20px; font-size: 12px; font-weight: 600; white-space: nowrap; line-height: 1.4; }
+  .badge-icon { font-size: 12px; line-height: 1; }
+  .badge-confidence { background: var(--bg-alt); color: var(--ink); }
+  .badge-confidence.conf-fair { opacity: 0.7; font-weight: 500; }
+  .badge-confidence.conf-tossup { color: var(--muted); font-weight: 500; }
+  .badge-confidence.conf-mixed { background: var(--accent-tint); color: var(--accent);
+    border: 1px solid var(--accent); font-weight: 700; }
+  .badge-weather { background: var(--bg-alt); color: var(--muted); font-weight: 500; }
+  .badge-flag { background: var(--accent-tint); color: var(--accent); border: 1px solid var(--accent); font-weight: 700; }
 
   .icon-legend { font-size: 11.5px; color: var(--muted); margin: 0 0 16px; }
-  .icon-legend .conf-strong, .icon-legend .conf-fair, .icon-legend .conf-mixed, .icon-legend .conf-tossup { margin-right: 2px; }
 
   .stale-banner { background: var(--accent-tint); border: 1px solid var(--accent); color: var(--accent);
     border-radius: 4px; padding: 10px 14px; font-size: 13px; margin: 0 0 20px; }
@@ -84,18 +90,22 @@
     border-radius: 0 4px 4px 0; padding: 16px 20px; margin-bottom: 22px; }
   .spotlight-box .kicker { font-family: var(--font-display); font-size: 11.5px; font-weight: 700;
     letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
-  .spotlight-box p:last-child { margin-bottom: 0; }
 
   .conviction-box { border: 1px solid var(--ink); border-radius: 4px; padding: 16px 20px; margin-bottom: 22px; }
   .conviction-box .kicker { font-family: var(--font-display); font-size: 11.5px; font-weight: 700;
     letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
-  .conviction-box p:last-child { margin-bottom: 0; }
   .also-note { font-size: 13.5px; color: var(--muted); margin: 0 0 22px; }
 
-  .toss-up-line { margin: 18px 0 0; padding-top: 14px; border-top: 1px solid var(--line); }
-  .toss-up-line .kicker { display: block; font-family: var(--font-display); font-size: 11px; font-weight: 700;
-    letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
-  .toss-up-line p { font-size: 13px; opacity: 0.85; margin-bottom: 6px; }
+  .callout-game + .callout-game { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); }
+  .cg-score { font-weight: 600; font-variant-numeric: tabular-nums; margin: 4px 0 8px; font-size: 15px; }
+  .cg-badges { display: flex; flex-wrap: wrap; gap: 6px; }
+  .cg-note { font-size: 13.5px; color: var(--muted); margin-top: 8px; }
+
+  .tonight-table th.num, .tonight-table td.num { text-align: right; }
+  .tonight-table tbody tr.section-row td { background: var(--bg-alt); font-family: var(--font-display);
+    font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted);
+    border-bottom: 1px solid var(--line); padding: 8px 10px; }
+  .tonight-table tbody tr.section-row:hover { background: var(--bg-alt); }
 
   .divider { border: none; border-top: 1px solid var(--line); margin: 46px 0 8px; }
 
@@ -164,19 +174,26 @@
   .final-note { margin-top: 50px; padding-top: 16px; border-top: 1px solid var(--line); font-size: 12px; color: var(--muted); }
 </style>
 
-{% macro game_line(m) %}
+{% macro score_line(m) %}
+{% if m.prediction_away is not none %}{% if m.prediction_winner and m.prediction_winner != 'tie' %}<strong>{{ m.prediction_winner }}</strong> {% endif %}{{ "%.1f"|format(m.prediction_away) }}–{{ "%.1f"|format(m.prediction_home) }}{% else %}<span class="muted">no prediction</span>{% endif %}
+{% endmacro %}
+
+{% macro badges(m) %}
 {% set p = m.prose %}
-<span class="g-row">
-<span class="g-head">{{ m.away_abbrev }} @ {{ m.home_abbrev }}</span>{% if m.game_time %} <span class="g-time">{{ m.game_time }}</span>{% endif %}
-{% if p %}<span class="icon conf-{{ p.icon_class }}" title="{{ p.label }}">{{ p.icon }}</span>{% endif %}
-{% if m.prediction_away is not none %}
-  <span class="g-score">{% if m.prediction_winner and m.prediction_winner != 'tie' %}{{ m.prediction_winner }} {% endif %}{{ "%.1f"|format(m.prediction_away) }}–{{ "%.1f"|format(m.prediction_home) }}</span>
-{% else %}
-  <span class="g-score muted">no prediction</span>
-{% endif %}
-{% if m.weather_arrow %}<span class="icon weather-{{ m.weather_arrow_class }}" title="Weather {{ m.weather_plain }}">{{ m.weather_arrow }}</span>{% endif %}
-{% if 'a' in m.flag_codes %}<span class="icon total-flag" title="Model total differs notably from the market number">🎯</span>{% endif %}
-</span>
+{% if p %}<span class="badge badge-confidence conf-{{ p.icon_class }}" title="{{ p.label }}"><span class="badge-icon">{{ p.icon }}</span>{{ p.badge }}</span>{% endif %}
+<span class="badge badge-weather" title="Weather {{ m.weather_plain }}"><span class="badge-icon">{{ m.weather_arrow if m.weather_arrow else "—" }}</span>{{ m.weather_badge }}</span>
+{% if 'a' in m.flag_codes %}<span class="badge badge-flag" title="Model total differs notably from the market number">≠ Differs from market</span>{% endif %}
+{% endmacro %}
+
+{% macro game_row(m) %}
+<tr>
+<td style="white-space:nowrap"><span class="g-head">{{ m.away_abbrev }} @ {{ m.home_abbrev }}</span></td>
+<td style="white-space:nowrap">{{ m.game_time or "—" }}</td>
+<td class="num">{{ score_line(m) }}</td>
+<td>{% set p = m.prose %}{% if p %}<span class="badge badge-confidence conf-{{ p.icon_class }}" title="{{ p.label }}"><span class="badge-icon">{{ p.icon }}</span>{{ p.badge }}</span>{% endif %}</td>
+<td><span class="badge badge-weather" title="Weather {{ m.weather_plain }}"><span class="badge-icon">{{ m.weather_arrow if m.weather_arrow else "—" }}</span>{{ m.weather_badge }}</span></td>
+<td>{% if 'a' in m.flag_codes %}<span class="badge badge-flag" title="Model total differs notably from the market number">≠ Differs from market</span>{% endif %}</td>
+</tr>
 {% endmacro %}
 
 <div class="masthead">
@@ -189,13 +206,18 @@
 {% endif %}
 
 <div class="eyebrow"><span class="label">Tonight, in Plain English</span><span class="rule"></span></div>
-<div class="icon-legend"><span class="conf-strong">●</span> strong consensus &nbsp; <span class="conf-fair">◐</span> fairly confident &nbsp; <span class="conf-mixed">⚠</span> mixed signals &nbsp; <span class="conf-tossup">–</span> toss-up &nbsp;|&nbsp; ↑ easier to score &nbsp; ↓ harder to score &nbsp;|&nbsp; 🎯 model total differs from market</div>
 <div class="prose">
 
 {% if r.spotlight_games %}
 <div class="spotlight-box">
   <div class="kicker">Tigers / Mariners</div>
-  {% for m in r.spotlight_games %}<p>{{ game_line(m) }}</p>{% endfor %}
+  {% for m in r.spotlight_games %}
+  <div class="callout-game">
+    <div class="g-row"><span class="g-head">{{ m.away_abbrev }} @ {{ m.home_abbrev }}</span>{% if m.game_time %} <span class="g-time">{{ m.game_time }}</span>{% endif %}</div>
+    <div class="cg-score">{{ score_line(m) }}</div>
+    <div class="cg-badges">{{ badges(m) }}</div>
+  </div>
+  {% endfor %}
 </div>
 {% else %}
 <div class="also-note">Neither the Detroit Tigers nor the Seattle Mariners play today.</div>
@@ -208,18 +230,30 @@
   {% set hc = r.highest_conviction %}
   <div class="conviction-box">
     <div class="kicker">Highest conviction tonight</div>
-    <p>{{ game_line(hc.matchup) }}</p>
-    <p class="also-note" style="margin:2px 0 0">{% if hc.reddit_direction_team %}Reddit chatter leans the same way too. {% endif %}That's about as much agreement across sources as you'll find on tonight's slate.</p>
+    <div class="callout-game">
+      <div class="g-row"><span class="g-head">{{ hc.matchup.away_abbrev }} @ {{ hc.matchup.home_abbrev }}</span>{% if hc.matchup.game_time %} <span class="g-time">{{ hc.matchup.game_time }}</span>{% endif %}</div>
+      <div class="cg-score">{{ score_line(hc.matchup) }}</div>
+      <div class="cg-badges">{{ badges(hc.matchup) }}</div>
+      <div class="cg-note">{% if hc.reddit_direction_team %}Reddit chatter leans the same way too. {% endif %}That's about as much agreement across sources as you'll find on tonight's slate.</div>
+    </div>
   </div>
   {% endif %}
 {% else %}
 <div class="also-note">No game shows full agreement across model, betting money, and Reddit today.</div>
 {% endif %}
 
-{% for m in r.rest_clear_games %}<p>{{ game_line(m) }}</p>{% endfor %}
-
+{% if r.rest_clear_games or r.rest_toss_up_games %}
+<div class="icon-legend">A "Differs from market" badge only appears in the Total column when the model's projected total is notably off from the betting market's number — most games are left blank there.</div>
+<div class="table-wrap"><table class="tonight-table">
+<thead><tr><th>Matchup</th><th>Time</th><th class="num">Predicted Score</th><th>Confidence</th><th>Weather</th><th>Total</th></tr></thead>
+<tbody>
+{% for m in r.rest_clear_games %}{{ game_row(m) }}{% endfor %}
 {% if r.rest_toss_up_games %}
-<div class="toss-up-line"><span class="kicker">Less clear tonight</span>{% for m in r.rest_toss_up_games %}<p>{{ game_line(m) }}</p>{% endfor %}</div>
+<tr class="section-row"><td colspan="6">Less clear tonight</td></tr>
+{% for m in r.rest_toss_up_games %}{{ game_row(m) }}{% endfor %}
+{% endif %}
+</tbody>
+</table></div>
 {% endif %}
 
 </div>

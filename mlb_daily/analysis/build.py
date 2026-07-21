@@ -60,26 +60,31 @@ def _weather_plain(net_pct):
 
 def _weather_arrow(net_pct):
     """Scannable up/down glyph + a size class for the scoring-effect
-    magnitude, for the prose section (separate from _weather_icon, which
-    picks a sky-conditions emoji for the deep-dive weather tiles)."""
+    magnitude, plus a plain-word badge label - for the prose section
+    (separate from _weather_icon, which picks a sky-conditions emoji for
+    the deep-dive weather tiles)."""
     if net_pct is None:
-        return "", ""
+        return "", "", "Neutral"
     if net_pct >= 8:
-        return "↑", "strong"
+        return "↑", "strong", "Easier"
     if net_pct >= 3:
-        return "↑", "light"
+        return "↑", "light", "Easier"
     if net_pct <= -8:
-        return "↓", "strong"
+        return "↓", "strong", "Harder"
     if net_pct <= -3:
-        return "↓", "light"
-    return "", ""
+        return "↓", "light", "Harder"
+    return "", "", "Neutral"
 
 
+# label -> (glyph, css modifier, short badge word). No emoji here on purpose -
+# these are plain Unicode symbols with reliable text-glyph fallback, unlike
+# pictographic emoji (e.g. the old 🎯 target) which can render as a tofu box
+# in the artifact viewer if the emoji font doesn't load.
 _CONFIDENCE_ICONS = {
-    "strong consensus": ("●", "strong"),
-    "fairly confident pick": ("◐", "fair"),
-    "mixed signals": ("⚠", "mixed"),
-    "not much consensus": ("–", "tossup"),
+    "strong consensus": ("●", "strong", "Strong"),
+    "fairly confident pick": ("◐", "fair", "Fairly confident"),
+    "mixed signals": ("⚠", "mixed", "Mixed"),
+    "not much consensus": ("–", "tossup", "Toss-up"),
 }
 
 
@@ -117,6 +122,7 @@ class Matchup:
     weather_notable: bool = False
     weather_arrow: str = ""
     weather_arrow_class: str = ""
+    weather_badge: str = "Neutral"
 
     # set after alignment_rows is computed - {model_direction, split_direction,
     # reddit_direction, agree, confidence_score, confidence_label}, see _alignment_for_game
@@ -330,7 +336,7 @@ def _build_matchups(dr_games, me_games, reddit_result):
             m.weather_icon = _weather_icon(me.conditions)
             m.weather_plain = _weather_plain(me.weather_net_pct)
             m.weather_notable = me.weather_net_pct is not None and abs(me.weather_net_pct) >= 3
-            m.weather_arrow, m.weather_arrow_class = _weather_arrow(me.weather_net_pct)
+            m.weather_arrow, m.weather_arrow_class, m.weather_badge = _weather_arrow(me.weather_net_pct)
 
         for check in ALL_CHECKS:
             flag = check(m)
@@ -436,7 +442,7 @@ def _prose_signals(m):
     agree = len(set(signals)) <= 1 if signals else True
     score = a["confidence_score"] if a else 0.0
     label = _confidence_label(score, agree)
-    icon, icon_class = _CONFIDENCE_ICONS[label]
+    icon, icon_class, badge = _CONFIDENCE_ICONS[label]
 
     return {
         "model_team": model_team,
@@ -448,6 +454,7 @@ def _prose_signals(m):
         "label": label,
         "icon": icon,
         "icon_class": icon_class,
+        "badge": badge,
     }
 
 
