@@ -297,15 +297,17 @@ def _totals_alignment_for_game(m):
 def build_report_data(dr_games, me_games, reddit_result, today_iso, today_display, slate_subtitle):
     matchups = _build_matchups(dr_games, me_games, reddit_result)
 
-    notable_games = [m for m in matchups if m.flags]
-    most_flagged = max(matchups, key=lambda m: len(m.flags), default=None)
-    if most_flagged is not None and not most_flagged.flags:
-        most_flagged = None
+    # most-flagged games first within the notable-games table itself
+    notable_games = sorted((m for m in matchups if m.flags), key=lambda m: len(m.flags), reverse=True)
+    most_flagged = notable_games[0] if notable_games else None
 
-    alignment_rows = [_alignment_for_game(m) for m in matchups]
+    # disagreements (NO) first in both alignment tables, stable within each group
+    alignment_rows = sorted((_alignment_for_game(m) for m in matchups), key=lambda row: row["agree"])
     alignment_disagreements = [row for row in alignment_rows if not row["agree"]]
 
-    totals_rows = [_totals_alignment_for_game(m) for m in matchups if m.flags]
+    totals_rows = sorted(
+        (_totals_alignment_for_game(m) for m in matchups if m.flags), key=lambda row: row["agree"]
+    )
     totals_disagreements = [row for row in totals_rows if not row["agree"]]
 
     spotlight_games = [m for m in matchups if m.away_abbrev in SPOTLIGHT_TEAMS or m.home_abbrev in SPOTLIGHT_TEAMS]

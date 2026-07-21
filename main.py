@@ -17,7 +17,8 @@ from mlb_daily.analysis.build import build_report_data
 from mlb_daily.fetch import dratings, moundedge, reddit, sportsbettingdime
 from mlb_daily.report.render import render_artifact_fragment, render_report
 
-ET = ZoneInfo("America/New_York")
+ET = ZoneInfo("America/New_York")  # MLB slates are organized by US Eastern date
+PT = ZoneInfo("America/Los_Angeles")  # "generated at" is shown in Pacific time
 OUTPUT_DIR = Path(__file__).resolve().parent / "docs"
 
 
@@ -34,7 +35,7 @@ def main():
     now_et = datetime.now(ET)
     today_iso = now_et.strftime("%Y-%m-%d")
     today_display = now_et.strftime("%A, %B %-d, %Y")
-    generated_at = now_et.strftime("%Y-%m-%d %H:%M %Z")
+    generated_at = datetime.now(PT).strftime("%Y-%m-%d %H:%M %Z")
 
     print(f"Building MLB daily analysis for {today_display} ({today_iso})")
 
