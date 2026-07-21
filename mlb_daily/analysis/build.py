@@ -95,6 +95,11 @@ class Matchup:
     # reddit_direction, agree, confidence_score, confidence_label}, see _alignment_for_game
     alignment: object = None
 
+    # set after alignment - prose-section-only signal agreement, consistent
+    # with prediction_winner rather than the table's DRatings-priority
+    # direction; see _prose_signals
+    prose: object = None
+
     flags: list = field(default_factory=list)
 
     @property
@@ -353,13 +358,19 @@ def _alignment_for_game(m):
 
 def _confidence_score(row):
     """How strong the model/betting-money signals are, regardless of whether
-    they agree - used to sort and group games in the prose section (and for
-    the toss-up threshold). A separate, signal-count-weighted score
-    (_conviction_score) is used just for picking the headline game."""
+    they agree - a pure magnitude, reused by both the Alignment Check table's
+    existing logic and the prose section's (separate) signal-agreement logic
+    below. Falls back to MoundEdge's own projected-run gap when DRatings'
+    win probability isn't available for this game."""
     m = row["matchup"]
     model_margin = 0.0
     if m.dratings and m.dratings.away_win_pct is not None:
         model_margin = abs(m.dratings.away_win_pct - m.dratings.home_win_pct)
+    elif m.moundedge and m.moundedge.model_away_runs is not None:
+        # no win-probability number from MoundEdge, so approximate one from
+        # the projected-run gap (roughly ~18 win-probability points per run
+        # of edge in a typical run environment), capped at a realistic max
+        model_margin = min(60.0, abs(m.moundedge.model_away_runs - m.moundedge.model_home_runs) * 18)
 
     split_margin = 0.0
     if m.moundedge and m.moundedge.split_ml_away_money is not None:
@@ -369,19 +380,43 @@ def _confidence_score(row):
 
 
 def _confidence_label(score, agree):
-    if not agree or score < TOSS_UP_THRESHOLD:
+    if not agree:
+        return "mixed signals" if score >= TOSS_UP_THRESHOLD else "not much consensus"
+    if score < TOSS_UP_THRESHOLD:
         return "not much consensus"
     if score >= 40:
         return "strong consensus"
     return "fairly confident pick"
 
 
-def _conviction_score(row):
-    """Headline-selection score: prefers more independent corroborating
-    signals (model + betting money + Reddit all agreeing) over just one
-    strong signal, then breaks ties by _confidence_score."""
-    signals = [d for d in (row["model_direction"], row["split_direction"], row["reddit_direction"]) if d]
-    return len(signals) * 1000 + _confidence_score(row)
+def _prose_signals(m):
+    """The prose section always shows the score from m.prediction_winner
+    (BPP sim > MoundEdge Model > DRatings priority - see _build_matchups),
+    so "does the betting money agree" must be judged against that same
+    winner, not the Alignment Check table's DRatings-priority direction
+    (which is left untouched for that table). When DRatings and BPP
+    disagree on the winner (trigger b), these two notions of "the model's
+    pick" can differ - reusing the table's `agree` here would produce
+    self-contradictory sentences ("betting money disagrees - strong
+    consensus")."""
+    a = m.alignment
+    split_team = a["split_direction_team"] if a else None
+    reddit_team = a["reddit_direction_team"] if a else None
+    model_team = m.prediction_winner
+
+    signals = [t for t in (model_team, split_team, reddit_team) if t and t != "tie"]
+    agree = len(set(signals)) <= 1 if signals else True
+    score = a["confidence_score"] if a else 0.0
+
+    return {
+        "model_team": model_team,
+        "split_team": split_team,
+        "reddit_team": reddit_team,
+        "signal_count": len(signals),
+        "agree": agree,
+        "score": score,
+        "label": _confidence_label(score, agree),
+    }
 
 
 def _totals_alignment_for_game(m):
@@ -430,13 +465,21 @@ def build_report_data(dr_games, me_games, reddit_result, today_iso, today_displa
     for row in alignment_rows:
         row["matchup"].alignment = row
 
+    # prose-only signal agreement, consistent with m.prediction_winner (the
+    # score the prose section actually shows) - see _prose_signals for why
+    # this can't just reuse the Alignment Check table's `agree`
+    for m in matchups:
+        m.prose = _prose_signals(m)
+
     # headline: the game with the strongest agreement across model/money/Reddit,
     # not the game with the most disagreement (that's the flags table below)
-    aligned_rows = [
-        row for row in alignment_rows
-        if row["agree"] and any((row["model_direction"], row["split_direction"], row["reddit_direction"]))
-    ]
-    highest_conviction = max(aligned_rows, key=_conviction_score, default=None)
+    aligned_matchups = [m for m in matchups if m.prose["agree"] and m.prose["signal_count"] > 0]
+    highest_conviction_matchup = max(
+        aligned_matchups,
+        key=lambda m: m.prose["signal_count"] * 1000 + m.prose["score"],
+        default=None,
+    )
+    highest_conviction = highest_conviction_matchup.alignment if highest_conviction_matchup else None
 
     totals_rows = sorted(
         (_totals_alignment_for_game(m) for m in matchups if m.flags), key=lambda row: row["agree"]
@@ -446,8 +489,8 @@ def build_report_data(dr_games, me_games, reddit_result, today_iso, today_displa
     spotlight_games = [m for m in matchups if m.away_abbrev in SPOTLIGHT_TEAMS or m.home_abbrev in SPOTLIGHT_TEAMS]
     spotlight_keys = {(m.away_abbrev, m.home_abbrev) for m in spotlight_games}
     headline_key = (
-        (highest_conviction["matchup"].away_abbrev, highest_conviction["matchup"].home_abbrev)
-        if highest_conviction else None
+        (highest_conviction_matchup.away_abbrev, highest_conviction_matchup.home_abbrev)
+        if highest_conviction_matchup else None
     )
     highest_conviction_is_spotlight = headline_key in spotlight_keys if headline_key else False
 
@@ -455,11 +498,11 @@ def build_report_data(dr_games, me_games, reddit_result, today_iso, today_displa
     # ranked most- to least-confident for the "rest of the slate" prose
     rest_of_slate = sorted(
         (m for m in matchups if (m.away_abbrev, m.home_abbrev) not in spotlight_keys and (m.away_abbrev, m.home_abbrev) != headline_key),
-        key=lambda m: m.alignment["confidence_score"] if m.alignment else 0,
+        key=lambda m: m.prose["score"],
         reverse=True,
     )
-    rest_clear_games = [m for m in rest_of_slate if m.alignment and m.alignment["confidence_score"] >= TOSS_UP_THRESHOLD]
-    rest_toss_up_games = [m for m in rest_of_slate if not (m.alignment and m.alignment["confidence_score"] >= TOSS_UP_THRESHOLD)]
+    rest_clear_games = [m for m in rest_of_slate if m.prose["score"] >= TOSS_UP_THRESHOLD]
+    rest_toss_up_games = [m for m in rest_of_slate if m.prose["score"] < TOSS_UP_THRESHOLD]
 
     return {
         "date_iso": today_iso,

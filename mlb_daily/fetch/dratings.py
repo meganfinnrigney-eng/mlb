@@ -45,18 +45,26 @@ def _clean(text):
     return re.sub(r"\s+", " ", text or "").strip()
 
 
+def _strip_trailing_record(text):
+    """The teams cell nests a '(51-47)' win-loss record span inside the same
+    wrapper as the team name; get_text() pulls both in as one string, so
+    strip any trailing '(NN-NN)' - a no-op for pitcher-name cells, which
+    never have this pattern."""
+    return re.sub(r"\s*\(\d+-\d+\)\s*$", "", text or "").strip()
+
+
 def _parse_two_stacked_spans(cell):
     """Cells like <span>Team A</span><br/><span>Team B</span> -> [textA, textB]."""
     spans = cell.find_all("span", recursive=False) if cell else []
     if len(spans) >= 2:
-        return [_clean(s.get_text()) for s in spans[:2]]
+        return [_strip_trailing_record(_clean(s.get_text())) for s in spans[:2]]
     # fallback: split on <br>
     if cell is None:
         return [None, None]
     parts = [p for p in cell.stripped_strings]
     if len(parts) >= 2:
-        return parts[:2]
-    return [parts[0] if parts else None, None]
+        return [_strip_trailing_record(p) for p in parts[:2]]
+    return [_strip_trailing_record(parts[0]) if parts else None, None]
 
 
 def _first_number(text):

@@ -146,7 +146,7 @@
 </style>
 
 {% macro game_sentence(m) %}
-{% set a = m.alignment %}
+{% set p = m.prose %}
 <span class="g-head">{{ m.away_abbrev }} @ {{ m.home_abbrev }}</span>{% if m.game_time %} <span class="g-time">({{ m.game_time }})</span>{% endif %}:
 {% if m.prediction_away is not none %}
   {% if m.prediction_winner and m.prediction_winner != 'tie' %}
@@ -155,10 +155,13 @@
   {% else %}
     models see this as an even matchup ({{ "%.1f"|format(m.prediction_away) }}–{{ "%.1f"|format(m.prediction_home) }})
   {% endif %}
-  {% if a and a.split_direction_team %}
-    {% if a.split_direction_team == m.prediction_winner %}, and the betting money agrees{% else %}, though the betting money leans the other way{% endif %}
+  {% if p and p.split_team and m.prediction_winner != 'tie' %}
+    {% if p.split_team == m.prediction_winner %}, and the betting money agrees{% else %}, though the betting money leans the other way{% endif %}
+  {% elif p and p.split_team %}
+    {% set money_name = m.away_name if p.split_team == m.away_abbrev else m.home_name %}
+    , though the betting money leans toward {{ money_name }}
   {% endif %}
-  {% if a %} — {{ a.confidence_label }}{% endif %}.
+  {% if p %} — {{ p.label }}{% endif %}.
 {% else %}
   no prediction available for this game yet.
 {% endif %}
