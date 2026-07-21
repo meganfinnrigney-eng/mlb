@@ -286,6 +286,7 @@
 {% else %}
 <div class="card boxed">
 Reddit sentiment isn't available today. Reddit blocks most automated requests outright — even from well-behaved scripts with a proper User-Agent — so this section will often be empty; it's not a bug in this report, and there's no way to make Reddit reliably allow it without switching to their official OAuth API (which this project deliberately avoids).
+<div style="margin-top:8px">Want it filled in? Paste today's daily-thread text into a Claude session on this project and ask for it to be added — no GitHub needed.</div>
 <div style="margin-top:8px; font-size:12px; color:var(--muted)">Technical detail: {{ r.reddit.note if r.reddit else "" }}</div>
 </div>
 {% endif %}
@@ -336,7 +337,7 @@ Reddit sentiment isn't available today. Reddit blocks most automated requests ou
 {% for name, url in r.source_urls.items() %}
 <li><span class="src-name">{{ name }}</span><a href="{{ url }}" target="_blank" rel="noopener">{{ url }}</a></li>
 {% endfor %}
-<li><span class="src-name">Reddit</span>{% if r.reddit and r.reddit.available and r.reddit.thread_url %}<a href="{{ r.reddit.thread_url }}" target="_blank" rel="noopener">{{ r.reddit.thread_url }}</a>{% else %}not fetched today — Reddit blocks most automated requests outright (confirmed: a 403 "blocked due to network policy" response, not just rate-limiting), so this section is often empty. Pasting the daily thread's text into <code>mlb_daily/data/reddit_manual_&lt;date&gt;.txt</code> before the next run will fill it in.{% endif %}</li>
+<li><span class="src-name">Reddit</span>{% if r.reddit and r.reddit.available and r.reddit.thread_url %}<a href="{{ r.reddit.thread_url }}" target="_blank" rel="noopener">{{ r.reddit.thread_url }}</a>{% else %}not fetched today — Reddit blocks most automated requests outright. Paste the daily thread's text into a Claude session on this project to fill it in.{% endif %}</li>
 </ul>
 
 <div class="final-note">Personal learning project: compares model/market/public-sentiment data to actual outcomes over time. No betting units, stake sizing, or recommended plays are included or implied anywhere in this report.</div>

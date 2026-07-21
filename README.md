@@ -57,17 +57,21 @@ at the time), folder: `/docs`.
 
 ## Reddit fallback
 
-Reddit blocks a lot of automated/datacenter traffic outright — this project
-retries with backoff and a descriptive User-Agent, but some days the fetch
-will simply fail. When it does, the report notes it and skips the Reddit
-section rather than crashing. To include Reddit sentiment on a day the
-automated fetch failed, paste the daily thread's text into:
+Reddit blocks a lot of automated/datacenter traffic outright (confirmed: a
+403 "blocked due to network policy" response, even from GitHub's own
+runners, not just rate-limiting) — this project retries with backoff and a
+descriptive User-Agent, but most days the automated fetch will simply fail.
+When it does, the report notes it plainly and skips the Reddit section
+rather than crashing.
 
-```
-mlb_daily/data/reddit_manual_<YYYY-MM-DD>.txt
-```
-
-then re-run the workflow (`workflow_dispatch`) — it's picked up automatically.
+**To include Reddit sentiment on a given day: paste the daily thread's text
+as a message in a Claude session on this project.** No GitHub or git needed
+— just paste the text and ask for it to be picked up; it gets written to
+`mlb_daily/data/reddit_manual_<YYYY-MM-DD>.txt` and the workflow is
+re-run so the report (and the published artifact) reflect it right away.
+(Under the hood: `reddit.py` checks for that file before giving up, so
+committing it there manually - e.g. via GitHub's web UI - and re-running
+`workflow_dispatch` works too, if you'd rather skip the chat step.)
 
 ## Notable-game triggers
 
