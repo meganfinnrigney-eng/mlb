@@ -1,0 +1,40 @@
+name: Fetch Results
+
+# Manual-only check of the prediction tracker's results_log.csv - reads
+# only the official MLB Stats API schedule endpoint (see
+# scripts/fetch_results_once.py), never MoundEdge/DRatings/Kalshi/My
+# model, so it's safe to run at any hour, including overnight.
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install deps
+        run: pip install requests
+
+      - name: Fetch results
+        run: python scripts/fetch_results_once.py
+
+      - name: Commit and push results
+        run: |
+          git config user.name "mlb-daily-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add mlb_daily/data/
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+          else
+            git commit -m "Results tracker: $(date -u +%Y-%m-%d)"
+            git push
+          fi
