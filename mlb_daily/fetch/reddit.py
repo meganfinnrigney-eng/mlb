@@ -1,19 +1,31 @@
 """
-Pulls today's MLB daily discussion thread from Reddit via the unauthenticated
-.json endpoints (no OAuth app registration). Reddit blocks a lot of
-datacenter/cloud traffic outright regardless of rate - if every attempt
-fails, this falls back to a manually-pasted thread text file so the daily
-run degrades gracefully instead of crashing.
+Confirms today's MLB daily discussion thread exists on r/sportsbook and
+captures its original-post text via the subreddit's RSS feed
+(/r/sportsbook/new.rss). This is intentionally NOT full sentiment
+analysis: RSS is submissions-only, so no comment discussion is available
+here - only the OP's own text. Comment-level "recurring picks/reasoning
+across posters" requires either a manually-pasted thread (see below) or
+Reddit's official OAuth API (not yet integrated into this project).
+
+Reddit's unauthenticated .json endpoints (search.json, <permalink>.json)
+started returning blocked/403 responses regardless of request rate or
+User-Agent, so this module no longer uses them. RSS is also rate-limited
+(observed 429s on back-to-back requests within the same minute), so this
+does exactly one GET per run and does not retry - we only need the thread
+once a day, and retrying risks tripping the limit further for no benefit.
 
 Manual fallback: drop the thread's text into
     mlb_daily/data/reddit_manual_<YYYY-MM-DD>.txt
 (one paste per day, plain text) before/after a run - the next run (or a
-manual `workflow_dispatch` re-run) will pick it up automatically.
+manual `workflow_dispatch` re-run) will pick it up automatically. This is
+still the only way to get real comment-level sentiment into the report.
 """
 
+import html
 import re
-import time
+import xml.etree.ElementTree as ET
 from dataclasses import dataclass, field
+from datetime import datetime
 from pathlib import Path
 
 import requests
@@ -22,6 +34,9 @@ from mlb_daily.teams import NICKNAME_TO_ABBREV
 
 USER_AGENT = "mlb-daily-tracker/1.0 (personal project; non-commercial daily digest)"
 HEADERS = {"User-Agent": USER_AGENT}
+
+REDDIT_RSS_URL = "https://www.reddit.com/r/sportsbook/new.rss"
+ATOM_NS = "{http://www.w3.org/2005/Atom}"
 
 MANUAL_FALLBACK_DIR = Path(__file__).resolve().parent.parent / "data"
 
@@ -43,50 +58,54 @@ class RedditMention:
 @dataclass
 class RedditResult:
     available: bool
-    source: str  # 'api', 'manual', or 'unavailable'
+    source: str  # 'rss', 'manual', or 'unavailable'
     thread_title: str = ""
     thread_url: str = ""
     mentions: dict = field(default_factory=dict)  # abbrev -> RedditMention
     note: str = ""
 
 
-def _get_with_retries(url, attempts=3, backoff=2):
-    last_exc = None
-    for i in range(attempts):
-        try:
-            r = requests.get(url, headers=HEADERS, timeout=15)
-            if r.status_code == 200:
-                return r
-            if r.status_code in (429, 500, 502, 503, 504) and i < attempts - 1:
-                time.sleep(backoff * (2**i))
-                continue
-            r.raise_for_status()
-        except Exception as e:
-            last_exc = e
-            if i < attempts - 1:
-                time.sleep(backoff * (2**i))
-    if last_exc:
-        raise last_exc
-    raise RuntimeError(f"failed to fetch {url}")
+def _fetch_rss_once():
+    r = requests.get(REDDIT_RSS_URL, headers=HEADERS, timeout=15)
+    r.raise_for_status()
+    return r.text
 
 
-def _find_daily_thread():
-    for sub, query in [("sportsbook", "MLB daily thread"), ("baseball", "daily discussion")]:
-        url = (
-            f"https://www.reddit.com/r/{sub}/search.json"
-            f"?q={requests.utils.quote(query)}&restrict_sr=1&sort=new&limit=10"
+def _parse_rss_entries(xml_text):
+    root = ET.fromstring(xml_text)
+    entries = []
+    for entry in root.findall(f"{ATOM_NS}entry"):
+        title_el = entry.find(f"{ATOM_NS}title")
+        link_el = entry.find(f"{ATOM_NS}link")
+        content_el = entry.find(f"{ATOM_NS}content")
+        entries.append(
+            {
+                "title": title_el.text if title_el is not None else "",
+                "url": link_el.get("href") if link_el is not None else "",
+                "content": content_el.text if content_el is not None else "",
+            }
         )
-        r = _get_with_retries(url)
-        data = r.json()
-        candidates = [
-            child["data"]
-            for child in data.get("data", {}).get("children", [])
-            if "daily" in child["data"].get("title", "").lower()
-        ]
-        if candidates:
-            best = max(candidates, key=lambda c: c.get("created_utc", 0))
-            return best
+    return entries
+
+
+def _find_todays_mlb_entry(entries, today_iso):
+    dt = datetime.strptime(today_iso, "%Y-%m-%d")
+    date_variants = {
+        f"{dt.month}/{dt.day}/{dt.strftime('%y')}",
+        f"{dt.month}/{dt.day}/{dt.year}",
+    }
+    for entry in entries:
+        title = entry["title"] or ""
+        if "mlb" not in title.lower():
+            continue
+        if any(variant in title for variant in date_variants):
+            return entry
     return None
+
+
+def _clean_op_text(raw_content):
+    unescaped = html.unescape(raw_content or "")
+    return re.sub(r"<[^>]+>", " ", unescaped)
 
 
 def _extract_mentions(text):
@@ -113,30 +132,26 @@ def _load_manual_fallback(today_iso):
 
 def fetch_daily_sentiment(today_iso):
     try:
-        thread = _find_daily_thread()
-        if thread is None:
-            raise ValueError("no daily thread found in recent search results")
+        xml_text = _fetch_rss_once()
+        entries = _parse_rss_entries(xml_text)
+        entry = _find_todays_mlb_entry(entries, today_iso)
+        if entry is None:
+            raise ValueError("no MLB thread dated today found in r/sportsbook's RSS feed")
 
-        permalink = thread["permalink"].rstrip("/")
-        thread_url = f"https://www.reddit.com{permalink}"
-        r = _get_with_retries(f"https://www.reddit.com{permalink}.json")
-        listings = r.json()
-
-        texts = [thread.get("selftext", "")]
-        if len(listings) > 1:
-            for child in listings[1].get("data", {}).get("children", []):
-                body = child.get("data", {}).get("body")
-                if body:
-                    texts.append(body)
-
-        mentions = _extract_mentions("\n".join(texts))
+        op_text = _clean_op_text(entry["content"])
+        mentions = _extract_mentions(op_text)
         return RedditResult(
             available=True,
-            source="api",
-            thread_title=thread.get("title", ""),
-            thread_url=thread_url,
+            source="rss",
+            thread_title=entry["title"],
+            thread_url=entry["url"],
             mentions=mentions,
-            note=f"fetched {len(texts) - 1} comments from the live thread",
+            note=(
+                "fetched via RSS - original post text only, no comment discussion "
+                "(Reddit's .json endpoints are blocked; RSS is submissions-only, "
+                "so this confirms the thread and its OP text, not recurring "
+                "picks/reasoning across commenters)"
+            ),
         )
     except Exception as api_exc:
         manual_text = _load_manual_fallback(today_iso)
@@ -147,13 +162,13 @@ def fetch_daily_sentiment(today_iso):
                 source="manual",
                 thread_title=f"(manually pasted for {today_iso})",
                 mentions=mentions,
-                note="live fetch failed; used manually-pasted thread text",
+                note="live fetch failed; used manually-pasted thread text (includes comments if pasted)",
             )
         return RedditResult(
             available=False,
             source="unavailable",
             note=(
-                f"live fetch failed ({api_exc}) and no manual paste found at "
+                f"live RSS fetch failed ({api_exc}) and no manual paste found at "
                 f"mlb_daily/data/reddit_manual_{today_iso}.txt - to include Reddit "
                 f"sentiment today, paste the daily thread's text into that file and "
                 f"re-run the workflow."

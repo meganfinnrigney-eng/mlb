@@ -639,7 +639,7 @@ Kalshi market data isn't available today - either no markets were found for toda
 <tr><td style="white-space:nowrap">SportsBettingDime</td><td>Public betting splits (% money vs % bets per game). Real numbers are rendered client-side by a JS widget with no public JSON/CSV endpoint, so this report uses MoundEdge's embedded bets%/money% splits instead, which mirror SportsBettingDime's figures.</td></tr>
 <tr><td style="white-space:nowrap">DRatings</td><td>Model projected score per team, win probability, and best available market moneyline/spread/total across tracked sportsbooks.</td></tr>
 <tr><td style="white-space:nowrap">MoundEdge</td><td>BPP sim projected score (separate from its own "Model" projection), weather/park run-environment effect, starting-pitcher splits, hitting/bullpen trend arrows vs season stats, market lines, and embedded betting splits.</td></tr>
-<tr><td style="white-space:nowrap">Reddit</td><td>Today's MLB daily discussion thread, fetched via the unauthenticated .json endpoint. Recurring team mentions and their stated reasoning.</td></tr>
+<tr><td style="white-space:nowrap">Reddit</td><td>Today's MLB daily discussion thread on r/sportsbook, confirmed and its original-post text captured via RSS. Team mentions found in that OP text only — RSS doesn't include comments, so this isn't the recurring picks/reasoning across posters that a full comment thread would show (see the manual-paste option below for that).</td></tr>
 <tr><td style="white-space:nowrap">Kalshi</td><td>Real-money prediction market: implied win probability and a total-runs over/under line, from Kalshi's public market-data API. Shown for reference (Market Probabilities table + probability bars above) and counted toward the Alignment Check's agreement column, but not folded into the confidence score.</td></tr>
 <tr><td style="white-space:nowrap">My model</td><td>A from-scratch projection built directly from raw Baseball Savant/Statcast data (starting pitcher rolling stats, team batting xwOBA) plus a hand-maintained park factor - not aggregated from another site's predictions, unlike DRatings/MoundEdge. Shown in the Model Predictions table for side-by-side comparison only.</td></tr>
 </tbody>
@@ -648,20 +648,23 @@ Kalshi market data isn't available today - either no markets were found for toda
 <div class="eyebrow" id="dd-reddit"><span class="label">Reddit Sentiment</span><span class="rule"></span></div>
 {% if r.reddit and r.reddit.available %}
 <div class="disclaimer-strip">Source: {{ r.reddit.source }}. {{ r.reddit.note }}{% if r.reddit.thread_title %} — thread: "{{ r.reddit.thread_title }}"{% endif %}</div>
+{% if r.reddit.source == "rss" %}
+<div class="disclaimer-strip">Note: RSS only provides the thread's original post, not comments — the mentions below reflect the OP's text alone, not recurring picks/reasoning across posters. For that, paste the thread's text manually (see below).</div>
+{% endif %}
 <div class="table-wrap"><table>
 <thead><tr><th>Team</th><th>Mentions</th><th>Example snippet(s)</th></tr></thead>
 <tbody>
 {% for abbrev, mention in r.reddit.mentions.items() %}
 <tr><td>{{ abbrev }}</td><td class="num">{{ mention.count }}</td><td>{% for s in mention.snippets %}<div class="snippet">"{{ s }}"</div>{% endfor %}</td></tr>
 {% else %}
-<tr><td colspan="3">No team mentions found in the thread.</td></tr>
+<tr><td colspan="3">No team mentions found in the thread's OP text.</td></tr>
 {% endfor %}
 </tbody>
 </table></div>
 {% else %}
 <div class="card boxed">
-Reddit sentiment isn't available today. Reddit blocks most automated requests outright — even from well-behaved scripts with a proper User-Agent — so this section will often be empty; it's not a bug in this report, and there's no way to make Reddit reliably allow it without switching to their official OAuth API (which this project deliberately avoids).
-<div style="margin-top:8px">Want it filled in? Paste today's daily-thread text into a Claude session on this project and ask for it to be added — no GitHub needed.</div>
+Reddit sentiment isn't available today. This report confirms the daily thread and captures its original-post text via RSS (Reddit's .json endpoints are blocked outright, regardless of request rate or User-Agent) — if RSS itself failed or didn't turn up a dated thread today, this section comes up empty. It's not a bug in this report.
+<div style="margin-top:8px">Want it filled in? Paste today's daily-thread text into a Claude session on this project and ask for it to be added — no GitHub needed. That also gets you real comment-level sentiment, which RSS never provides.</div>
 <div style="margin-top:8px; font-size:var(--fs-fine); color:var(--muted)">Technical detail: {{ r.reddit.note if r.reddit else "" }}</div>
 </div>
 {% endif %}
@@ -696,7 +699,7 @@ Reddit sentiment isn't available today. Reddit blocks most automated requests ou
 {% for name, url in r.source_urls.items() %}
 <li><span class="src-name">{{ name }}</span><a href="{{ url }}" target="_blank" rel="noopener">{{ url }}</a></li>
 {% endfor %}
-<li><span class="src-name">Reddit</span>{% if r.reddit and r.reddit.available and r.reddit.thread_url %}<a href="{{ r.reddit.thread_url }}" target="_blank" rel="noopener">{{ r.reddit.thread_url }}</a>{% else %}not fetched today — Reddit blocks most automated requests outright. Paste the daily thread's text into a Claude session on this project to fill it in.{% endif %}</li>
+<li><span class="src-name">Reddit</span>{% if r.reddit and r.reddit.available and r.reddit.thread_url %}<a href="{{ r.reddit.thread_url }}" target="_blank" rel="noopener">{{ r.reddit.thread_url }}</a>{% else %}not fetched today — Reddit's .json endpoints are blocked and RSS didn't turn up a dated thread. Paste the daily thread's text into a Claude session on this project to fill it in.{% endif %}</li>
 </ul>
 
 <div class="final-note">Personal learning project: compares model/market/public-sentiment data to actual outcomes over time. No betting units, stake sizing, or recommended plays are included or implied anywhere in this report.</div>
