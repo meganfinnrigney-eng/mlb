@@ -395,6 +395,34 @@ def probe_final_score_schema():
             print("no Final games found in this date's basic schedule response")
 
 
+def probe_reddit_rss():
+    """Tests Reddit's RSS feed as an alternative to the .json endpoints
+    (which have been getting 403'd) - see mlb_daily/fetch/reddit.py's
+    USER_AGENT/HEADERS, reused as-is here. RSS only ever gives post
+    titles/links, not comment threads, so this just checks: does it work
+    at all, and is there enough in a title to identify the daily MLB
+    thread. Falls back from r/sportsbook to r/baseball if blocked."""
+    from mlb_daily.fetch.reddit import HEADERS
+
+    for label, url in [
+        ("r/sportsbook new.rss", "https://www.reddit.com/r/sportsbook/new.rss"),
+        ("r/sportsbook .rss (hot)", "https://www.reddit.com/r/sportsbook/.rss"),
+        ("r/baseball new.rss (fallback)", "https://www.reddit.com/r/baseball/new.rss"),
+    ]:
+        hr(f"Reddit RSS: {label}")
+        try:
+            r = requests.get(url, headers=HEADERS, timeout=15)
+            print(f"status={r.status_code}  bytes={len(r.content)}  content-type={r.headers.get('content-type')}")
+            if r.status_code == 200:
+                print(r.text[:4000])
+            else:
+                print(f"non-200 body (first 1000 chars):\n{r.text[:1000]}")
+        except Exception as e:
+            print(f"FAILED: {type(e).__name__}: {e}")
+            import traceback
+            traceback.print_exc()
+
+
 def main():
     probe_moundedge()
     try:
@@ -426,6 +454,12 @@ def main():
         probe_final_score_schema()
     except Exception as e:
         hr(f"Final-score schema probe failed: {e}")
+        import traceback
+        traceback.print_exc()
+    try:
+        probe_reddit_rss()
+    except Exception as e:
+        hr(f"Reddit RSS probe failed: {e}")
         import traceback
         traceback.print_exc()
     print("\n\nDONE.")
