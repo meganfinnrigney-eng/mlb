@@ -399,22 +399,44 @@ def probe_reddit_rss():
     """Tests Reddit's RSS feed as an alternative to the .json endpoints
     (which have been getting 403'd) - see mlb_daily/fetch/reddit.py's
     USER_AGENT/HEADERS, reused as-is here. RSS only ever gives post
-    titles/links, not comment threads, so this just checks: does it work
-    at all, and is there enough in a title to identify the daily MLB
-    thread. Falls back from r/sportsbook to r/baseball if blocked."""
+    titles/links (plus, it turns out, each entry's own selftext in
+    <content>), not comment threads, so this checks: does it work at
+    all, is there enough in a title to identify the daily MLB thread,
+    and how much real text is actually in <content>. Falls back from
+    r/sportsbook to r/baseball if blocked. Spaced ~20s apart rather than
+    back-to-back, since an earlier back-to-back run got the first request
+    through (200) and the next two 429'd almost instantly - this checks
+    whether that was genuine blocking or just rapid-fire rate limiting."""
+    import time
+
     from mlb_daily.fetch.reddit import HEADERS
 
-    for label, url in [
-        ("r/sportsbook new.rss", "https://www.reddit.com/r/sportsbook/new.rss"),
-        ("r/sportsbook .rss (hot)", "https://www.reddit.com/r/sportsbook/.rss"),
-        ("r/baseball new.rss (fallback)", "https://www.reddit.com/r/baseball/new.rss"),
-    ]:
+    for i, (label, url) in enumerate(
+        [
+            ("r/sportsbook new.rss", "https://www.reddit.com/r/sportsbook/new.rss"),
+            ("r/sportsbook .rss (hot)", "https://www.reddit.com/r/sportsbook/.rss"),
+            ("r/baseball new.rss (fallback)", "https://www.reddit.com/r/baseball/new.rss"),
+        ]
+    ):
+        if i > 0:
+            time.sleep(20)
         hr(f"Reddit RSS: {label}")
         try:
             r = requests.get(url, headers=HEADERS, timeout=15)
             print(f"status={r.status_code}  bytes={len(r.content)}  content-type={r.headers.get('content-type')}")
             if r.status_code == 200:
-                print(r.text[:4000])
+                titles = re.findall(r"<title>(.*?)</title>", r.text)
+                print(f"entry count (incl. feed title itself): {len(titles)}")
+                print("titles:")
+                for t in titles:
+                    print(f"  {t}")
+                daily_like = [t for t in titles if "daily" in t.lower()]
+                print(f"\ntitles containing 'daily': {daily_like}")
+                # how much real text is in one entry's <content> (not just a link)
+                m = re.search(r"<content type=\"html\">(.*?)</content>", r.text, re.S)
+                if m:
+                    print(f"\nfirst entry's <content> length: {len(m.group(1))} chars (HTML-escaped)")
+                    print(f"first 800 chars: {m.group(1)[:800]}")
             else:
                 print(f"non-200 body (first 1000 chars):\n{r.text[:1000]}")
         except Exception as e:
