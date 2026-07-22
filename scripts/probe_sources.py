@@ -8,13 +8,24 @@ so mlb_daily/fetch/kalshi.py's ticker/polarity parsing can be designed
 against actual payloads instead of guessed from public docs (which is all
 that was available from the dev sandbox - Kalshi's API itself was
 unreachable from there, likely Cloudflare bot-protection on the edge).
+
+Fifth recon pass: DRatings regression check - a user reported the
+existing dratings.py parser (unchanged since an earlier commit) is now
+only returning ~3 of 15 games instead of the full slate. This dumps the
+raw table's row count/content next to what dratings.fetch_today_games()
+actually parses, to tell whether DRatings' own page structure changed or
+something else is going on.
 """
 
 import json
 import re
 import sys
+from pathlib import Path
 
 import requests
+from bs4 import BeautifulSoup
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 BROWSER_HEADERS = {
     "User-Agent": (
@@ -131,9 +142,98 @@ def probe_kalshi():
     print(r.text[:2000])
 
 
+def probe_moundedge_freshness_now():
+    """Direct, minimal check of MoundEdge's real fetch_today_games() output
+    right now - what slate_subtitle date does it show, at this exact
+    UTC/ET timestamp, independent of whatever main.py's own comparison logic
+    decides. Answers "is it actually stale right now" with one clean line."""
+    from datetime import datetime
+    from zoneinfo import ZoneInfo
+
+    from mlb_daily.fetch import moundedge
+
+    hr("MoundEdge: live freshness check right now")
+    now_utc = datetime.now(ZoneInfo("UTC"))
+    now_et = datetime.now(ZoneInfo("America/New_York"))
+    print(f"current time: {now_utc.isoformat()} UTC / {now_et.isoformat()} ET")
+    try:
+        games = moundedge.fetch_today_games()
+        subtitle = games[0].slate_subtitle if games else "(no games returned)"
+        print(f"games returned: {len(games)}")
+        print(f"slate_subtitle: {subtitle!r}")
+        today_et_display = now_et.strftime("%A, %B %-d, %Y")
+        print(f"today (ET) per this exact moment: {today_et_display!r}")
+        print(f"MATCHES today: {today_et_display in subtitle}")
+    except Exception as e:
+        print(f"FAILED: {e}")
+        import traceback
+        traceback.print_exc()
+
+
+def probe_dratings():
+    from mlb_daily.fetch import dratings
+    from mlb_daily.teams import abbrev_from_name
+
+    hr("DRatings: raw table structure vs what fetch_today_games() actually returns")
+    r = get(dratings.URL, headers=dratings.HEADERS)
+    soup = BeautifulSoup(r.text, "html.parser")
+
+    heading = soup.find(lambda tag: tag.name in ("h2", "h3") and "Upcoming Games" in tag.get_text())
+    print(f"'Upcoming Games' heading found: {heading is not None}" + (f" -> {heading.get_text(strip=True)!r}" if heading else ""))
+    table = heading.find_next("table") if heading else soup.find("table")
+    print(f"table found: {table is not None}")
+    if table is None:
+        print("No table at all - DRatings page structure likely changed significantly.")
+        return
+
+    header_cells = [re.sub(r"\s+", " ", th.get_text(' ')).strip() for th in table.select("thead th")]
+    print(f"header cells: {header_cells}")
+
+    rows = table.select("tbody.table-body > tr")
+    print(f"raw <tbody.table-body> rows found: {len(rows)}")
+    if not rows:
+        print("Trying a looser selector: table.select('tbody tr')")
+        rows = table.select("tbody tr")
+        print(f"raw <tbody tr> rows found: {len(rows)}")
+
+    for i, tr in enumerate(rows):
+        cells = tr.find_all("td", recursive=False)
+        teams_text = cells[0].get_text(" ", strip=True) if cells else "NO CELLS"
+        print(f"row {i}: {len(cells)} <td recursive=False> cells | first cell text: {teams_text[:200]!r}")
+
+    hr("DRatings: dratings.fetch_today_games() actual output")
+    try:
+        games = dratings.fetch_today_games()
+        print(f"parsed games: {len(games)}")
+        for g in games:
+            away_ab = abbrev_from_name(g.away_team)
+            home_ab = abbrev_from_name(g.home_team)
+            print(
+                f"  away_team={g.away_team!r} (-> {away_ab}) home_team={g.home_team!r} (-> {home_ab}) "
+                f"away_win_pct={g.away_win_pct} home_win_pct={g.home_win_pct} "
+                f"away_pitcher={g.away_pitcher!r} home_pitcher={g.home_pitcher!r}"
+            )
+    except Exception as e:
+        print(f"FAILED: {e}")
+        import traceback
+        traceback.print_exc()
+
+
 def main():
     probe_moundedge()
+    try:
+        probe_moundedge_freshness_now()
+    except Exception as e:
+        hr(f"MoundEdge freshness probe failed: {e}")
+        import traceback
+        traceback.print_exc()
     probe_sbd_widget()
+    try:
+        probe_dratings()
+    except Exception as e:
+        hr(f"DRatings probe failed: {e}")
+        import traceback
+        traceback.print_exc()
     try:
         probe_kalshi()
     except Exception as e:
