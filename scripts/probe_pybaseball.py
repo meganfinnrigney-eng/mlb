@@ -115,6 +115,45 @@ def probe_fangraphs_pitching():
         traceback.print_exc()
 
 
+def probe_savant_team_leaderboard():
+    """Workaround candidate #1 for the FanGraphs block: Baseball Savant's
+    own custom-leaderboard CSV export, same host as statcast_pitcher (which
+    worked), so it should not hit the same Cloudflare block."""
+    hr("Workaround candidate: Baseball Savant custom leaderboard CSV (team xwOBA)")
+    year = date.today().year
+    url = (
+        f"https://baseballsavant.mlb.com/leaderboard/custom?year={year}&type=team"
+        f"&min=1&selections=xwoba,woba&chart=false&x=xwoba&y=xwoba&r=no"
+        f"&chartType=beeswarm&csv=true"
+    )
+    try:
+        r = requests.get(url, timeout=20)
+        print(f"status={r.status_code}  bytes={len(r.content)}")
+        print(r.text[:2000])
+    except Exception as e:
+        print(f"FAILED: {type(e).__name__}: {e}")
+        traceback.print_exc()
+
+
+def probe_bbref_team_batting():
+    """Workaround candidate #2 for wRC+ specifically (FanGraphs-proprietary,
+    no Savant equivalent): Baseball-Reference via pybaseball, which is a
+    different host/scraper path than FanGraphs."""
+    import pybaseball as pb
+
+    hr("Workaround candidate: Baseball-Reference team_batting_bref (one sample team)")
+    year = date.today().year
+    try:
+        df = pb.team_batting_bref("NYY", year, year)
+        print(f"rows: {len(df)}")
+        print(f"columns ({len(df.columns)}): {list(df.columns)}")
+        print(df.head(5).to_string())
+        print("\nBBREF TEAM BATTING: OK")
+    except Exception as e:
+        print(f"\nBBREF TEAM BATTING BLOCKED/FAILED: {type(e).__name__}: {e}")
+        traceback.print_exc()
+
+
 def probe_park_factors():
     hr("Park factors: checking what pybaseball actually provides")
     import pybaseball as pb
@@ -166,6 +205,18 @@ def main():
         probe_fangraphs_pitching()
     except Exception as e:
         hr(f"FanGraphs pitching_stats probe crashed outright: {e}")
+        traceback.print_exc()
+
+    try:
+        probe_savant_team_leaderboard()
+    except Exception as e:
+        hr(f"Savant team leaderboard probe crashed outright: {e}")
+        traceback.print_exc()
+
+    try:
+        probe_bbref_team_batting()
+    except Exception as e:
+        hr(f"Baseball-Reference probe crashed outright: {e}")
         traceback.print_exc()
 
     probe_park_factors()
