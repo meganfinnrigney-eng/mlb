@@ -365,6 +365,36 @@ def col_lookup(cells, col_index, name):
     return cells[i]
 
 
+def probe_final_score_schema():
+    """Confirms the exact field names MLB Stats API's schedule endpoint
+    uses for a FINISHED game's score/status, so results-fetching code can
+    be written against real data instead of guessed field names. Queries
+    yesterday's date (should be fully final) plus today's (for any early
+    games already done), and prints the raw teams/status JSON."""
+    import json
+    from datetime import date, timedelta
+
+    for d in (date.today() - timedelta(days=1), date.today()):
+        hr(f"Final-score schema check: schedule for {d.isoformat()}")
+        url = f"https://statsapi.mlb.com/api/v1/schedule?sportId=1&date={d.isoformat()}"
+        r = get(url)
+        data = r.json()
+        printed = 0
+        for dd in data.get("dates", []):
+            for g in dd.get("games", []):
+                state = g.get("status", {}).get("abstractGameState")
+                if state == "Final" and printed < 2:
+                    print(json.dumps({
+                        "gamePk": g.get("gamePk"),
+                        "gameNumber": g.get("gameNumber"),
+                        "status": g.get("status"),
+                        "teams": g.get("teams"),
+                    }, indent=2, default=str))
+                    printed += 1
+        if printed == 0:
+            print("no Final games found in this date's basic schedule response")
+
+
 def main():
     probe_moundedge()
     try:
@@ -390,6 +420,12 @@ def main():
         probe_doubleheaders()
     except Exception as e:
         hr(f"Doubleheader probe failed: {e}")
+        import traceback
+        traceback.print_exc()
+    try:
+        probe_final_score_schema()
+    except Exception as e:
+        hr(f"Final-score schema probe failed: {e}")
         import traceback
         traceback.print_exc()
     print("\n\nDONE.")
