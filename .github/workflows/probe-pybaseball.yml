@@ -1,0 +1,22 @@
+name: Probe pybaseball
+
+# One-off / manual reconnaissance workflow, same pattern as probe-sources.yml.
+# Run manually (workflow_dispatch) to dump real Statcast/FanGraphs sample
+# data into the job log, since the dev sandbox used to build this repo
+# can't reach baseballsavant.mlb.com or fangraphs.com directly.
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install deps
+        run: pip install requests pybaseball
+      - name: Probe pybaseball sources
+        run: python scripts/probe_pybaseball.py
