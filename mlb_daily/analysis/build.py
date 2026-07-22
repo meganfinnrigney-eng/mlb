@@ -108,6 +108,7 @@ class Matchup:
 
     dratings: object = None
     moundedge: object = None
+    kalshi: object = None
     reddit_away: object = None
     reddit_home: object = None
 
@@ -125,6 +126,10 @@ class Matchup:
     weather_arrow_class: str = ""
     weather_badge: str = "Neutral"
 
+    # small set of totals-runs ticks for the hero-card sparkline, see
+    # _totals_sparkline - None when fewer than 2 sources have a total
+    totals_spark: object = None
+
     # set after alignment_rows is computed - {model_direction, split_direction,
     # reddit_direction, agree, confidence_score, confidence_label}, see _alignment_for_game
     alignment: object = None
@@ -139,6 +144,34 @@ class Matchup:
     @property
     def flag_codes(self):
         return {f.code for f in self.flags}
+
+
+def _totals_sparkline(m):
+    """Small set of (label, value) totals-runs ticks for the hero-card
+    sparkline, normalized to a 0-100 x-position within this game's own
+    min/max (each game uses its own local scale, not a league-wide one).
+    Returns None when fewer than 2 sources have a total to compare."""
+    dr_total = m.dratings.total_projected_runs if m.dratings else None
+    bpp_total = m.moundedge.bpp_total if m.moundedge else None
+    model_total = m.moundedge.model_total if m.moundedge else None
+    market_total = (m.moundedge.market_total if m.moundedge else None) or (
+        m.dratings.market_total if m.dratings else None
+    )
+
+    candidates = [("DR", dr_total, False), ("BPP", bpp_total, False), ("Mdl", model_total, False), ("Mkt", market_total, True)]
+    points = [(label, v, is_market) for label, v, is_market in candidates if v is not None]
+    if len(points) < 2:
+        return None
+
+    values = [v for _, v, _ in points]
+    lo, hi = min(values), max(values)
+    span = (hi - lo) or 1.0
+    # inset 8-92% rather than 0-100% so an extreme tick's label never gets
+    # clipped by the card edge (its container is centered via translateX(-50%))
+    return [
+        {"label": label, "value": v, "x": round(8 + ((v - lo) / span) * 84, 1), "is_market": is_market}
+        for label, v, is_market in points
+    ]
 
 
 def _match_dratings_to_abbrev(dr_games):
@@ -339,6 +372,8 @@ def _build_matchups(dr_games, me_games, reddit_result):
             m.weather_plain = _weather_plain(me.weather_net_pct)
             m.weather_notable = me.weather_net_pct is not None and abs(me.weather_net_pct) >= 3
             m.weather_arrow, m.weather_arrow_class, m.weather_badge = _weather_arrow(me.weather_net_pct)
+
+        m.totals_spark = _totals_sparkline(m)
 
         for check in ALL_CHECKS:
             flag = check(m)

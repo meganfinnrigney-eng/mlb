@@ -2,8 +2,15 @@
 Third recon pass: MoundEdge per-game field layout (base64 logos stripped so
 the real content is readable) and the SportsBettingDime widget tag/attrs
 that actually carries the betting-split data.
+
+Fourth recon pass: Kalshi's MLB prediction-market data - real market JSON
+so mlb_daily/fetch/kalshi.py's ticker/polarity parsing can be designed
+against actual payloads instead of guessed from public docs (which is all
+that was available from the dev sandbox - Kalshi's API itself was
+unreachable from there, likely Cloudflare bot-protection on the edge).
 """
 
+import json
 import re
 import sys
 
@@ -78,9 +85,61 @@ def probe_sbd_widget():
             print(text[max(0, idx - 200): idx + 400])
 
 
+KALSHI_BASE = "https://external-api.kalshi.com/trade-api/v2"
+
+
+def probe_kalshi():
+    hr("Kalshi: KXMLBGAME (win market) - raw market objects")
+    r = get(f"{KALSHI_BASE}/markets?series_ticker=KXMLBGAME&status=open&limit=10")
+    try:
+        data = r.json()
+    except Exception as e:
+        print(f"failed to parse JSON: {e}")
+        print(r.text[:2000])
+        return
+    markets = data.get("markets", [])
+    print(f"markets returned: {len(markets)}  cursor: {data.get('cursor')!r}")
+    for m in markets[:6]:
+        print(json.dumps(m, indent=2, default=str))
+
+    hr("Kalshi: KXMLBTOTAL (total runs market) - raw market objects")
+    r = get(f"{KALSHI_BASE}/markets?series_ticker=KXMLBTOTAL&status=open&limit=10")
+    try:
+        data = r.json()
+    except Exception as e:
+        print(f"failed to parse JSON: {e}")
+        print(r.text[:2000])
+        return
+    markets = data.get("markets", [])
+    print(f"markets returned: {len(markets)}  cursor: {data.get('cursor')!r}")
+    for m in markets[:6]:
+        print(json.dumps(m, indent=2, default=str))
+
+    # resolves whether a KXMLBGAME event has one market (need polarity
+    # inference from title/subtitle) or two (one per team, no inference needed)
+    hr("Kalshi: KXMLBGAME events with nested markets (1-vs-2-markets-per-game check)")
+    r = get(f"{KALSHI_BASE}/events?series_ticker=KXMLBGAME&status=open&with_nested_markets=true&limit=5")
+    try:
+        data = r.json()
+        print(json.dumps(data, indent=2, default=str)[:6000])
+    except Exception as e:
+        print(f"failed to parse JSON: {e}")
+        print(r.text[:2000])
+
+    hr("Kalshi: KXMLBGAME series metadata (category/tags, sanity check)")
+    r = get(f"{KALSHI_BASE}/series/KXMLBGAME")
+    print(r.text[:2000])
+
+
 def main():
     probe_moundedge()
     probe_sbd_widget()
+    try:
+        probe_kalshi()
+    except Exception as e:
+        hr(f"Kalshi probe failed: {e}")
+        import traceback
+        traceback.print_exc()
     print("\n\nDONE.")
 
 

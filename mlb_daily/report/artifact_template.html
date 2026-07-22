@@ -2,25 +2,46 @@
 <style>
 {{ inline_font_css|safe }}
 
+  /* Palette: "broadcast graphic at a night game" - cool chalk/sage neutrals
+     (not a warm AI-report cream), grass-green and dusk-gold as structural
+     accents, clay/rust kept as the ONE reserved "pay attention" signal
+     color (Mixed confidence, Differs-from-market, Conflict verdict - same
+     rule as before, just extended to any future flagged badge). */
   :root {
-    --bg:#f7f5f0; --bg-alt:#efeae0; --ink:#1a1d1b; --muted:#6b6559;
-    --line:#dcd5c4; --accent:#a8622e; --accent-tint:rgba(168,98,46,0.045);
+    --bg:#eef1ee; --bg-alt:#e2e7e1; --card:#ffffff; --ink:#14201a; --muted:#5b6b60;
+    --line:#d3dcd2; --accent:#a8622e; --accent-tint:rgba(168,98,46,0.045);
+    --accent-2:#2c5e38; --accent-2-tint:rgba(44,94,56,0.08);
+    --accent-3:#b8862b; --accent-3-tint:rgba(184,134,43,0.14);
+    --sky-a:#dce8f2; --sky-b:#eef1ee;
+    --shadow-card: 0 1px 2px rgba(20,32,26,.05), 0 10px 28px -14px rgba(20,32,26,.22);
     --font-display: 'Oswald', 'Arial Narrow', 'Helvetica Neue Condensed', sans-serif;
     --font-body: 'Inter', -apple-system, 'Segoe UI', Roboto, sans-serif;
   }
   @media (prefers-color-scheme: dark) {
     :root {
-      --bg:#15140f; --bg-alt:#1e1c15; --ink:#eeeadf; --muted:#a29c8c;
-      --line:#39352a; --accent:#d99b6c; --accent-tint:rgba(217,155,108,0.07);
+      --bg:#10140f; --bg-alt:#1a1f17; --card:#1c2118; --ink:#e9ede4; --muted:#93a08f;
+      --line:#2e362a; --accent:#d99b6c; --accent-tint:rgba(217,155,108,0.07);
+      --accent-2:#6fae72; --accent-2-tint:rgba(111,174,114,0.10);
+      --accent-3:#d9ad4f; --accent-3-tint:rgba(217,173,79,0.14);
+      --sky-a:#16243a; --sky-b:#1c2118;
+      --shadow-card: 0 1px 2px rgba(0,0,0,.3), 0 10px 28px -14px rgba(0,0,0,.5);
     }
   }
   :root[data-theme="dark"] {
-    --bg:#15140f; --bg-alt:#1e1c15; --ink:#eeeadf; --muted:#a29c8c;
-    --line:#39352a; --accent:#d99b6c; --accent-tint:rgba(217,155,108,0.07);
+    --bg:#10140f; --bg-alt:#1a1f17; --card:#1c2118; --ink:#e9ede4; --muted:#93a08f;
+    --line:#2e362a; --accent:#d99b6c; --accent-tint:rgba(217,155,108,0.07);
+    --accent-2:#6fae72; --accent-2-tint:rgba(111,174,114,0.10);
+    --accent-3:#d9ad4f; --accent-3-tint:rgba(217,173,79,0.14);
+    --sky-a:#16243a; --sky-b:#1c2118;
+    --shadow-card: 0 1px 2px rgba(0,0,0,.3), 0 10px 28px -14px rgba(0,0,0,.5);
   }
   :root[data-theme="light"] {
-    --bg:#f7f5f0; --bg-alt:#efeae0; --ink:#1a1d1b; --muted:#6b6559;
-    --line:#dcd5c4; --accent:#a8622e; --accent-tint:rgba(168,98,46,0.045);
+    --bg:#eef1ee; --bg-alt:#e2e7e1; --card:#ffffff; --ink:#14201a; --muted:#5b6b60;
+    --line:#d3dcd2; --accent:#a8622e; --accent-tint:rgba(168,98,46,0.045);
+    --accent-2:#2c5e38; --accent-2-tint:rgba(44,94,56,0.08);
+    --accent-3:#b8862b; --accent-3-tint:rgba(184,134,43,0.14);
+    --sky-a:#dce8f2; --sky-b:#eef1ee;
+    --shadow-card: 0 1px 2px rgba(20,32,26,.05), 0 10px 28px -14px rgba(20,32,26,.22);
   }
 
   * { box-sizing: border-box; }
@@ -40,13 +61,21 @@
   strong { font-weight: 600; }
 
   /* ---------- masthead ---------- */
+  /* Pale sky-to-chalk gradient band, dark text throughout in light mode -
+     the "safe" version of the reference weather-app's dark hero strip.
+     Dark mode gets the moodier "night game" read for free since --sky-a/b
+     are already a deep navy-to-charcoal pair there. */
+  .hero-band { margin: -26px -20px 28px; padding: 26px 20px 22px;
+    background: linear-gradient(180deg, var(--sky-a), var(--sky-b));
+    border-radius: 0 0 20px 20px; }
   .masthead { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px;
     border-bottom: 3px solid var(--ink); padding-bottom: 14px; margin-bottom: 6px; flex-wrap: wrap; }
   .masthead h1 { margin: 0; font-family: var(--font-display); font-size: 28px; font-weight: 700;
     letter-spacing: 0.01em; text-transform: uppercase; text-wrap: balance; }
   .masthead .meta { text-align: right; color: var(--muted); font-size: 12px; line-height: 1.6; }
   .masthead .meta strong { display: block; color: var(--ink); font-size: 13px; font-weight: 600; }
-  .disclaimer-strip { color: var(--muted); font-size: 12.5px; margin: 8px 0 30px; }
+  .disclaimer-strip { color: var(--muted); font-size: 12.5px; margin: 8px 0 0; }
+  .hero-band .disclaimer-strip:last-child { margin-bottom: 0; }
 
   /* ---------- section labels ---------- */
   .eyebrow { margin: 36px 0 14px; }
@@ -84,22 +113,66 @@
   .icon-legend { font-size: 11.5px; color: var(--muted); margin: 0 0 16px; }
 
   .stale-banner { background: var(--accent-tint); border: 1px solid var(--accent); color: var(--accent);
-    border-radius: 4px; padding: 10px 14px; font-size: 13px; margin: 0 0 20px; }
+    border-radius: 4px; padding: 10px 14px; font-size: 13px; margin: 14px 0 0; }
+  .hero-band .stale-banner:last-child { margin-bottom: 0; }
 
-  .spotlight-box { background: var(--accent-tint); border-left: 3px solid var(--accent);
-    border-radius: 0 4px 4px 0; padding: 16px 20px; margin-bottom: 22px; }
-  .spotlight-box .kicker { font-family: var(--font-display); font-size: 11.5px; font-weight: 700;
-    letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
-
-  .conviction-box { border: 1px solid var(--ink); border-radius: 4px; padding: 16px 20px; margin-bottom: 22px; }
-  .conviction-box .kicker { font-family: var(--font-display); font-size: 11.5px; font-weight: 700;
-    letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+  /* Hero cards: elevated surface, rounded, soft shadow - the "broadcast
+     graphic" card language. Left-rule color is the only difference between
+     the two (grass for the Tigers/Mariners spotlight, gold for Highest
+     Conviction) - both are structural accents, not "pay attention" signals,
+     so they stay distinct from --accent (clay), which is reserved for
+     Mixed/Conflict/Differs-from-market. */
+  .hero-card { background: var(--card); border-radius: 16px; box-shadow: var(--shadow-card);
+    padding: 18px 22px; margin-bottom: 22px; border-left: 4px solid var(--accent-2); }
+  .hero-card.conviction { border-left-color: var(--accent-3); }
+  .hero-card .kicker { font-family: var(--font-display); font-size: 11.5px; font-weight: 700;
+    letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
   .also-note { font-size: 13.5px; color: var(--muted); margin: 0 0 22px; }
 
-  .callout-game + .callout-game { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); }
-  .cg-score { font-weight: 600; font-variant-numeric: tabular-nums; margin: 4px 0 8px; font-size: 15px; }
-  .cg-badges { display: flex; flex-wrap: wrap; gap: 6px; }
-  .cg-note { font-size: 13.5px; color: var(--muted); margin-top: 8px; }
+  .callout-game + .callout-game { margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--line); }
+  .cg-score { font-family: var(--font-display); font-weight: 700; font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em; margin: 6px 0 4px; font-size: 40px; line-height: 1.1; }
+  .cg-score strong { font-weight: 700; }
+  .cg-pct { font-family: var(--font-body); font-size: 13px; font-weight: 600; color: var(--muted);
+    margin: 0 0 10px; }
+  .cg-badges { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  .cg-note { font-size: 13.5px; color: var(--muted); margin-top: 10px; }
+
+  /* Sparkline: totals-runs ticks (DRatings/BPP/Model/Market) on one line,
+     each positioned by its precomputed 0-100 x (see _totals_sparkline in
+     build.py) - plain positioned divs rather than an SVG viewBox, so it
+     stays pixel-accurate at any card width with no scaling math to get wrong. */
+  .spark { position: relative; height: 30px; margin: 14px 6px 4px; }
+  .spark::before { content: ""; position: absolute; left: 0; right: 0; top: 8px; height: 2px; background: var(--line); }
+  .spark-tick { position: absolute; top: 8px; transform: translate(-50%, -50%);
+    display: flex; flex-direction: column; align-items: center; }
+  .spark-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent-2); border: 2px solid var(--card); }
+  .spark-tick.is-market .spark-dot { background: var(--ink); width: 9px; height: 9px; }
+  .spark-label { font-family: var(--font-body); font-size: 9px; font-weight: 600; color: var(--muted);
+    margin-top: 4px; white-space: nowrap; }
+
+  /* Probability bars: Kalshi's real-money market odds, in the same visual
+     language as the reference weather-app's bracket list - grass fill for
+     ordinary rows, gold fill + bold label for whichever side the market
+     currently favors. Reused compact in hero cards and (smaller, "sm") in
+     the deep-dive Market Probabilities table. */
+  .prob-bar-list { margin-top: 12px; }
+  .prob-bar-kicker { font-family: var(--font-display); font-size: 10.5px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin-bottom: 6px; }
+  .prob-row { display: flex; align-items: center; gap: 8px; margin: 4px 0; font-size: 12.5px; }
+  .prob-label { flex: 0 0 auto; min-width: 90px; max-width: 160px; overflow: hidden; text-overflow: ellipsis;
+    white-space: nowrap; color: var(--ink); }
+  .prob-row.is-top .prob-label { font-weight: 700; }
+  .prob-bar-track { flex: 1 1 auto; height: 8px; background: var(--bg-alt); border-radius: 6px; overflow: hidden; }
+  .prob-bar-track.sm { height: 6px; }
+  .prob-bar-fill { display: block; height: 100%; background: var(--accent-2); border-radius: 6px; }
+  .prob-row.is-top .prob-bar-fill { background: var(--accent-3); }
+  .prob-pct { flex: 0 0 auto; width: 34px; text-align: right; font-variant-numeric: tabular-nums;
+    font-weight: 600; color: var(--muted); }
+  .prob-row.is-top .prob-pct { color: var(--ink); }
+  .cell-bar-row { display: flex; align-items: center; gap: 6px; font-size: 11.5px; margin: 3px 0; min-width: 140px; }
+  .cell-bar-row .cell-bar-label { flex: 0 0 26px; font-weight: 600; color: var(--muted); }
+  .cell-bar-row .cell-bar-pct { flex: 0 0 30px; text-align: right; font-variant-numeric: tabular-nums; color: var(--muted); }
 
   .tonight-table th.num, .tonight-table td.num { text-align: right; }
   .tonight-table tbody tr.section-row td { background: var(--bg-alt); font-family: var(--font-display);
@@ -117,21 +190,32 @@
     color: var(--muted); font-size: 12.5px; letter-spacing: normal; margin-left: 8px; }
 
   .jump-nav { display: flex; flex-wrap: wrap; gap: 6px 0; margin: 10px 0 6px; padding: 12px 14px;
-    background: var(--bg-alt); border-radius: 5px; font-size: 12.5px; }
+    background: var(--card); border-radius: 10px; box-shadow: var(--shadow-card); font-size: 12.5px; }
   .jump-nav a { color: var(--ink); text-decoration: none; padding: 2px 10px; border-right: 1px solid var(--line); }
   .jump-nav a:last-child { border-right: none; }
   .jump-nav a:hover { color: var(--accent); }
 
   .card { padding: 2px 0 4px; font-size: 13.5px; }
-  .card.boxed { background: var(--bg-alt); border: 1px solid var(--line); border-radius: 3px; padding: 14px 16px; }
+  .card.boxed { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px;
+    box-shadow: var(--shadow-card); }
 
-  .table-wrap { overflow-x: auto; margin: 4px 0 8px; }
+  /* Dense data tables stay tables (a 15-row card grid doesn't scan the way
+     a table does) - just get a rounded elevated "panel" chrome and zebra
+     striping so they read as part of the same card-based system as the
+     hero cards above, rather than looking like a leftover plain-HTML table. */
+  .table-wrap { overflow-x: auto; margin: 4px 0 8px; background: var(--card); border-radius: 12px;
+    box-shadow: var(--shadow-card); }
   table { border-collapse: collapse; width: 100%; font-size: 13.2px; }
   th, td { padding: 9px 10px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--line); }
   thead th { font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em;
-    color: var(--muted); border-bottom: 1px solid var(--ink); white-space: nowrap; }
-  tbody tr:hover { background: var(--bg-alt); }
-  tbody tr:last-child td { border-bottom: 1px solid var(--line); }
+    color: var(--muted); background: var(--bg-alt); border-bottom: 1px solid var(--line); white-space: nowrap; }
+  thead th:first-child { border-top-left-radius: 12px; }
+  thead th:last-child { border-top-right-radius: 12px; }
+  tbody tr:nth-child(even) { background: var(--bg-alt); }
+  tbody tr:hover { background: var(--accent-2-tint); }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:last-child td:first-child { border-bottom-left-radius: 12px; }
+  tbody tr:last-child td:last-child { border-bottom-right-radius: 12px; }
 
   /* the ONE accent color: flag trigger labels, "Conflict" verdicts, and the
      Tigers/Mariners border/tint above - nowhere else */
@@ -149,7 +233,7 @@
   .no-prediction { color: var(--muted); font-style: italic; font-size: 13px; }
 
   .weather-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin: 10px 0 8px; }
-  .weather-tile { border: 1px solid var(--line); border-radius: 5px; padding: 12px 13px; }
+  .weather-tile { background: var(--card); border-radius: 10px; box-shadow: var(--shadow-card); padding: 12px 13px; }
   .weather-tile .wt-matchup { font-family: var(--font-display); font-weight: 700; font-size: 13px; margin-bottom: 6px; }
   .weather-tile .wt-main { display: flex; align-items: baseline; gap: 8px; }
   .weather-tile .wt-icon { font-size: 22px; line-height: 1; }
@@ -178,6 +262,48 @@
 {% if m.prediction_away is not none %}{% if m.prediction_winner_name %}<strong>{{ m.prediction_winner_name }}</strong> {% endif %}{{ "%.1f"|format(m.prediction_away) }}–{{ "%.1f"|format(m.prediction_home) }}{% else %}<span class="muted">no prediction</span>{% endif %}
 {% endmacro %}
 
+{% macro hero_pct(m) %}
+{% if m.dratings and m.dratings.away_win_pct is not none and m.dratings.home_win_pct is not none %}
+{% set fav_pct = m.dratings.away_win_pct if m.dratings.away_win_pct > m.dratings.home_win_pct else m.dratings.home_win_pct %}
+{% set fav_name = m.away_name if m.dratings.away_win_pct > m.dratings.home_win_pct else m.home_name %}
+<div class="cg-pct">{{ fav_pct }}% DRatings win probability ({{ fav_name }})</div>
+{% endif %}
+{% endmacro %}
+
+{% macro prob_bar(label, pct, is_top) %}
+<div class="prob-row{% if is_top %} is-top{% endif %}">
+  <span class="prob-label">{{ label }}</span>
+  <span class="prob-bar-track"><span class="prob-bar-fill" style="width:{{ pct }}%"></span></span>
+  <span class="prob-pct">{{ "%.0f"|format(pct) }}%</span>
+</div>
+{% endmacro %}
+
+{% macro kalshi_bars(m) %}
+{% if m.kalshi and m.kalshi.away_win_pct is not none and m.kalshi.home_win_pct is not none %}
+<div class="prob-bar-list">
+  <div class="prob-bar-kicker">Kalshi win market</div>
+  {{ prob_bar(m.away_name, m.kalshi.away_win_pct, m.kalshi.away_win_pct >= m.kalshi.home_win_pct) }}
+  {{ prob_bar(m.home_name, m.kalshi.home_win_pct, m.kalshi.home_win_pct > m.kalshi.away_win_pct) }}
+</div>
+{% endif %}
+{% if m.kalshi and m.kalshi.total_line is not none and m.kalshi.over_pct is not none %}
+{% set under_pct = 100 - m.kalshi.over_pct %}
+<div class="prob-bar-list">
+  <div class="prob-bar-kicker">Kalshi total: {{ "%.1f"|format(m.kalshi.total_line) }} runs</div>
+  {{ prob_bar("Over " ~ ("%.1f"|format(m.kalshi.total_line)), m.kalshi.over_pct, m.kalshi.over_pct >= under_pct) }}
+  {{ prob_bar("Under " ~ ("%.1f"|format(m.kalshi.total_line)), under_pct, under_pct > m.kalshi.over_pct) }}
+</div>
+{% endif %}
+{% endmacro %}
+
+{% macro sparkline(m) %}
+{% if m.totals_spark %}
+<div class="spark" title="Projected total runs: {% for pt in m.totals_spark %}{{ pt.label }} {{ "%.1f"|format(pt.value) }}{% if not loop.last %}, {% endif %}{% endfor %}">
+{% for pt in m.totals_spark %}<div class="spark-tick{% if pt.is_market %} is-market{% endif %}" style="left:{{ pt.x }}%"><span class="spark-dot"></span><span class="spark-label">{{ pt.label }}</span></div>{% endfor %}
+</div>
+{% endif %}
+{% endmacro %}
+
 {% macro badges(m) %}
 {% set p = m.prose %}
 {% if p %}<span class="badge badge-confidence conf-{{ p.icon_class }}" title="{{ p.label }}"><span class="badge-icon">{{ p.icon }}</span>{{ p.badge }}</span>{% endif %}
@@ -196,6 +322,7 @@
 </tr>
 {% endmacro %}
 
+<div class="hero-band">
 <div class="masthead">
   <h1>MLB Daily Analysis</h1>
   <div class="meta">{{ r.date_display }}<strong>Published {{ generated_at }}</strong></div>
@@ -204,17 +331,21 @@
 {% if r.source_date_stale %}
 <div class="stale-banner">⚠ MoundEdge's page is still dated "{{ r.slate_subtitle }}" as of this run, not today ({{ r.date_display }}) — its daily update may not have posted yet. The games below could still be repeating last night's slate. If so, check back later today for a refresh.</div>
 {% endif %}
+</div>
 
 <div class="eyebrow"><span class="label">Tonight, in Plain English</span><span class="rule"></span></div>
 <div class="prose">
 
 {% if r.spotlight_games %}
-<div class="spotlight-box">
+<div class="hero-card">
   <div class="kicker">Tigers / Mariners</div>
   {% for m in r.spotlight_games %}
   <div class="callout-game">
     <div class="g-row"><span class="g-head">{{ m.away_name }} @ {{ m.home_name }}</span>{% if m.game_time %} <span class="g-time">{{ m.game_time }}</span>{% endif %}</div>
     <div class="cg-score">{{ score_line(m) }}</div>
+    {{ hero_pct(m) }}
+    {{ sparkline(m) }}
+    {{ kalshi_bars(m) }}
     <div class="cg-badges">{{ badges(m) }}</div>
   </div>
   {% endfor %}
@@ -228,11 +359,14 @@
   <div class="also-note">Today's highest-conviction game is also a Tigers/Mariners game — see above.</div>
   {% else %}
   {% set hc = r.highest_conviction %}
-  <div class="conviction-box">
+  <div class="hero-card conviction">
     <div class="kicker">Highest conviction tonight</div>
     <div class="callout-game">
       <div class="g-row"><span class="g-head">{{ hc.matchup.away_name }} @ {{ hc.matchup.home_name }}</span>{% if hc.matchup.game_time %} <span class="g-time">{{ hc.matchup.game_time }}</span>{% endif %}</div>
       <div class="cg-score">{{ score_line(hc.matchup) }}</div>
+      {{ hero_pct(hc.matchup) }}
+      {{ sparkline(hc.matchup) }}
+      {{ kalshi_bars(hc.matchup) }}
       <div class="cg-badges">{{ badges(hc.matchup) }}</div>
       <div class="cg-note">{% if hc.reddit_direction_team %}Reddit chatter leans the same way too. {% endif %}That's about as much agreement across sources as you'll find on tonight's slate.</div>
     </div>
@@ -269,6 +403,7 @@
   <a href="#dd-flags">Flags</a>
   <a href="#dd-alignment">Alignment</a>
   <a href="#dd-totals">Totals</a>
+  <a href="#dd-kalshi">Market Probabilities</a>
   <a href="#dd-predictions">Predictions</a>
   <a href="#dd-sources-summary">Source summary</a>
   <a href="#dd-reddit">Reddit</a>
@@ -355,6 +490,31 @@
 {% endfor %}
 </tbody>
 </table></div>
+
+<div class="eyebrow" id="dd-kalshi"><span class="label">Market Probabilities</span><span class="sub">Kalshi's real-money prediction market - win odds and total-runs line, display only (not folded into the confidence scoring above)</span><span class="rule"></span></div>
+{% set kalshi_games = r.games | selectattr('kalshi') | list %}
+{% if kalshi_games %}
+<div class="table-wrap"><table>
+<thead><tr><th>Matchup</th><th>Win market</th><th class="num">Total line</th><th>Over / Under</th></tr></thead>
+<tbody>
+{% for m in kalshi_games %}
+<tr>
+  <td style="font-weight:600; white-space:nowrap">{{ m.away_abbrev }} @ {{ m.home_abbrev }}</td>
+  <td>{% if m.kalshi.away_win_pct is not none and m.kalshi.home_win_pct is not none %}
+    <div class="cell-bar-row"><span class="cell-bar-label">{{ m.away_abbrev }}</span><span class="prob-bar-track sm"><span class="prob-bar-fill" style="width:{{ m.kalshi.away_win_pct }}%"></span></span><span class="cell-bar-pct">{{ "%.0f"|format(m.kalshi.away_win_pct) }}%</span></div>
+    <div class="cell-bar-row"><span class="cell-bar-label">{{ m.home_abbrev }}</span><span class="prob-bar-track sm"><span class="prob-bar-fill" style="width:{{ m.kalshi.home_win_pct }}%"></span></span><span class="cell-bar-pct">{{ "%.0f"|format(m.kalshi.home_win_pct) }}%</span></div>
+  {% else %}—{% endif %}</td>
+  <td class="num">{{ "%.1f"|format(m.kalshi.total_line) if m.kalshi.total_line is not none else "—" }}</td>
+  <td>{% if m.kalshi.over_pct is not none %}Over {{ "%.0f"|format(m.kalshi.over_pct) }}% / Under {{ "%.0f"|format(100 - m.kalshi.over_pct) }}%{% else %}—{% endif %}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table></div>
+{% else %}
+<div class="card boxed">
+Kalshi market data isn't available today - either no markets were found for today's slate, or the fetch failed. This isn't folded into the confidence scoring above, so its absence doesn't affect anything else in this report.
+</div>
+{% endif %}
 
 <div class="eyebrow" id="dd-predictions"><span class="label">Model Predictions</span><span class="rule"></span></div>
 <div class="disclaimer-strip">Three independent projections per game — they won't always agree with each other, which is normal and part of the point of tracking them.</div>
