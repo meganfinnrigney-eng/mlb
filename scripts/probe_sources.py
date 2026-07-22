@@ -15,6 +15,17 @@ only returning ~3 of 15 games instead of the full slate. This dumps the
 raw table's row count/content next to what dratings.fetch_today_games()
 actually parses, to tell whether DRatings' own page structure changed or
 something else is going on.
+
+Sixth recon pass: doubleheader disambiguation. build.py's _build_matchups
+keys every source by plain (away_abbrev, home_abbrev) - for a
+doubleheader (two real games between the same two teams same day) that
+silently collapses both games into one Matchup, and the tracker's logged
+row for that pair turns out to be a mix of fields from two different
+physical games. This dumps each source's RAW per-game fields for today's
+doubleheader team pairs (found via the official MLB Stats API schedule,
+which has an authoritative gameNumber/gameDate per game) so the actual
+fix can match each source's row to the correct game by real data rather
+than assumption.
 """
 
 import json
@@ -219,6 +230,88 @@ def probe_dratings():
         traceback.print_exc()
 
 
+def probe_doubleheaders():
+    from datetime import date
+
+    from mlb_daily.fetch import dratings, kalshi, moundedge
+    from mlb_daily.teams import abbrev_from_name
+
+    today_iso = date.today().isoformat()
+
+    hr("Doubleheader recon: official schedule (MLB Stats API) - find today's doubleheader pairs")
+    url = f"https://statsapi.mlb.com/api/v1/schedule?sportId=1&date={today_iso}&hydrate=probablePitcher,team"
+    r = get(url)
+    data = r.json()
+    from collections import defaultdict
+    by_pair = defaultdict(list)
+    for d in data.get("dates", []):
+        for g in d.get("games", []):
+            away = g["teams"]["away"]["team"].get("name", "")
+            home = g["teams"]["home"]["team"].get("name", "")
+            away_ab, home_ab = abbrev_from_name(away), abbrev_from_name(home)
+            by_pair[(away_ab, home_ab)].append(
+                {
+                    "gamePk": g.get("gamePk"),
+                    "gameNumber": g.get("gameNumber"),
+                    "gameDate_utc": g.get("gameDate"),
+                    "doubleHeader": g.get("doubleHeader"),
+                    "status": g.get("status", {}).get("detailedState"),
+                }
+            )
+    dh_pairs = {k: v for k, v in by_pair.items() if len(v) > 1}
+    print(f"doubleheader pairs found today: {list(dh_pairs.keys())}")
+    for pair, games in dh_pairs.items():
+        print(f"\n{pair}:")
+        for g in games:
+            print(f"  {g}")
+
+    if not dh_pairs:
+        print("\nNo doubleheaders today - can't do a live comparison. Re-run on a day with one.")
+        return
+
+    hr("Doubleheader recon: DRatings raw rows for those team pairs (incl. raw Time cell)")
+    r = get(dratings.URL, headers=dratings.HEADERS)
+    soup = BeautifulSoup(r.text, "html.parser")
+    heading = soup.find(lambda tag: tag.name in ("h2", "h3") and "Upcoming Games" in tag.get_text())
+    table = heading.find_next("table") if heading else soup.find("table")
+    header_cells = [re.sub(r"\s+", " ", th.get_text(' ')).strip() for th in table.select("thead th")]
+    col_index = {name.lower(): i for i, name in enumerate(header_cells)}
+    time_idx = col_index.get("time")
+    for tr in table.select("tbody.table-body > tr"):
+        cells = tr.find_all("td", recursive=False)
+        if not cells:
+            continue
+        teams_cell = dratings._parse_two_stacked_spans(col_lookup(cells, col_index, "teams"))
+        away_ab, home_ab = abbrev_from_name(teams_cell[0]), abbrev_from_name(teams_cell[1])
+        if (away_ab, home_ab) in dh_pairs:
+            time_text = cells[time_idx].get_text(" ", strip=True) if time_idx is not None and time_idx < len(cells) else "(no time column)"
+            print(f"  {teams_cell} | raw Time cell: {time_text!r}")
+
+    hr("Doubleheader recon: MoundEdge raw game_time text for those team pairs")
+    me_games = moundedge.fetch_today_games()
+    for g in me_games:
+        if (g.away.abbrev, g.home.abbrev) in dh_pairs:
+            print(f"  {g.away.abbrev}@{g.home.abbrev} | game_time: {g.game_time!r} | venue: {g.venue!r}")
+
+    hr("Doubleheader recon: Kalshi raw tickers for those team pairs (win + total markets)")
+    for series in (kalshi.GAME_SERIES, kalshi.TOTAL_SERIES):
+        for market in kalshi._get_all_markets(series):
+            event_ticker = market.get("event_ticker", "")
+            away_ab, home_ab = kalshi._teams_from_event_ticker(event_ticker)
+            if (away_ab, home_ab) in dh_pairs:
+                print(
+                    f"  series={series} ticker={market.get('ticker')!r} event_ticker={event_ticker!r} "
+                    f"occurrence_datetime={market.get('occurrence_datetime')!r} strike_type={market.get('strike_type')!r}"
+                )
+
+
+def col_lookup(cells, col_index, name):
+    i = col_index.get(name)
+    if i is None or i >= len(cells):
+        return None
+    return cells[i]
+
+
 def main():
     probe_moundedge()
     try:
@@ -238,6 +331,12 @@ def main():
         probe_kalshi()
     except Exception as e:
         hr(f"Kalshi probe failed: {e}")
+        import traceback
+        traceback.print_exc()
+    try:
+        probe_doubleheaders()
+    except Exception as e:
+        hr(f"Doubleheader probe failed: {e}")
         import traceback
         traceback.print_exc()
     print("\n\nDONE.")
