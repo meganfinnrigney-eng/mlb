@@ -154,6 +154,47 @@ def probe_bbref_team_batting():
         traceback.print_exc()
 
 
+def probe_league_wide_statcast_pull():
+    """Verifies a full-league (all games, all batters) Statcast pull over a
+    rolling window is fast enough to build team-level xwOBA aggregates
+    directly from raw pitch-level data - this turned out to be a cleaner
+    path than guessing at a Savant team-leaderboard URL, and matches the
+    "raw stats, not someone else's aggregation" goal better anyway."""
+    import time
+
+    import pybaseball as pb
+
+    hr("Full-league Statcast pull (15-day window) - team xwOBA aggregation feasibility")
+    end = date.today()
+    start = end - timedelta(days=15)
+    t0 = time.time()
+    df = pb.statcast(str(start), str(end))
+    elapsed = time.time() - t0
+    print(f"elapsed: {elapsed:.1f}s, rows: {len(df)}")
+    if len(df) == 0:
+        print("No rows returned - can't test aggregation.")
+        return
+
+    cols = ["home_team", "away_team", "inning_topbot", "woba_value", "woba_denom", "estimated_woba_using_speedangle"]
+    present = [c for c in cols if c in df.columns]
+    print(f"relevant columns present: {present}")
+
+    # batting team = away_team when inning_topbot == 'Top' (visitors bat top of
+    # inning), home_team when 'Bot' - standard Statcast convention
+    df = df.dropna(subset=["woba_denom"])
+    df = df[df["woba_denom"] > 0]
+    df["batting_team"] = df.apply(lambda r: r["away_team"] if r["inning_topbot"] == "Top" else r["home_team"], axis=1)
+    df["xwoba_component"] = df["estimated_woba_using_speedangle"].fillna(df["woba_value"])
+
+    team_agg = df.groupby("batting_team").apply(
+        lambda g: (g["xwoba_component"] * g["woba_denom"]).sum() / g["woba_denom"].sum()
+    )
+    print(f"\nteam-level xwOBA aggregate ({len(team_agg)} teams):")
+    print(team_agg.sort_values(ascending=False).to_string())
+    league_avg = (df["xwoba_component"] * df["woba_denom"]).sum() / df["woba_denom"].sum()
+    print(f"\nleague average xwOBA over this window: {league_avg:.3f}")
+
+
 def probe_park_factors():
     hr("Park factors: checking what pybaseball actually provides")
     import pybaseball as pb
@@ -217,6 +258,12 @@ def main():
         probe_bbref_team_batting()
     except Exception as e:
         hr(f"Baseball-Reference probe crashed outright: {e}")
+        traceback.print_exc()
+
+    try:
+        probe_league_wide_statcast_pull()
+    except Exception as e:
+        hr(f"League-wide Statcast pull probe crashed outright: {e}")
         traceback.print_exc()
 
     probe_park_factors()
