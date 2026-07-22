@@ -178,14 +178,24 @@ def _section_div(game_div, emoji_text_fragment):
 
 def _parse_game(game_div):
     game_id = game_div.get("id", "")
-    m = re.match(r"g-([A-Z]+)-([A-Z]+)", game_id)
+    # doubleheader nightcap cards use id="g-AWAY-HOME-2" (a numeric suffix
+    # to keep the id unique on the page) - this is a more reliable game
+    # number signal than the "DH Game N" text span below, since it's
+    # structural rather than free text. A stricter regex here used to
+    # reject "-2"-suffixed ids outright as "not a real matchup card" (see
+    # fetch_today_games' id filter, same bug, fixed alongside this), which
+    # silently dropped every doubleheader's second game entirely.
+    m = re.match(r"g-([A-Z]+)-([A-Z]+)(?:-(\d+))?$", game_id)
     away_abbrev, home_abbrev = (m.group(1), m.group(2)) if m else (None, None)
+    id_game_number = int(m.group(3)) if m and m.group(3) else None
 
     sides = game_div.select(".mh > .side")
     away = _parse_side(sides[0]) if len(sides) > 0 else TeamSide(abbrev=away_abbrev or "")
     home = _parse_side(sides[1]) if len(sides) > 1 else TeamSide(abbrev=home_abbrev or "")
 
     game = MoundEdgeGame(away=away, home=home)
+    if id_game_number is not None:
+        game.game_number = id_game_number
 
     gmeta = game_div.select_one(".gmeta")
     if gmeta is not None:
@@ -193,10 +203,13 @@ def _parse_game(game_div):
         # doubleheader cards insert a "DH Game N" span before the real time,
         # which would otherwise get misread as game_time (and shift the
         # actual time into the venue field) - split it off first so the
-        # rest of the parsing is identical to a normal single game.
+        # rest of the parsing is identical to a normal single game. Only
+        # falls back to this text for game_number when the id itself
+        # didn't already give a reliable one.
         dh_match = re.match(r"DH\s*Game\s*(\d+)", spans[0], re.I) if spans else None
         if dh_match:
-            game.game_number = int(dh_match.group(1))
+            if id_game_number is None:
+                game.game_number = int(dh_match.group(1))
             spans = spans[1:]
         if spans:
             game.game_time = spans[0]
@@ -323,7 +336,10 @@ def fetch_today_games(timeout=20):
     games = []
     for game_div in soup.select("div.game"):
         game_id = game_div.get("id", "")
-        if not re.match(r"g-[A-Z]+-[A-Z]+$", game_id):
+        # doubleheader nightcaps are "g-AWAY-HOME-2" - this used to be
+        # rejected as "not a real matchup card", silently dropping every
+        # doubleheader's second game (see _parse_game's game_number comment).
+        if not re.match(r"g-[A-Z]+-[A-Z]+(-\d+)?$", game_id):
             continue  # not a real matchup card (malformed/placeholder id)
         try:
             game = _parse_game(game_div)
