@@ -287,7 +287,7 @@
 </div>
 {% endif %}
 {% if m.kalshi and m.kalshi.total_line is not none and m.kalshi.over_pct is not none %}
-{% set under_pct = 100 - m.kalshi.over_pct %}
+{% set under_pct = (100 - m.kalshi.over_pct) | round(1) %}
 <div class="prob-bar-list">
   <div class="prob-bar-kicker">Kalshi total: {{ "%.1f"|format(m.kalshi.total_line) }} runs</div>
   {{ prob_bar("Over " ~ ("%.1f"|format(m.kalshi.total_line)), m.kalshi.over_pct, m.kalshi.over_pct >= under_pct) }}

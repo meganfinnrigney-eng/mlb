@@ -127,9 +127,9 @@ def _mid_price_pct(market):
     last_price_dollars, then None if nothing usable."""
     bid, ask = _dollars(market.get("yes_bid_dollars")), _dollars(market.get("yes_ask_dollars"))
     if bid is not None and ask is not None and (bid or ask):
-        return (bid + ask) / 2 * 100
+        return round((bid + ask) / 2 * 100, 1)
     last = _dollars(market.get("last_price_dollars"))
-    return last * 100 if last is not None else None
+    return round(last * 100, 1) if last is not None else None
 
 
 def _is_today(market, today_iso):
