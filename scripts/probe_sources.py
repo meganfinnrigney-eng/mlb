@@ -304,6 +304,56 @@ def probe_doubleheaders():
                     f"occurrence_datetime={market.get('occurrence_datetime')!r} strike_type={market.get('strike_type')!r}"
                 )
 
+    hr("Doubleheader recon: raw MoundEdge HTML - how many <div class=\"game\" id=\"g-X-Y\"> cards actually exist per pair")
+    r = get("https://moundedge.github.io/MLB-Summaries/")
+    raw_html = r.text
+    for away_ab, home_ab in dh_pairs:
+        ids_found = re.findall(rf'id="(g-{away_ab}-{home_ab}[^"]*)"', raw_html)
+        print(f"  {away_ab}@{home_ab}: {len(ids_found)} card id(s) found in raw HTML: {ids_found}")
+
+    hr("Doubleheader recon: full probable-pitcher data for BOTH games of each pair (MLB Stats API)")
+    for pair, sched_games in dh_pairs.items():
+        away_ab, home_ab = pair
+        for sched in sched_games:
+            game_pk = sched["gamePk"]
+            gr = get(f"https://statsapi.mlb.com/api/v1/schedule?gamePk={game_pk}&hydrate=probablePitcher,team")
+            gdata = gr.json()
+            for d in gdata.get("dates", []):
+                for g in d.get("games", []):
+                    away_p = g["teams"]["away"].get("probablePitcher", {})
+                    home_p = g["teams"]["home"].get("probablePitcher", {})
+                    print(
+                        f"  {away_ab}@{home_ab} gameNumber={g.get('gameNumber')} gamePk={game_pk} "
+                        f"status={g.get('status', {}).get('detailedState')!r} "
+                        f"away_pitcher={away_p.get('fullName')!r}(id={away_p.get('id')}) "
+                        f"home_pitcher={home_p.get('fullName')!r}(id={home_p.get('id')})"
+                    )
+
+    hr("Doubleheader recon: try fetching Statcast rolling stats directly for each G2 home pitcher")
+    import mlb_daily.fetch.mymodel as mymodel
+    for pair, sched_games in dh_pairs.items():
+        away_ab, home_ab = pair
+        g2 = next((s for s in sched_games if s["gameNumber"] == 2), None)
+        if not g2:
+            continue
+        gr = get(f"https://statsapi.mlb.com/api/v1/schedule?gamePk={g2['gamePk']}&hydrate=probablePitcher,team")
+        gdata = gr.json()
+        for d in gdata.get("dates", []):
+            for g in d.get("games", []):
+                home_p = g["teams"]["home"].get("probablePitcher", {})
+                pid, pname = home_p.get("id"), home_p.get("fullName", "")
+                print(f"  {away_ab}@{home_ab} G2 home pitcher: {pname!r} (id={pid})")
+                if pid is None:
+                    print("    -> pid is None: probable pitcher not yet announced by MLB Stats API for this game")
+                    continue
+                try:
+                    stats = mymodel.fetch_pitcher_rolling_stats(pid, pname)
+                    print(f"    -> stats: {stats}")
+                except Exception as e:
+                    print(f"    -> fetch_pitcher_rolling_stats FAILED: {type(e).__name__}: {e}")
+                    import traceback
+                    traceback.print_exc()
+
 
 def col_lookup(cells, col_index, name):
     i = col_index.get(name)
