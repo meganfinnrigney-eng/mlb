@@ -17,6 +17,7 @@ from mlb_daily.analysis.build import build_report_data
 from mlb_daily.fetch import dratings, kalshi, moundedge, mymodel, reddit, sportsbettingdime
 from mlb_daily.report import fonts
 from mlb_daily.report.render import render_artifact_fragment, render_report
+from mlb_daily.tracker.log_predictions import log_todays_predictions
 
 ET = ZoneInfo("America/New_York")  # MLB slates are organized by US Eastern date
 PT = ZoneInfo("America/Los_Angeles")  # "generated at" is shown in Pacific time
@@ -90,6 +91,15 @@ def main():
     report_data["source_date_stale"] = source_date_stale
     if source_date_stale:
         print(f"[warn] MoundEdge slate subtitle doesn't mention today ({today_display}): {slate_subtitle!r}")
+
+    # Paper-trading accuracy tracker: logs each source's pick + Kalshi's price
+    # for scoring later - a historical record only, never an order/trade.
+    try:
+        logged_rows = log_todays_predictions(report_data["games"], today_iso)
+        print(f"Prediction tracker: logged {len(logged_rows)} games for {today_iso}")
+    except Exception as e:
+        print(f"[warn] Prediction tracker logging failed: {e}", file=sys.stderr)
+        traceback.print_exc(file=sys.stderr)
 
     inline_font_css = _fetch_safe("Google Fonts (Oswald/Inter)", _inline_font_css, "")
     if inline_font_css:

@@ -39,6 +39,9 @@ jobs:
           if [ -f mlb_daily/report/inline_fonts.cache.css ]; then
             git add mlb_daily/report/inline_fonts.cache.css
           fi
+          if [ -f mlb_daily/data/predictions_log.csv ]; then
+            git add mlb_daily/data/predictions_log.csv
+          fi
           if git diff --cached --quiet; then
             echo "No changes to commit."
           else
