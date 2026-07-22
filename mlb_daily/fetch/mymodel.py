@@ -50,7 +50,6 @@ from mlb_daily.park_factors import park_factor as _park_factor
 from mlb_daily.teams import ABBREV_TO_FULL_NAME, NICKNAME_TO_ABBREV, abbrev_from_name
 
 TEAM_XWOBA_WINDOW_DAYS = 15  # "recent" team-batting window
-PITCHER_SEASON_START_MONTH_DAY = (3, 1)  # safely before any real MLB game
 
 HEADERS = {
     "User-Agent": "mlb-daily-tracker/1.0 (personal project; non-commercial daily digest)",
@@ -72,12 +71,14 @@ class PitcherRollingStats:
     pitcher_name: str
     velocity_15d: float | None = None
     velocity_30d: float | None = None
-    velocity_season: float | None = None
     whiff_pct_15d: float | None = None
     whiff_pct_30d: float | None = None
-    whiff_pct_season: float | None = None
     xwoba_allowed_15d: float | None = None
     xwoba_allowed_30d: float | None = None
+    # from statcast_pitcher_expected_stats (one lightweight league-wide
+    # pull, not a full-season pitch-level pull per pitcher - see
+    # fetch_season_xwoba_allowed_lookup) - None if the pitcher isn't
+    # qualified/listed there yet
     xwoba_allowed_season: float | None = None
     pitches_30d: int = 0
 
@@ -191,20 +192,24 @@ def fetch_pitcher_rolling_stats(pitcher_id, pitcher_name, today=None, timeout=No
     today = today or date.today()
     stats = PitcherRollingStats(pitcher_id=pitcher_id, pitcher_name=pitcher_name)
 
-    season_start = date(today.year, *PITCHER_SEASON_START_MONTH_DAY)
-    df = pb.statcast_pitcher(str(season_start), str(today), pitcher_id)
+    # only pull a 30-day pitch-level window, not the full season - an
+    # earlier version pulled March-1-to-today per pitcher for a "season"
+    # bucket and that alone (x ~20-30 starters in one daily run) blew past
+    # 9 minutes before being cancelled. Season xwOBA-allowed instead comes
+    # from fetch_season_xwoba_allowed_lookup(), one lightweight pull for
+    # every qualified pitcher at once.
+    start = today - timedelta(days=30)
+    df = pb.statcast_pitcher(str(start), str(today), pitcher_id)
     if df is None or len(df) == 0:
         return stats
 
     df = df.copy()
     df["game_date"] = pd.to_datetime(df["game_date"])
     cutoff_15 = pd.Timestamp(today - timedelta(days=15))
-    cutoff_30 = pd.Timestamp(today - timedelta(days=30))
 
     windows = {
         "15d": df[df["game_date"] >= cutoff_15],
-        "30d": df[df["game_date"] >= cutoff_30],
-        "season": df,
+        "30d": df,
     }
     for label, sub in windows.items():
         velo, whiff, xwoba = _window_stats(sub)
@@ -213,6 +218,19 @@ def fetch_pitcher_rolling_stats(pitcher_id, pitcher_name, today=None, timeout=No
         setattr(stats, f"xwoba_allowed_{label}", xwoba)
     stats.pitches_30d = len(windows["30d"])
     return stats
+
+
+def fetch_season_xwoba_allowed_lookup(today=None):
+    """One lightweight league-wide pull covering every qualified pitcher's
+    season xwOBA-allowed (Statcast's own `est_woba`), instead of a
+    full-season pitch-level pull per starter. Returns {pitcher_id: xwoba}."""
+    import pybaseball as pb
+
+    today = today or date.today()
+    df = pb.statcast_pitcher_expected_stats(today.year, minPA=1)
+    if df is None or len(df) == 0:
+        return {}
+    return dict(zip(df["player_id"], df["est_woba"]))
 
 
 def fetch_team_xwoba(today=None, window_days=TEAM_XWOBA_WINDOW_DAYS):
@@ -265,6 +283,10 @@ def fetch_today_games(today_iso, today=None):
 
     team_xwoba, league_xwoba = fetch_team_xwoba(today)
     league_avg_runs = _fetch_league_avg_runs_per_team_game(today)
+    try:
+        season_xwoba_lookup = fetch_season_xwoba_allowed_lookup(today)
+    except Exception:
+        season_xwoba_lookup = {}
 
     pitcher_cache = {}
 
@@ -273,7 +295,9 @@ def fetch_today_games(today_iso, today=None):
             return None
         if pid not in pitcher_cache:
             try:
-                pitcher_cache[pid] = fetch_pitcher_rolling_stats(pid, name, today)
+                stats = fetch_pitcher_rolling_stats(pid, name, today)
+                stats.xwoba_allowed_season = season_xwoba_lookup.get(pid)
+                pitcher_cache[pid] = stats
             except Exception:
                 pitcher_cache[pid] = None
         return pitcher_cache[pid]
