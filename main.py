@@ -18,6 +18,7 @@ from mlb_daily.fetch import dratings, kalshi, moundedge, mymodel, reddit, schedu
 from mlb_daily.report import fonts
 from mlb_daily.report.render import render_artifact_fragment, render_report
 from mlb_daily.tracker.log_predictions import log_todays_predictions
+from mlb_daily.tracker.log_results import fetch_and_log_results
 
 ET = ZoneInfo("America/New_York")  # MLB slates are organized by US Eastern date
 PT = ZoneInfo("America/Los_Angeles")  # "generated at" is shown in Pacific time
@@ -106,6 +107,16 @@ def main():
         print(f"Prediction tracker: logged {len(logged_rows)} games for {today_iso}")
     except Exception as e:
         print(f"[warn] Prediction tracker logging failed: {e}", file=sys.stderr)
+        traceback.print_exc(file=sys.stderr)
+
+    # checks every previously-logged prediction that isn't already recorded
+    # as final, and records any that have finished since the last run -
+    # historical scoring only, same no-trading guarantee as the logger above.
+    try:
+        newly_final = fetch_and_log_results()
+        print(f"Results tracker: {len(newly_final)} game(s) newly recorded as final")
+    except Exception as e:
+        print(f"[warn] Results tracker fetch failed: {e}", file=sys.stderr)
         traceback.print_exc(file=sys.stderr)
 
     inline_font_css = _fetch_safe("Google Fonts (Oswald/Inter)", _inline_font_css, "")
