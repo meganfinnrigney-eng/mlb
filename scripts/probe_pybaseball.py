@@ -195,6 +195,22 @@ def probe_league_wide_statcast_pull():
     print(f"\nleague average xwOBA over this window: {league_avg:.3f}")
 
 
+def probe_pitcher_expected_stats():
+    """Checks the exact column names of statcast_pitcher_expected_stats -
+    a single lightweight leaderboard pull for ALL qualified pitchers'
+    season xwOBA-allowed, to replace pulling full-season pitch-level data
+    per pitcher (which turned out to be much too slow for ~20-30 starters
+    in one daily run - a real pull timed out past 9 minutes)."""
+    import pybaseball as pb
+
+    hr("statcast_pitcher_expected_stats - column names + sample rows (season xwOBA-allowed lookup)")
+    year = date.today().year
+    df = pb.statcast_pitcher_expected_stats(year, minPA=1)
+    print(f"rows: {len(df)}")
+    print(f"columns ({len(df.columns)}): {list(df.columns)}")
+    print(df.head(5).to_string())
+
+
 def probe_park_factors():
     hr("Park factors: checking what pybaseball actually provides")
     import pybaseball as pb
@@ -264,6 +280,12 @@ def main():
         probe_league_wide_statcast_pull()
     except Exception as e:
         hr(f"League-wide Statcast pull probe crashed outright: {e}")
+        traceback.print_exc()
+
+    try:
+        probe_pitcher_expected_stats()
+    except Exception as e:
+        hr(f"statcast_pitcher_expected_stats probe crashed outright: {e}")
         traceback.print_exc()
 
     probe_park_factors()
