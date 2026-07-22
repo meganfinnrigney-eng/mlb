@@ -16,9 +16,24 @@
     --accent-2:#2c5e38; --accent-2-tint:rgba(44,94,56,0.08);
     --accent-3:#b8862b; --accent-3-tint:rgba(184,134,43,0.14);
     --sky-a:#dce8f2; --sky-b:#eef1ee;
+    /* Conviction Board panel tones - two distinct NEUTRAL tones (steel-blue
+       for moneyline, warm bronze for totals) so the two lists read as
+       separate panels at a glance. Deliberately not team colors. */
+    --panel-money:#3b6178; --panel-money-tint:rgba(59,97,120,0.08);
+    --panel-totals:#8a5f2e; --panel-totals-tint:rgba(138,95,46,0.09);
     --shadow-card: 0 1px 2px rgba(20,32,26,.05), 0 10px 28px -14px rgba(20,32,26,.22);
     --font-display: 'Oswald', 'Arial Narrow', 'Helvetica Neue Condensed', sans-serif;
     --font-body: 'Inter', -apple-system, 'Segoe UI', Roboto, sans-serif;
+    /* Type scale - established once here, applied consistently rather than
+       ad hoc per-section sizing. Two deliberate exceptions stay outside
+       this scale: large hero-stat numbers (.cg-score, .wt-temp) and the
+       sparkline's micro tick labels (.spark-label), both of which are
+       chart/stat elements rather than text content. */
+    --fs-title: 28px;   /* page title */
+    --fs-section: 18px; /* section headers (eyebrows, deep-dive summary) */
+    --fs-name: 16px;    /* game/team names */
+    --fs-body: 14px;    /* body/detail text */
+    --fs-fine: 12px;    /* fine print (labels, captions, table chrome) */
   }
   @media (prefers-color-scheme: dark) {
     :root {
@@ -27,6 +42,8 @@
       --accent-2:#6fae72; --accent-2-tint:rgba(111,174,114,0.10);
       --accent-3:#d9ad4f; --accent-3-tint:rgba(217,173,79,0.14);
       --sky-a:#16243a; --sky-b:#1c2118;
+      --panel-money:#7fa8c4; --panel-money-tint:rgba(127,168,196,0.10);
+      --panel-totals:#c99a55; --panel-totals-tint:rgba(201,154,85,0.12);
       --shadow-card: 0 1px 2px rgba(0,0,0,.3), 0 10px 28px -14px rgba(0,0,0,.5);
     }
   }
@@ -36,6 +53,8 @@
     --accent-2:#6fae72; --accent-2-tint:rgba(111,174,114,0.10);
     --accent-3:#d9ad4f; --accent-3-tint:rgba(217,173,79,0.14);
     --sky-a:#16243a; --sky-b:#1c2118;
+    --panel-money:#7fa8c4; --panel-money-tint:rgba(127,168,196,0.10);
+    --panel-totals:#c99a55; --panel-totals-tint:rgba(201,154,85,0.12);
     --shadow-card: 0 1px 2px rgba(0,0,0,.3), 0 10px 28px -14px rgba(0,0,0,.5);
   }
   :root[data-theme="light"] {
@@ -44,7 +63,16 @@
     --accent-2:#2c5e38; --accent-2-tint:rgba(44,94,56,0.08);
     --accent-3:#b8862b; --accent-3-tint:rgba(184,134,43,0.14);
     --sky-a:#dce8f2; --sky-b:#eef1ee;
+    --panel-money:#3b6178; --panel-money-tint:rgba(59,97,120,0.08);
+    --panel-totals:#8a5f2e; --panel-totals-tint:rgba(138,95,46,0.09);
     --shadow-card: 0 1px 2px rgba(20,32,26,.05), 0 10px 28px -14px rgba(20,32,26,.22);
+  }
+  /* Tigers/Mariners real team colors - ONLY ever used as a thin left
+     border + tiny accent dot on that team's own game card, never as a
+     background or dominant fill. */
+  :root {
+    --det-navy:#0C2340; --det-orange:#FA4616;
+    --sea-navy:#0C2C56; --sea-teal:#005C5C;
   }
 
   * { box-sizing: border-box; }
@@ -53,7 +81,7 @@
     color: var(--ink);
     font-family: var(--font-body);
     max-width: 880px; margin: 0 auto; padding: 26px 20px 80px;
-    line-height: 1.55; font-size: 15px;
+    line-height: 1.55; font-size: var(--fs-body);
     animation: fade-in 0.4s ease-out both;
   }
   @keyframes fade-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
@@ -73,27 +101,27 @@
     border-radius: 0 0 20px 20px; }
   .masthead { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px;
     border-bottom: 3px solid var(--ink); padding-bottom: 14px; margin-bottom: 6px; flex-wrap: wrap; }
-  .masthead h1 { margin: 0; font-family: var(--font-display); font-size: 28px; font-weight: 700;
+  .masthead h1 { margin: 0; font-family: var(--font-display); font-size: var(--fs-title); font-weight: 700;
     letter-spacing: 0.01em; text-transform: uppercase; text-wrap: balance; }
-  .masthead .meta { text-align: right; color: var(--muted); font-size: 12px; line-height: 1.6; }
-  .masthead .meta strong { display: block; color: var(--ink); font-size: 13px; font-weight: 600; }
-  .disclaimer-strip { color: var(--muted); font-size: 12.5px; margin: 8px 0 0; }
+  .masthead .meta { text-align: right; color: var(--muted); font-size: var(--fs-fine); line-height: 1.6; }
+  .masthead .meta strong { display: block; color: var(--ink); font-size: var(--fs-fine); font-weight: 600; }
+  .disclaimer-strip { color: var(--muted); font-size: var(--fs-fine); margin: 8px 0 0; }
   .hero-band .disclaimer-strip:last-child { margin-bottom: 0; }
 
   /* ---------- section labels ---------- */
   .eyebrow { margin: 36px 0 14px; }
-  .eyebrow .label { font-family: var(--font-display); font-size: 20px; font-weight: 700;
+  .eyebrow .label { font-family: var(--font-display); font-size: var(--fs-section); font-weight: 700;
     letter-spacing: 0.01em; text-transform: uppercase; color: var(--ink); }
-  .eyebrow .sub { display: block; color: var(--muted); font-size: 12.5px; font-family: var(--font-body);
+  .eyebrow .sub { display: block; color: var(--muted); font-size: var(--fs-fine); font-family: var(--font-body);
     font-weight: 400; margin-top: 2px; }
   .eyebrow .rule { display: block; height: 1px; background: var(--ink); margin-top: 8px; opacity: 0.7; }
-  .deep-dive .eyebrow .label { font-size: 15px; }
+  .deep-dive .eyebrow .label { font-size: var(--fs-section); }
 
   /* ---------- prose (Tonight in Plain English) ---------- */
-  .prose p { margin: 0 0 10px; font-size: 15px; }
+  .prose p { margin: 0 0 10px; font-size: var(--fs-body); }
   .g-row { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 9px; }
-  .g-head { font-family: var(--font-display); font-weight: 700; letter-spacing: 0.01em; }
-  .g-time { color: var(--muted); font-size: 12.5px; font-weight: 400; font-family: var(--font-body); }
+  .g-head { font-family: var(--font-display); font-weight: 700; letter-spacing: 0.01em; font-size: var(--fs-name); }
+  .g-time { color: var(--muted); font-size: var(--fs-fine); font-weight: 400; font-family: var(--font-body); }
   .muted { font-weight: 400; color: var(--muted); font-style: italic; }
 
   /* status badges: icon + word together, always legible on their own -
@@ -103,8 +131,8 @@
      glyphs are used in badges - only plain Unicode symbols with reliable
      text-glyph fallback, to avoid the tofu-box rendering risk emoji can hit. */
   .badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px;
-    border-radius: 20px; font-size: 12px; font-weight: 600; white-space: nowrap; line-height: 1.4; }
-  .badge-icon { font-size: 12px; line-height: 1; }
+    border-radius: 20px; font-size: var(--fs-fine); font-weight: 600; white-space: nowrap; line-height: 1.4; }
+  .badge-icon { font-size: var(--fs-fine); line-height: 1; }
   .badge-confidence { background: var(--bg-alt); color: var(--ink); }
   .badge-confidence.conf-fair { opacity: 0.7; font-weight: 500; }
   .badge-confidence.conf-tossup { color: var(--muted); font-weight: 500; }
@@ -113,10 +141,10 @@
   .badge-weather { background: var(--bg-alt); color: var(--muted); font-weight: 500; }
   .badge-flag { background: var(--accent-tint); color: var(--accent); border: 1px solid var(--accent); font-weight: 700; }
 
-  .icon-legend { font-size: 11.5px; color: var(--muted); margin: 0 0 16px; }
+  .icon-legend { font-size: var(--fs-fine); color: var(--muted); margin: 0 0 16px; }
 
   .stale-banner { background: var(--accent-tint); border: 1px solid var(--accent); color: var(--accent);
-    border-radius: 4px; padding: 10px 14px; font-size: 13px; margin: 14px 0 0; }
+    border-radius: 4px; padding: 10px 14px; font-size: var(--fs-body); margin: 14px 0 0; }
   .hero-band .stale-banner:last-child { margin-bottom: 0; }
 
   /* Hero cards: elevated surface, rounded, soft shadow - the "broadcast
@@ -128,36 +156,55 @@
   .hero-card { background: var(--card); border-radius: 16px; box-shadow: var(--shadow-card);
     padding: 18px 22px; margin-bottom: 22px; border-left: 4px solid var(--accent-2); }
   .hero-card.conviction { border-left-color: var(--accent-3); }
-  .hero-card .kicker { font-family: var(--font-display); font-size: 11.5px; font-weight: 700;
+  .hero-card .kicker { font-family: var(--font-display); font-size: var(--fs-fine); font-weight: 700;
     letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
-  .also-note { font-size: 13.5px; color: var(--muted); margin: 0 0 22px; }
+  .also-note { font-size: var(--fs-body); color: var(--muted); margin: 0 0 22px; }
 
+  .callout-game { padding-left: 12px; border-left: 3px solid transparent; }
   .callout-game + .callout-game { margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--line); }
+  /* Tigers/Mariners real team colors - thin left border only, per team,
+     never a background or dominant fill (see :root vars above). */
+  .callout-game.team-det { border-left-color: var(--det-navy); }
+  .callout-game.team-sea { border-left-color: var(--sea-navy); }
+  .callout-game .team-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 6px; }
+  .callout-game.team-det .team-dot { background: var(--det-orange); }
+  .callout-game.team-sea .team-dot { background: var(--sea-teal); }
   .cg-score { font-family: var(--font-display); font-weight: 700; font-variant-numeric: tabular-nums;
-    letter-spacing: -0.01em; margin: 6px 0 4px; font-size: 40px; line-height: 1.1; }
+    letter-spacing: -0.01em; margin: 6px 0 4px; font-size: 40px; line-height: 1.1; } /* hero stat, outside type scale */
   .cg-score strong { font-weight: 700; }
-  .cg-pct { font-family: var(--font-body); font-size: 13px; font-weight: 600; color: var(--muted);
+  .cg-pct { font-family: var(--font-body); font-size: var(--fs-fine); font-weight: 600; color: var(--muted);
     margin: 0 0 10px; }
   .cg-badges { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
-  .cg-note { font-size: 13.5px; color: var(--muted); margin-top: 10px; }
+  .cg-note { font-size: var(--fs-body); color: var(--muted); margin-top: 10px; }
 
   /* Conviction Board: two independently-ranked lists (moneyline agreement,
      totals agreement) - dots make the agreement count scannable at a
      glance, the text spells out exactly which sources agree/dissent so
-     "conviction" is never asserted without showing its reasoning. */
+     "conviction" is never asserted without showing its reasoning. Each
+     list gets its own panel treatment (top border + tint + icon) using
+     --panel-money/--panel-totals, two neutral tones distinct from any
+     team color, so the two questions ("who wins" vs. "over/under") read
+     as separate panels even on a quick scroll. */
   .board-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
   @media (max-width: 640px) { .board-grid { grid-template-columns: 1fr; } }
-  .board-col .board-heading { font-family: var(--font-display); font-size: 11.5px; font-weight: 700;
-    letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+  .board-col { border-radius: 10px; padding: 14px 14px 4px; border-top: 3px solid var(--line); }
+  .board-col.money { border-top-color: var(--panel-money); background: var(--panel-money-tint); }
+  .board-col.totals { border-top-color: var(--panel-totals); background: var(--panel-totals-tint); }
+  .board-col .board-heading { display: flex; align-items: center; gap: 6px; font-family: var(--font-display);
+    font-size: var(--fs-fine); font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 10px; }
+  .board-col.money .board-heading { color: var(--panel-money); }
+  .board-col.totals .board-heading { color: var(--panel-totals); }
+  .board-heading .bh-icon { font-size: 14px; line-height: 1; }
   .board-row + .board-row { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); }
-  .board-row .br-matchup { font-family: var(--font-display); font-weight: 700; font-size: 14.5px; }
-  .board-row .br-time { color: var(--muted); font-weight: 400; font-size: 12px; margin-left: 6px; }
-  .board-dots { margin: 6px 0 4px; letter-spacing: 2px; font-size: 13px; }
+  .board-row .br-matchup { font-family: var(--font-display); font-weight: 700; font-size: var(--fs-name); }
+  .board-row .br-time { color: var(--muted); font-weight: 400; font-size: var(--fs-fine); margin-left: 6px; }
+  .board-dots { margin: 6px 0 4px; letter-spacing: 2px; font-size: var(--fs-body); }
   .board-dots .dot-on { color: var(--accent-3); }
   .board-dots .dot-off { color: var(--line); }
-  .board-verdict { font-size: 13.5px; }
+  .board-verdict { font-size: var(--fs-body); }
   .board-verdict strong { font-weight: 700; }
-  .board-dissent { font-size: 12.5px; color: var(--muted); margin-top: 2px; }
+  .board-dissent { font-size: var(--fs-fine); color: var(--muted); margin-top: 2px; }
 
   /* Sparkline: totals-runs ticks (DRatings/BPP/Model/Market) on one line,
      each positioned by its precomputed 0-100 x (see _totals_sparkline in
@@ -170,7 +217,7 @@
   .spark-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent-2); border: 2px solid var(--card); }
   .spark-tick.is-market .spark-dot { background: var(--ink); width: 9px; height: 9px; }
   .spark-label { font-family: var(--font-body); font-size: 9px; font-weight: 600; color: var(--muted);
-    margin-top: 4px; white-space: nowrap; }
+    margin-top: 4px; white-space: nowrap; } /* sparkline micro tick, outside type scale */
 
   /* Probability bars: Kalshi's real-money market odds, in the same visual
      language as the reference weather-app's bracket list - grass fill for
@@ -178,9 +225,9 @@
      currently favors. Reused compact in hero cards and (smaller, "sm") in
      the deep-dive Market Probabilities table. */
   .prob-bar-list { margin-top: 12px; }
-  .prob-bar-kicker { font-family: var(--font-display); font-size: 10.5px; font-weight: 700;
+  .prob-bar-kicker { font-family: var(--font-display); font-size: var(--fs-fine); font-weight: 700;
     text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin-bottom: 6px; }
-  .prob-row { display: flex; align-items: center; gap: 8px; margin: 4px 0; font-size: 12.5px; }
+  .prob-row { display: flex; align-items: center; gap: 8px; margin: 4px 0; font-size: var(--fs-fine); }
   .prob-label { flex: 0 0 auto; min-width: 90px; max-width: 160px; overflow: hidden; text-overflow: ellipsis;
     white-space: nowrap; color: var(--ink); }
   .prob-row.is-top .prob-label { font-weight: 700; }
@@ -191,32 +238,32 @@
   .prob-pct { flex: 0 0 auto; width: 34px; text-align: right; font-variant-numeric: tabular-nums;
     font-weight: 600; color: var(--muted); }
   .prob-row.is-top .prob-pct { color: var(--ink); }
-  .cell-bar-row { display: flex; align-items: center; gap: 6px; font-size: 11.5px; margin: 3px 0; min-width: 140px; }
+  .cell-bar-row { display: flex; align-items: center; gap: 6px; font-size: var(--fs-fine); margin: 3px 0; min-width: 140px; }
   .cell-bar-row .cell-bar-label { flex: 0 0 26px; font-weight: 600; color: var(--muted); }
   .cell-bar-row .cell-bar-pct { flex: 0 0 30px; text-align: right; font-variant-numeric: tabular-nums; color: var(--muted); }
 
   .tonight-table th.num, .tonight-table td.num { text-align: right; }
   .tonight-table tbody tr.section-row td { background: var(--bg-alt); font-family: var(--font-display);
-    font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted);
+    font-size: var(--fs-fine); font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted);
     border-bottom: 1px solid var(--line); padding: 8px 10px; }
   .tonight-table tbody tr.section-row:hover { background: var(--bg-alt); }
 
   .divider { border: none; border-top: 1px solid var(--line); margin: 46px 0 8px; }
 
   /* ---------- deep dive ---------- */
-  details.deep-dive summary { font-family: var(--font-display); font-size: 15px; font-weight: 700;
+  details.deep-dive summary { font-family: var(--font-display); font-size: var(--fs-section); font-weight: 700;
     letter-spacing: 0.03em; text-transform: uppercase; cursor: pointer; padding: 14px 0; color: var(--ink); }
   details.deep-dive summary::marker { color: var(--muted); }
   details.deep-dive summary .hint { font-family: var(--font-body); text-transform: none; font-weight: 400;
-    color: var(--muted); font-size: 12.5px; letter-spacing: normal; margin-left: 8px; }
+    color: var(--muted); font-size: var(--fs-fine); letter-spacing: normal; margin-left: 8px; }
 
   .jump-nav { display: flex; flex-wrap: wrap; gap: 6px 0; margin: 10px 0 6px; padding: 12px 14px;
-    background: var(--card); border-radius: 10px; box-shadow: var(--shadow-card); font-size: 12.5px; }
+    background: var(--card); border-radius: 10px; box-shadow: var(--shadow-card); font-size: var(--fs-fine); }
   .jump-nav a { color: var(--ink); text-decoration: none; padding: 2px 10px; border-right: 1px solid var(--line); }
   .jump-nav a:last-child { border-right: none; }
   .jump-nav a:hover { color: var(--accent); }
 
-  .card { padding: 2px 0 4px; font-size: 13.5px; }
+  .card { padding: 2px 0 4px; font-size: var(--fs-body); }
   .card.boxed { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px;
     box-shadow: var(--shadow-card); }
 
@@ -226,9 +273,9 @@
      hero cards above, rather than looking like a leftover plain-HTML table. */
   .table-wrap { overflow-x: auto; margin: 4px 0 8px; background: var(--card); border-radius: 12px;
     box-shadow: var(--shadow-card); }
-  table { border-collapse: collapse; width: 100%; font-size: 13.2px; }
+  table { border-collapse: collapse; width: 100%; font-size: var(--fs-body); }
   th, td { padding: 9px 10px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--line); }
-  thead th { font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em;
+  thead th { font-weight: 600; font-size: var(--fs-fine); text-transform: uppercase; letter-spacing: 0.04em;
     color: var(--muted); background: var(--bg-alt); border-bottom: 1px solid var(--line); white-space: nowrap; }
   thead th:first-child { border-top-left-radius: 12px; }
   thead th:last-child { border-top-right-radius: 12px; }
@@ -238,32 +285,33 @@
   tbody tr:last-child td:first-child { border-bottom-left-radius: 12px; }
   tbody tr:last-child td:last-child { border-bottom-right-radius: 12px; }
 
-  /* the ONE accent color: flag trigger labels, "Conflict" verdicts, and the
-     Tigers/Mariners border/tint above - nowhere else */
+  /* the ONE accent color: flag trigger labels and "Conflict" verdicts only -
+     Tigers/Mariners now use their own real team colors (see .callout-game.team-*
+     above), not this shared accent. */
   .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 7px;
     background: var(--accent); flex-shrink: 0; position: relative; top: 5px; }
   .dot-quiet { background: var(--line); }
   .flag-line { display: flex; align-items: flex-start; margin: 7px 0; }
   .flag-text { display: block; }
-  .flag-text .tag-mini { display: block; font-size: 10px; font-weight: 700; text-transform: uppercase;
+  .flag-text .tag-mini { display: block; font-size: var(--fs-fine); font-weight: 700; text-transform: uppercase;
     letter-spacing: 0.05em; color: var(--accent); margin-bottom: 2px; }
-  .flag-text .detail-main { display: block; color: var(--ink); font-size: 13.5px; }
+  .flag-text .detail-main { display: block; color: var(--ink); font-size: var(--fs-body); }
 
-  .prediction-line { font-size: 15px; margin: 6px 0 2px; }
-  .prediction-line .src { color: var(--muted); font-size: 11.5px; font-weight: 400; text-transform: uppercase; letter-spacing: 0.03em; }
-  .no-prediction { color: var(--muted); font-style: italic; font-size: 13px; }
+  .prediction-line { font-size: var(--fs-body); margin: 6px 0 2px; }
+  .prediction-line .src { color: var(--muted); font-size: var(--fs-fine); font-weight: 400; text-transform: uppercase; letter-spacing: 0.03em; }
+  .no-prediction { color: var(--muted); font-style: italic; font-size: var(--fs-body); }
 
   .weather-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin: 10px 0 8px; }
   .weather-tile { background: var(--card); border-radius: 10px; box-shadow: var(--shadow-card); padding: 12px 13px; }
-  .weather-tile .wt-matchup { font-family: var(--font-display); font-weight: 700; font-size: 13px; margin-bottom: 6px; }
+  .weather-tile .wt-matchup { font-family: var(--font-display); font-weight: 700; font-size: var(--fs-name); margin-bottom: 6px; }
   .weather-tile .wt-main { display: flex; align-items: baseline; gap: 8px; }
   .weather-tile .wt-icon { font-size: 22px; line-height: 1; }
-  .weather-tile .wt-temp { font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; }
-  .weather-tile .wt-cond { color: var(--muted); font-size: 12.5px; }
-  .weather-tile .wt-effect { font-size: 12.5px; margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--line); }
+  .weather-tile .wt-temp { font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; } /* hero stat, outside type scale */
+  .weather-tile .wt-cond { color: var(--muted); font-size: var(--fs-fine); }
+  .weather-tile .wt-effect { font-size: var(--fs-body); margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--line); }
 
   .glossary dt { font-weight: 600; }
-  .glossary dl { display: grid; grid-template-columns: 110px 1fr; gap: 7px 14px; margin: 0; font-size: 13px; }
+  .glossary dl { display: grid; grid-template-columns: 110px 1fr; gap: 7px 14px; margin: 0; font-size: var(--fs-body); }
 
   .sources { list-style: none; margin: 0; padding: 0; }
   .sources li { padding: 8px 0; border-bottom: 1px solid var(--line); }
@@ -276,7 +324,7 @@
 
   .snippet { font-style: italic; color: var(--muted); }
   a { color: var(--ink); }
-  .final-note { margin-top: 50px; padding-top: 16px; border-top: 1px solid var(--line); font-size: 12px; color: var(--muted); }
+  .final-note { margin-top: 50px; padding-top: 16px; border-top: 1px solid var(--line); font-size: var(--fs-fine); color: var(--muted); }
 </style>
 
 
@@ -302,7 +350,7 @@
 <div class="hero-band">
 <div class="masthead">
   <h1>MLB Daily Analysis</h1>
-  <div class="meta">Wednesday, July 22, 2026<strong>Published 2026-07-22 10:58 PDT</strong></div>
+  <div class="meta">Wednesday, July 22, 2026<strong>Published 2026-07-22 11:28 PDT</strong></div>
 </div>
 <div class="disclaimer-strip">Personal-learning report comparing model projections to market/public data. No betting units, stake sizing, or recommended plays anywhere in this report. · Wednesday, July 22, 2026 · 17-game slate · season stats + last-30-day trends · ▲▼ trend vs season</div>
 
@@ -315,8 +363,9 @@
 <div class="hero-card">
   <div class="kicker">Tigers / Mariners</div>
   
-  <div class="callout-game">
-    <div class="g-row"><span class="g-head">Cincinnati Reds @ Seattle Mariners</span> <span class="g-time">3:40 pm</span></div>
+  
+  <div class="callout-game team-sea">
+    <div class="g-row"><span class="team-dot"></span><span class="g-head">Cincinnati Reds @ Seattle Mariners</span> <span class="g-time">3:40 pm</span></div>
     <div class="cg-score">
 <strong>Cincinnati Reds</strong> 4.5–4.4
 </div>
@@ -348,7 +397,7 @@
   
 <div class="prob-row is-top">
   <span class="prob-label">Seattle Mariners</span>
-  <span class="prob-bar-track"><span class="prob-bar-fill" style="width:59.5%"></span></span>
+  <span class="prob-bar-track"><span class="prob-bar-fill" style="width:60.5%"></span></span>
   <span class="prob-pct">60%</span>
 </div>
 
@@ -383,8 +432,9 @@
 </div>
   </div>
   
-  <div class="callout-game">
-    <div class="g-row"><span class="g-head">Detroit Tigers @ Chicago Cubs</span> <span class="g-time">8:10 pm</span></div>
+  
+  <div class="callout-game team-det">
+    <div class="g-row"><span class="team-dot"></span><span class="g-head">Detroit Tigers @ Chicago Cubs</span> <span class="g-time">8:10 pm</span></div>
     <div class="cg-score">
 <strong>Detroit Tigers</strong> 4.7–4.1
 </div>
@@ -458,28 +508,10 @@
   <div class="kicker">Conviction Board</div>
   <div class="also-note" style="margin-bottom:16px">Where do DRatings, BPP, Kalshi, and My model actually agree? Two separate questions - who wins, and whether the total goes over or under - each ranked by how many of the four sources land on the same answer. Only games with full or near-full agreement (at least 3 of 4 sources present, at most one dissenting) show up below; there's no forced "pick of the day."</div>
   <div class="board-grid">
-    <div class="board-col">
-      <div class="board-heading">Moneyline agreement</div>
+    <div class="board-col money">
+      <div class="board-heading"><span class="bh-icon">🏆</span>Moneyline agreement</div>
       
       
-<div class="board-row">
-  <div class="br-matchup">New York Mets @ Milwaukee Brewers<span class="br-time">2:10 pm</span></div>
-  
-<span class="board-dots"><span class="dot-on">●</span><span class="dot-on">●</span><span class="dot-on">●</span><span class="dot-on">●</span></span>
-
-  <div class="board-verdict">4/4 agree: <strong>MIL</strong> <span class="muted">(Milwaukee Brewers)</span></div>
-  
-</div>
-
-<div class="board-row">
-  <div class="br-matchup">San Francisco Giants @ Kansas City Royals<span class="br-time">2:10 pm</span></div>
-  
-<span class="board-dots"><span class="dot-on">●</span><span class="dot-on">●</span><span class="dot-on">●</span><span class="dot-on">●</span></span>
-
-  <div class="board-verdict">4/4 agree: <strong>SFG</strong> <span class="muted">(San Francisco Giants)</span></div>
-  
-</div>
-
 <div class="board-row">
   <div class="br-matchup">Washington Nationals @ Colorado Rockies<span class="br-time">3:10 pm</span></div>
   
@@ -565,11 +597,20 @@
 </div>
 
 <div class="board-row">
-  <div class="br-matchup">Pittsburgh Pirates @ New York Yankees<span class="br-time">DH Game 1</span></div>
+  <div class="br-matchup">New York Mets @ Milwaukee Brewers<span class="br-time">2:10 pm</span></div>
   
 <span class="board-dots"><span class="dot-on">●</span><span class="dot-on">●</span><span class="dot-on">●</span></span>
 
-  <div class="board-verdict">3/3 agree: <strong>NYY</strong> <span class="muted">(New York Yankees)</span></div>
+  <div class="board-verdict">3/3 agree: <strong>MIL</strong> <span class="muted">(Milwaukee Brewers)</span></div>
+  
+</div>
+
+<div class="board-row">
+  <div class="br-matchup">San Francisco Giants @ Kansas City Royals<span class="br-time">2:10 pm</span></div>
+  
+<span class="board-dots"><span class="dot-on">●</span><span class="dot-on">●</span><span class="dot-on">●</span></span>
+
+  <div class="board-verdict">3/3 agree: <strong>SFG</strong> <span class="muted">(San Francisco Giants)</span></div>
   
 </div>
 
@@ -584,10 +625,21 @@
   
 </div>
 
+<div class="board-row">
+  <div class="br-matchup">Pittsburgh Pirates @ New York Yankees<span class="br-time">DH Game 1</span></div>
+  
+<span class="board-dots"><span class="dot-on">●</span><span class="dot-on">●</span><span class="dot-off">○</span></span>
+
+  <div class="board-verdict">2/3 agree: <strong>NYY</strong> <span class="muted">(New York Yankees)</span></div>
+  
+  <div class="board-dissent">Kalshi leans PIT</div>
+  
+</div>
+
       
     </div>
-    <div class="board-col">
-      <div class="board-heading">Totals agreement</div>
+    <div class="board-col totals">
+      <div class="board-heading"><span class="bh-icon">↕</span>Totals agreement</div>
       
       
 <div class="board-row">
@@ -679,6 +731,28 @@
 </div>
 
 <div class="board-row">
+  <div class="br-matchup">New York Mets @ Milwaukee Brewers<span class="br-time">2:10 pm</span></div>
+  
+<span class="board-dots"><span class="dot-on">●</span><span class="dot-on">●</span><span class="dot-off">○</span></span>
+
+  <div class="board-verdict">2/3 lean <strong>OVER</strong></div>
+  
+  <div class="board-dissent">Kalshi leans under</div>
+  
+</div>
+
+<div class="board-row">
+  <div class="br-matchup">San Francisco Giants @ Kansas City Royals<span class="br-time">2:10 pm</span></div>
+  
+<span class="board-dots"><span class="dot-on">●</span><span class="dot-on">●</span><span class="dot-off">○</span></span>
+
+  <div class="board-verdict">2/3 lean <strong>UNDER</strong></div>
+  
+  <div class="board-dissent">BPP leans over</div>
+  
+</div>
+
+<div class="board-row">
   <div class="br-matchup">Pittsburgh Pirates @ New York Yankees<span class="br-time">DH Game 1</span></div>
   
 <span class="board-dots"><span class="dot-on">●</span><span class="dot-on">●</span><span class="dot-off">○</span></span>
@@ -699,17 +773,6 @@
 <div class="table-wrap"><table class="tonight-table">
 <thead><tr><th>Matchup</th><th>Time</th><th class="num">Predicted Score</th><th>Confidence</th><th>Weather</th><th>Total</th></tr></thead>
 <tbody>
-
-<tr>
-<td><span class="g-head">Pittsburgh Pirates @ New York Yankees</span></td>
-<td style="white-space:nowrap">DH Game 1</td>
-<td class="num">
-<strong>New York Yankees</strong> 4.0–5.9
-</td>
-<td><span class="badge badge-confidence conf-strong" title="strong consensus"><span class="badge-icon">●</span>Strong</span></td>
-<td><span class="badge badge-weather" title="Weather close to a neutral effect on scoring"><span class="badge-icon">—</span>Neutral</span></td>
-<td></td>
-</tr>
 
 <tr>
 <td><span class="g-head">New York Mets @ Milwaukee Brewers</span></td>
@@ -746,6 +809,17 @@
 
 
 <tr class="section-row"><td colspan="6">Less clear tonight</td></tr>
+
+<tr>
+<td><span class="g-head">Pittsburgh Pirates @ New York Yankees</span></td>
+<td style="white-space:nowrap">DH Game 1</td>
+<td class="num">
+<strong>New York Yankees</strong> 4.0–5.9
+</td>
+<td><span class="badge badge-confidence conf-mixed" title="mixed signals"><span class="badge-icon">⚠</span>Mixed</span></td>
+<td><span class="badge badge-weather" title="Weather close to a neutral effect on scoring"><span class="badge-icon">—</span>Neutral</span></td>
+<td></td>
+</tr>
 
 <tr>
 <td><span class="g-head">Baltimore Orioles @ Boston Red Sox</span></td>
@@ -792,6 +866,17 @@
 </tr>
 
 <tr>
+<td><span class="g-head">San Francisco Giants @ Kansas City Royals</span></td>
+<td style="white-space:nowrap">2:10 pm</td>
+<td class="num">
+<strong>San Francisco Giants</strong> 5.2–4.5
+</td>
+<td><span class="badge badge-confidence conf-mixed" title="mixed signals"><span class="badge-icon">⚠</span>Mixed</span></td>
+<td><span class="badge badge-weather" title="Weather close to a neutral effect on scoring"><span class="badge-icon">—</span>Neutral</span></td>
+<td><span class="badge badge-flag" title="Model total differs notably from the market number">≠ Differs from market</span></td>
+</tr>
+
+<tr>
 <td><span class="g-head">St. Louis Cardinals @ Los Angeles Angels</span></td>
 <td style="white-space:nowrap">4:07 pm</td>
 <td class="num">
@@ -811,17 +896,6 @@
 <td><span class="badge badge-confidence conf-mixed" title="mixed signals"><span class="badge-icon">⚠</span>Mixed</span></td>
 <td><span class="badge badge-weather" title="Weather makes scoring a bit harder"><span class="badge-icon">↓</span>Harder</span></td>
 <td></td>
-</tr>
-
-<tr>
-<td><span class="g-head">San Francisco Giants @ Kansas City Royals</span></td>
-<td style="white-space:nowrap">2:10 pm</td>
-<td class="num">
-<strong>San Francisco Giants</strong> 5.2–4.5
-</td>
-<td><span class="badge badge-confidence conf-mixed" title="mixed signals"><span class="badge-icon">⚠</span>Mixed</span></td>
-<td><span class="badge badge-weather" title="Weather close to a neutral effect on scoring"><span class="badge-icon">—</span>Neutral</span></td>
-<td><span class="badge badge-flag" title="Model total differs notably from the market number">≠ Differs from market</span></td>
 </tr>
 
 <tr>
@@ -1015,64 +1089,64 @@
 <tbody>
 
 <tr><td style="font-weight:600; white-space:nowrap">MIN @ CLE</td>
-  <td style="white-space:nowrap"><strong>MIN</strong><br><span class="num" style="font-size:12px;color:var(--muted)">4.4–4.0</span></td>
+  <td style="white-space:nowrap"><strong>MIN</strong><br><span class="num" style="font-size:var(--fs-fine);color:var(--muted)">4.4–4.0</span></td>
   <td><div class="flag-line"><span class="dot"></span><span class="flag-text"><span class="tag-mini">Models expect a different total than the betting market</span><span class="detail-main">Model total 9.1 runs vs. market total 7.5 runs (off by 1.6)</span></span></div><div class="flag-line"><span class="dot"></span><span class="flag-text"><span class="tag-mini">The two models disagree with each other</span><span class="detail-main">DRatings picks the home team, MoundEdge&#39;s BPP sim picks the away team</span></span></div><div class="flag-line"><span class="dot"></span><span class="flag-text"><span class="tag-mini">Public bets and public money don&#39;t agree</span><span class="detail-main">ML MIN: 23-point gap between % of bets and % of money; ML CLE: 23-point gap between % of bets and % of money</span></span></div><div class="flag-line"><span class="dot"></span><span class="flag-text"><span class="tag-mini">Starting pitcher is far from their normal form</span><span class="detail-main">B. Ober road ERA 6.90 vs season 4.32 (+2.58)</span></span></div><div class="flag-line"><span class="dot"></span><span class="flag-text"><span class="tag-mini">Weather/ballpark will change scoring a lot</span><span class="detail-main">makes scoring notably harder (-8% simulated effect)</span></span></div></td></tr>
 
 <tr><td style="font-weight:600; white-space:nowrap">DET @ CHC</td>
-  <td style="white-space:nowrap"><strong>DET</strong><br><span class="num" style="font-size:12px;color:var(--muted)">4.7–4.1</span></td>
+  <td style="white-space:nowrap"><strong>DET</strong><br><span class="num" style="font-size:var(--fs-fine);color:var(--muted)">4.7–4.1</span></td>
   <td><div class="flag-line"><span class="dot"></span><span class="flag-text"><span class="tag-mini">The two models disagree with each other</span><span class="detail-main">DRatings picks the home team, MoundEdge&#39;s BPP sim picks the away team</span></span></div><div class="flag-line"><span class="dot"></span><span class="flag-text"><span class="tag-mini">Starting pitcher is far from their normal form</span><span class="detail-main">C. Rea home ERA 2.74 vs season 4.74 (-2.00)</span></span></div><div class="flag-line"><span class="dot"></span><span class="flag-text"><span class="tag-mini">Weather/ballpark will change scoring a lot</span><span class="detail-main">makes scoring notably harder (-17% simulated effect)</span></span></div><div class="flag-line"><span class="dot"></span><span class="flag-text"><span class="tag-mini">MoundEdge&#39;s trend arrow looks inconsistent</span><span class="detail-main">DET hitting trend arrow vs L30/season numbers (99.0 vs 99.0)</span></span></div></td></tr>
 
-<tr><td style="font-weight:600; white-space:nowrap">NYM @ MIL</td>
-  <td style="white-space:nowrap"><strong>MIL</strong><br><span class="num" style="font-size:12px;color:var(--muted)">4.4–4.8</span></td>
-  <td><div class="flag-line"><span class="dot"></span><span class="flag-text"><span class="tag-mini">The two models disagree with each other</span><span class="detail-main">DRatings projects 7.5 total runs, BPP projects 9.2 (off by 1.7)</span></span></div><div class="flag-line"><span class="dot"></span><span class="flag-text"><span class="tag-mini">Starting pitcher is far from their normal form</span><span class="detail-main">L. Henderson home ERA 1.80 vs season 2.97 (-1.17)</span></span></div><div class="flag-line"><span class="dot"></span><span class="flag-text"><span class="tag-mini">Weather/ballpark will change scoring a lot</span><span class="detail-main">makes scoring notably harder (-8% simulated effect)</span></span></div></td></tr>
-
 <tr><td style="font-weight:600; white-space:nowrap">LAD @ PHI</td>
-  <td style="white-space:nowrap"><strong>PHI</strong><br><span class="num" style="font-size:12px;color:var(--muted)">5.0–5.4</span></td>
+  <td style="white-space:nowrap"><strong>PHI</strong><br><span class="num" style="font-size:var(--fs-fine);color:var(--muted)">5.0–5.4</span></td>
   <td><div class="flag-line"><span class="dot"></span><span class="flag-text"><span class="tag-mini">Models expect a different total than the betting market</span><span class="detail-main">Model total 11.1 runs vs. market total 9.5 runs (off by 1.6)</span></span></div><div class="flag-line"><span class="dot"></span><span class="flag-text"><span class="tag-mini">The two models disagree with each other</span><span class="detail-main">DRatings picks the away team, MoundEdge&#39;s BPP sim picks the home team</span></span></div><div class="flag-line"><span class="dot"></span><span class="flag-text"><span class="tag-mini">Weather/ballpark will change scoring a lot</span><span class="detail-main">makes scoring notably easier (+12% simulated effect)</span></span></div></td></tr>
 
+<tr><td style="font-weight:600; white-space:nowrap">NYM @ MIL</td>
+  <td style="white-space:nowrap"><strong>MIL</strong><br><span class="num" style="font-size:var(--fs-fine);color:var(--muted)">4.4–4.8</span></td>
+  <td><div class="flag-line"><span class="dot"></span><span class="flag-text"><span class="tag-mini">Starting pitcher is far from their normal form</span><span class="detail-main">L. Henderson home ERA 1.80 vs season 2.97 (-1.17)</span></span></div><div class="flag-line"><span class="dot"></span><span class="flag-text"><span class="tag-mini">Weather/ballpark will change scoring a lot</span><span class="detail-main">makes scoring notably harder (-8% simulated effect)</span></span></div></td></tr>
+
 <tr><td style="font-weight:600; white-space:nowrap">WSN @ COL</td>
-  <td style="white-space:nowrap"><strong>WSN</strong><br><span class="num" style="font-size:12px;color:var(--muted)">6.7–5.8</span></td>
+  <td style="white-space:nowrap"><strong>WSN</strong><br><span class="num" style="font-size:var(--fs-fine);color:var(--muted)">6.7–5.8</span></td>
   <td><div class="flag-line"><span class="dot"></span><span class="flag-text"><span class="tag-mini">The two models disagree with each other</span><span class="detail-main">DRatings projects 11.0 total runs, BPP projects 12.5 (off by 1.5)</span></span></div><div class="flag-line"><span class="dot"></span><span class="flag-text"><span class="tag-mini">Weather/ballpark will change scoring a lot</span><span class="detail-main">makes scoring notably easier (+39% simulated effect)</span></span></div></td></tr>
 
 <tr><td style="font-weight:600; white-space:nowrap">ATH @ ARI</td>
-  <td style="white-space:nowrap"><strong>ATH</strong><br><span class="num" style="font-size:12px;color:var(--muted)">5.1–4.8</span></td>
+  <td style="white-space:nowrap"><strong>ATH</strong><br><span class="num" style="font-size:var(--fs-fine);color:var(--muted)">5.1–4.8</span></td>
   <td><div class="flag-line"><span class="dot"></span><span class="flag-text"><span class="tag-mini">The two models disagree with each other</span><span class="detail-main">DRatings picks the home team, MoundEdge&#39;s BPP sim picks the away team; DRatings projects 8.9 total runs, BPP projects 9.9 (off by 1.0)</span></span></div><div class="flag-line"><span class="dot"></span><span class="flag-text"><span class="tag-mini">Starting pitcher is far from their normal form</span><span class="detail-main">G. Jump road ERA 0.75 vs season 3.78 (-3.03); M. Kelly home ERA 6.69 vs season 5.20 (+1.49)</span></span></div></td></tr>
 
 <tr><td style="font-weight:600; white-space:nowrap">CIN @ SEA</td>
-  <td style="white-space:nowrap"><strong>CIN</strong><br><span class="num" style="font-size:12px;color:var(--muted)">4.5–4.4</span></td>
+  <td style="white-space:nowrap"><strong>CIN</strong><br><span class="num" style="font-size:var(--fs-fine);color:var(--muted)">4.5–4.4</span></td>
   <td><div class="flag-line"><span class="dot"></span><span class="flag-text"><span class="tag-mini">The two models disagree with each other</span><span class="detail-main">DRatings picks the home team, MoundEdge&#39;s BPP sim picks the away team</span></span></div><div class="flag-line"><span class="dot"></span><span class="flag-text"><span class="tag-mini">Starting pitcher is far from their normal form</span><span class="detail-main">B. Singer road ERA 6.14 vs season 4.56 (+1.58)</span></span></div></td></tr>
 
 <tr><td style="font-weight:600; white-space:nowrap">STL @ LAA</td>
-  <td style="white-space:nowrap"><strong>LAA</strong><br><span class="num" style="font-size:12px;color:var(--muted)">4.4–5.4</span></td>
+  <td style="white-space:nowrap"><strong>LAA</strong><br><span class="num" style="font-size:var(--fs-fine);color:var(--muted)">4.4–5.4</span></td>
   <td><div class="flag-line"><span class="dot"></span><span class="flag-text"><span class="tag-mini">Public bets and public money don&#39;t agree</span><span class="detail-main">ML STL: 24-point gap between % of bets and % of money; ML LAA: 24-point gap between % of bets and % of money</span></span></div><div class="flag-line"><span class="dot"></span><span class="flag-text"><span class="tag-mini">Starting pitcher is far from their normal form</span><span class="detail-main">H. Dobbins road ERA 6.23 vs season 4.03 (+2.20)</span></span></div></td></tr>
 
 <tr><td style="font-weight:600; white-space:nowrap">TBR @ TOR</td>
-  <td style="white-space:nowrap"><strong>TOR</strong><br><span class="num" style="font-size:12px;color:var(--muted)">3.8–4.7</span></td>
+  <td style="white-space:nowrap"><strong>TOR</strong><br><span class="num" style="font-size:var(--fs-fine);color:var(--muted)">3.8–4.7</span></td>
   <td><div class="flag-line"><span class="dot"></span><span class="flag-text"><span class="tag-mini">The two models disagree with each other</span><span class="detail-main">DRatings picks the away team, MoundEdge&#39;s BPP sim picks the home team</span></span></div><div class="flag-line"><span class="dot"></span><span class="flag-text"><span class="tag-mini">Starting pitcher is far from their normal form</span><span class="detail-main">B. Fisher home ERA 0.00 vs season 3.65 (-3.65)</span></span></div></td></tr>
 
 <tr><td style="font-weight:600; white-space:nowrap">SDP @ ATL</td>
-  <td style="white-space:nowrap"><strong>ATL</strong><br><span class="num" style="font-size:12px;color:var(--muted)">4.6–5.5</span></td>
+  <td style="white-space:nowrap"><strong>ATL</strong><br><span class="num" style="font-size:var(--fs-fine);color:var(--muted)">4.6–5.5</span></td>
   <td><div class="flag-line"><span class="dot"></span><span class="flag-text"><span class="tag-mini">Models expect a different total than the betting market</span><span class="detail-main">Model total 9.6 runs vs. market total 8.5 runs (off by 1.1)</span></span></div><div class="flag-line"><span class="dot"></span><span class="flag-text"><span class="tag-mini">The two models disagree with each other</span><span class="detail-main">DRatings projects 8.5 total runs, BPP projects 10.1 (off by 1.6)</span></span></div></td></tr>
 
 <tr><td style="font-weight:600; white-space:nowrap">CHW @ TEX</td>
-  <td style="white-space:nowrap"><strong>TEX</strong><br><span class="num" style="font-size:12px;color:var(--muted)">3.8–4.5</span></td>
+  <td style="white-space:nowrap"><strong>TEX</strong><br><span class="num" style="font-size:var(--fs-fine);color:var(--muted)">3.8–4.5</span></td>
   <td><div class="flag-line"><span class="dot"></span><span class="flag-text"><span class="tag-mini">Starting pitcher is far from their normal form</span><span class="detail-main">A. Kay road ERA 5.80 vs season 4.24 (+1.56)</span></span></div><div class="flag-line"><span class="dot"></span><span class="flag-text"><span class="tag-mini">Weather/ballpark will change scoring a lot</span><span class="detail-main">makes scoring notably harder (-8% simulated effect)</span></span></div></td></tr>
 
 <tr><td style="font-weight:600; white-space:nowrap">BAL @ BOS</td>
-  <td style="white-space:nowrap"><strong>BAL</strong><br><span class="num" style="font-size:12px;color:var(--muted)">5.1–4.6</span></td>
+  <td style="white-space:nowrap"><strong>BAL</strong><br><span class="num" style="font-size:var(--fs-fine);color:var(--muted)">5.1–4.6</span></td>
   <td><div class="flag-line"><span class="dot"></span><span class="flag-text"><span class="tag-mini">The two models disagree with each other</span><span class="detail-main">DRatings picks the home team, MoundEdge&#39;s BPP sim picks the away team; DRatings projects 8.6 total runs, BPP projects 9.8 (off by 1.2)</span></span></div><div class="flag-line"><span class="dot"></span><span class="flag-text"><span class="tag-mini">Weather/ballpark will change scoring a lot</span><span class="detail-main">makes scoring notably easier (+23% simulated effect)</span></span></div></td></tr>
 
 <tr><td style="font-weight:600; white-space:nowrap">SFG @ KCR</td>
-  <td style="white-space:nowrap"><strong>SFG</strong><br><span class="num" style="font-size:12px;color:var(--muted)">5.2–4.5</span></td>
+  <td style="white-space:nowrap"><strong>SFG</strong><br><span class="num" style="font-size:var(--fs-fine);color:var(--muted)">5.2–4.5</span></td>
   <td><div class="flag-line"><span class="dot"></span><span class="flag-text"><span class="tag-mini">Models expect a different total than the betting market</span><span class="detail-main">Model total 9.8 runs vs. market total 8.5 runs (off by 1.3)</span></span></div></td></tr>
 
 <tr><td style="font-weight:600; white-space:nowrap">MIA @ HOU</td>
-  <td style="white-space:nowrap"><strong>MIA</strong><br><span class="num" style="font-size:12px;color:var(--muted)">3.9–3.8</span></td>
+  <td style="white-space:nowrap"><strong>MIA</strong><br><span class="num" style="font-size:var(--fs-fine);color:var(--muted)">3.9–3.8</span></td>
   <td><div class="flag-line"><span class="dot"></span><span class="flag-text"><span class="tag-mini">The two models disagree with each other</span><span class="detail-main">DRatings picks the home team, MoundEdge&#39;s BPP sim picks the away team</span></span></div></td></tr>
 
 <tr><td style="font-weight:600; white-space:nowrap">PIT @ NYY</td>
-  <td style="white-space:nowrap"><strong>NYY</strong><br><span class="num" style="font-size:12px;color:var(--muted)">4.0–5.9</span></td>
-  <td><div class="flag-line"><span class="dot"></span><span class="flag-text"><span class="tag-mini">The two models disagree with each other</span><span class="detail-main">DRatings projects 8.4 total runs, BPP projects 9.8 (off by 1.4)</span></span></div></td></tr>
+  <td style="white-space:nowrap"><strong>NYY</strong><br><span class="num" style="font-size:var(--fs-fine);color:var(--muted)">4.0–5.9</span></td>
+  <td><div class="flag-line"><span class="dot"></span><span class="flag-text"><span class="tag-mini">The two models disagree with each other</span><span class="detail-main">DRatings projects 8.6 total runs, BPP projects 9.8 (off by 1.2)</span></span></div></td></tr>
 
 </tbody>
 </table></div>
@@ -1115,6 +1189,15 @@
   <td>away</td>
   <td>—</td>
   <td>home</td>
+  <td><span class="verdict no"><span class="dot"></span>Conflict</span></td>
+</tr>
+
+<tr>
+  <td style="font-weight:600; white-space:nowrap">PIT @ NYY</td>
+  <td>home</td>
+  <td>home</td>
+  <td>—</td>
+  <td>away</td>
   <td><span class="verdict no"><span class="dot"></span>Conflict</span></td>
 </tr>
 
@@ -1208,15 +1291,6 @@
   <td><span class="verdict yes"><span class="dot dot-quiet"></span>Aligned</span></td>
 </tr>
 
-<tr>
-  <td style="font-weight:600; white-space:nowrap">PIT @ NYY</td>
-  <td>home</td>
-  <td>home</td>
-  <td>—</td>
-  <td>home</td>
-  <td><span class="verdict yes"><span class="dot dot-quiet"></span>Aligned</span></td>
-</tr>
-
 </tbody>
 </table></div>
 
@@ -1227,7 +1301,7 @@
 
 <tr>
   <td style="font-weight:600; white-space:nowrap">SFG @ KCR</td>
-  <td class="num">9.1</td>
+  <td class="num">—</td>
   <td class="num">9.6</td>
   <td class="num">9.8</td>
   <td class="num">8.5</td>
@@ -1299,7 +1373,7 @@
 
 <tr>
   <td style="font-weight:600; white-space:nowrap">PIT @ NYY</td>
-  <td class="num">8.4</td>
+  <td class="num">8.6</td>
   <td class="num">9.8</td>
   <td class="num">9.8</td>
   <td class="num">9.5</td>
@@ -1311,7 +1385,7 @@
 
 <tr>
   <td style="font-weight:600; white-space:nowrap">NYM @ MIL</td>
-  <td class="num">7.5</td>
+  <td class="num">—</td>
   <td class="num">9.2</td>
   <td class="num">7.8</td>
   <td class="num">7.5</td>
@@ -1418,27 +1492,27 @@
 <tr>
   <td style="font-weight:600; white-space:nowrap">NYM @ MIL</td>
   <td>
-    <div class="cell-bar-row"><span class="cell-bar-label">NYM</span><span class="prob-bar-track sm"><span class="prob-bar-fill" style="width:42.5%"></span></span><span class="cell-bar-pct">42%</span></div>
-    <div class="cell-bar-row"><span class="cell-bar-label">MIL</span><span class="prob-bar-track sm"><span class="prob-bar-fill" style="width:58.5%"></span></span><span class="cell-bar-pct">58%</span></div>
+    <div class="cell-bar-row"><span class="cell-bar-label">NYM</span><span class="prob-bar-track sm"><span class="prob-bar-fill" style="width:41.5%"></span></span><span class="cell-bar-pct">42%</span></div>
+    <div class="cell-bar-row"><span class="cell-bar-label">MIL</span><span class="prob-bar-track sm"><span class="prob-bar-fill" style="width:59.5%"></span></span><span class="cell-bar-pct">60%</span></div>
   </td>
   <td class="num">9.5</td>
-  <td>Over 30% / Under 70%</td>
+  <td>Over 24% / Under 76%</td>
 </tr>
 
 <tr>
   <td style="font-weight:600; white-space:nowrap">SFG @ KCR</td>
   <td>
-    <div class="cell-bar-row"><span class="cell-bar-label">SFG</span><span class="prob-bar-track sm"><span class="prob-bar-fill" style="width:55.5%"></span></span><span class="cell-bar-pct">56%</span></div>
+    <div class="cell-bar-row"><span class="cell-bar-label">SFG</span><span class="prob-bar-track sm"><span class="prob-bar-fill" style="width:54.5%"></span></span><span class="cell-bar-pct">54%</span></div>
     <div class="cell-bar-row"><span class="cell-bar-label">KCR</span><span class="prob-bar-track sm"><span class="prob-bar-fill" style="width:45.5%"></span></span><span class="cell-bar-pct">46%</span></div>
   </td>
   <td class="num">9.5</td>
-  <td>Over 40% / Under 60%</td>
+  <td>Over 28% / Under 72%</td>
 </tr>
 
 <tr>
   <td style="font-weight:600; white-space:nowrap">WSN @ COL</td>
   <td>
-    <div class="cell-bar-row"><span class="cell-bar-label">WSN</span><span class="prob-bar-track sm"><span class="prob-bar-fill" style="width:56.5%"></span></span><span class="cell-bar-pct">56%</span></div>
+    <div class="cell-bar-row"><span class="cell-bar-label">WSN</span><span class="prob-bar-track sm"><span class="prob-bar-fill" style="width:57.5%"></span></span><span class="cell-bar-pct">58%</span></div>
     <div class="cell-bar-row"><span class="cell-bar-label">COL</span><span class="prob-bar-track sm"><span class="prob-bar-fill" style="width:43.5%"></span></span><span class="cell-bar-pct">44%</span></div>
   </td>
   <td class="num">9.5</td>
@@ -1459,7 +1533,7 @@
   <td style="font-weight:600; white-space:nowrap">CIN @ SEA</td>
   <td>
     <div class="cell-bar-row"><span class="cell-bar-label">CIN</span><span class="prob-bar-track sm"><span class="prob-bar-fill" style="width:40.5%"></span></span><span class="cell-bar-pct">40%</span></div>
-    <div class="cell-bar-row"><span class="cell-bar-label">SEA</span><span class="prob-bar-track sm"><span class="prob-bar-fill" style="width:59.5%"></span></span><span class="cell-bar-pct">60%</span></div>
+    <div class="cell-bar-row"><span class="cell-bar-label">SEA</span><span class="prob-bar-track sm"><span class="prob-bar-fill" style="width:60.5%"></span></span><span class="cell-bar-pct">60%</span></div>
   </td>
   <td class="num">9.5</td>
   <td>Over 36% / Under 64%</td>
@@ -1558,8 +1632,8 @@
 <tr>
   <td style="font-weight:600; white-space:nowrap">PIT @ NYY</td>
   <td>
-    <div class="cell-bar-row"><span class="cell-bar-label">PIT</span><span class="prob-bar-track sm"><span class="prob-bar-fill" style="width:23.5%"></span></span><span class="cell-bar-pct">24%</span></div>
-    <div class="cell-bar-row"><span class="cell-bar-label">NYY</span><span class="prob-bar-track sm"><span class="prob-bar-fill" style="width:74.5%"></span></span><span class="cell-bar-pct">74%</span></div>
+    <div class="cell-bar-row"><span class="cell-bar-label">PIT</span><span class="prob-bar-track sm"><span class="prob-bar-fill" style="width:69.5%"></span></span><span class="cell-bar-pct">70%</span></div>
+    <div class="cell-bar-row"><span class="cell-bar-label">NYY</span><span class="prob-bar-track sm"><span class="prob-bar-fill" style="width:30.5%"></span></span><span class="cell-bar-pct">30%</span></div>
   </td>
   <td class="num">—</td>
   <td>—</td>
@@ -1577,8 +1651,8 @@
 
 <tr>
   <td style="font-weight:600; white-space:nowrap">NYM @ MIL</td>
-  <td class="num">3.2–4.2</td>
-  <td>MIL (59.1%)</td>
+  <td class="num">—</td>
+  <td>—</td>
   <td class="num">3.3–4.5</td>
   <td class="num">4.4–4.8</td>
   <td>MIL</td>
@@ -1588,8 +1662,8 @@
 
 <tr>
   <td style="font-weight:600; white-space:nowrap">SFG @ KCR</td>
-  <td class="num">4.6–4.4</td>
-  <td>SFG (52.0%)</td>
+  <td class="num">—</td>
+  <td>—</td>
   <td class="num">5.5–4.4</td>
   <td class="num">5.2–4.5</td>
   <td>SFG</td>
@@ -1731,7 +1805,7 @@
 
 <tr>
   <td style="font-weight:600; white-space:nowrap">PIT @ NYY</td>
-  <td class="num">3.6–4.8</td>
+  <td class="num">3.7–4.9</td>
   <td>NYY (61.4%)</td>
   <td class="num">4.4–5.4</td>
   <td class="num">4.0–5.9</td>
@@ -1761,7 +1835,7 @@
 <div class="card boxed">
 Reddit sentiment isn't available today. Reddit blocks most automated requests outright — even from well-behaved scripts with a proper User-Agent — so this section will often be empty; it's not a bug in this report, and there's no way to make Reddit reliably allow it without switching to their official OAuth API (which this project deliberately avoids).
 <div style="margin-top:8px">Want it filled in? Paste today's daily-thread text into a Claude session on this project and ask for it to be added — no GitHub needed.</div>
-<div style="margin-top:8px; font-size:12px; color:var(--muted)">Technical detail: live fetch failed (403 Client Error: Blocked for url: https://www.reddit.com/r/sportsbook/search.json?q=MLB%20daily%20thread&amp;restrict_sr=1&amp;sort=new&amp;limit=10) and no manual paste found at mlb_daily/data/reddit_manual_2026-07-22.txt - to include Reddit sentiment today, paste the daily thread&#39;s text into that file and re-run the workflow.</div>
+<div style="margin-top:8px; font-size:var(--fs-fine); color:var(--muted)">Technical detail: live fetch failed (403 Client Error: Blocked for url: https://www.reddit.com/r/sportsbook/search.json?q=MLB%20daily%20thread&amp;restrict_sr=1&amp;sort=new&amp;limit=10) and no manual paste found at mlb_daily/data/reddit_manual_2026-07-22.txt - to include Reddit sentiment today, paste the daily thread&#39;s text into that file and re-run the workflow.</div>
 </div>
 
 
