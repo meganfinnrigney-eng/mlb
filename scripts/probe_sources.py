@@ -249,6 +249,8 @@ def probe_doubleheaders():
             away = g["teams"]["away"]["team"].get("name", "")
             home = g["teams"]["home"]["team"].get("name", "")
             away_ab, home_ab = abbrev_from_name(away), abbrev_from_name(home)
+            away_p = g["teams"]["away"].get("probablePitcher", {})
+            home_p = g["teams"]["home"].get("probablePitcher", {})
             by_pair[(away_ab, home_ab)].append(
                 {
                     "gamePk": g.get("gamePk"),
@@ -256,6 +258,10 @@ def probe_doubleheaders():
                     "gameDate_utc": g.get("gameDate"),
                     "doubleHeader": g.get("doubleHeader"),
                     "status": g.get("status", {}).get("detailedState"),
+                    "away_pitcher": away_p.get("fullName"),
+                    "away_pitcher_id": away_p.get("id"),
+                    "home_pitcher": home_p.get("fullName"),
+                    "home_pitcher_id": home_p.get("id"),
                 }
             )
     dh_pairs = {k: v for k, v in by_pair.items() if len(v) > 1}
@@ -311,38 +317,33 @@ def probe_doubleheaders():
         ids_found = re.findall(rf'id="(g-{away_ab}-{home_ab}[^"]*)"', raw_html)
         print(f"  {away_ab}@{home_ab}: {len(ids_found)} card id(s) found in raw HTML: {ids_found}")
 
-    hr("Doubleheader recon: full probable-pitcher data for BOTH games of each pair (MLB Stats API)")
+    hr("Doubleheader recon: probable pitchers for BOTH games, straight from the SAME ?date=X query "
+       "production code uses (mymodel._fetch_probable_pitchers / schedule.fetch_today_schedule) - "
+       "not a separate ?gamePk=X re-query, which returns confusing duplicate/historical entries "
+       "for postponed-and-rescheduled games and is NOT what production code does")
     for pair, sched_games in dh_pairs.items():
         away_ab, home_ab = pair
         for sched in sched_games:
-            game_pk = sched["gamePk"]
-            gr = get(f"https://statsapi.mlb.com/api/v1/schedule?gamePk={game_pk}&hydrate=probablePitcher,team")
-            gdata = gr.json()
-            for d in gdata.get("dates", []):
-                for g in d.get("games", []):
-                    away_p = g["teams"]["away"].get("probablePitcher", {})
-                    home_p = g["teams"]["home"].get("probablePitcher", {})
-                    print(
-                        f"  {away_ab}@{home_ab} gameNumber={g.get('gameNumber')} gamePk={game_pk} "
-                        f"status={g.get('status', {}).get('detailedState')!r} "
-                        f"away_pitcher={away_p.get('fullName')!r}(id={away_p.get('id')}) "
-                        f"home_pitcher={home_p.get('fullName')!r}(id={home_p.get('id')})"
-                    )
+            print(
+                f"  {away_ab}@{home_ab} gameNumber={sched['gameNumber']} gamePk={sched['gamePk']} "
+                f"status={sched['status']!r} "
+                f"away_pitcher={sched['away_pitcher']!r}(id={sched['away_pitcher_id']}) "
+                f"home_pitcher={sched['home_pitcher']!r}(id={sched['home_pitcher_id']})"
+            )
 
-    hr("Doubleheader recon: try fetching Statcast rolling stats directly for each G2 home pitcher")
-    import mlb_daily.fetch.mymodel as mymodel
-    for pair, sched_games in dh_pairs.items():
-        away_ab, home_ab = pair
-        g2 = next((s for s in sched_games if s["gameNumber"] == 2), None)
-        if not g2:
-            continue
-        gr = get(f"https://statsapi.mlb.com/api/v1/schedule?gamePk={g2['gamePk']}&hydrate=probablePitcher,team")
-        gdata = gr.json()
-        for d in gdata.get("dates", []):
-            for g in d.get("games", []):
-                home_p = g["teams"]["home"].get("probablePitcher", {})
-                pid, pname = home_p.get("id"), home_p.get("fullName", "")
-                print(f"  {away_ab}@{home_ab} G2 home pitcher: {pname!r} (id={pid})")
+    hr("Doubleheader recon: try fetching Statcast rolling stats for each G2 pitcher (both sides)")
+    try:
+        import mlb_daily.fetch.mymodel as mymodel
+        for pair, sched_games in dh_pairs.items():
+            away_ab, home_ab = pair
+            g2 = next((s for s in sched_games if s["gameNumber"] == 2), None)
+            if not g2:
+                continue
+            for side, pid, pname in (
+                ("away", g2["away_pitcher_id"], g2["away_pitcher"]),
+                ("home", g2["home_pitcher_id"], g2["home_pitcher"]),
+            ):
+                print(f"  {away_ab}@{home_ab} G2 {side} pitcher: {pname!r} (id={pid})")
                 if pid is None:
                     print("    -> pid is None: probable pitcher not yet announced by MLB Stats API for this game")
                     continue
@@ -353,6 +354,8 @@ def probe_doubleheaders():
                     print(f"    -> fetch_pitcher_rolling_stats FAILED: {type(e).__name__}: {e}")
                     import traceback
                     traceback.print_exc()
+    except ImportError as e:
+        print(f"  SKIPPED - pandas/pybaseball not installed in this environment: {e}")
 
 
 def col_lookup(cells, col_index, name):
