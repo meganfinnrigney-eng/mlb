@@ -38,6 +38,13 @@ class DRatingsGame:
     total_projected_runs: float | None
     market_total: float | None
     detail_url: str | None = None
+    # raw "Time" cell text (e.g. "07/22/2026 11:05 PM") - kept as-is, not
+    # parsed here, since its timezone isn't documented anywhere (empirically
+    # it lines up with UTC, not ET, when compared against MLB's own
+    # schedule - see build.py's doubleheader-matching comment). Only used
+    # to disambiguate doubleheader rows for the same team pair; ignored
+    # entirely for a normal single game that day.
+    time_text: str = ""
     raw: dict = field(default_factory=dict)
 
 
@@ -114,6 +121,9 @@ def fetch_today_games(timeout=20):
         if not cells:
             continue
         try:
+            time_cell = col(cells, "time")
+            time_text = time_cell.get_text(" ", strip=True) if time_cell is not None else ""
+
             teams_cell = col(cells, "teams")
             away_team, home_team = _parse_two_stacked_spans(teams_cell)
 
@@ -154,6 +164,7 @@ def fetch_today_games(timeout=20):
                     total_projected_runs=total_runs,
                     market_total=market_total,
                     detail_url=detail_url,
+                    time_text=time_text,
                 )
             )
         except Exception:

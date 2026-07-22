@@ -56,6 +56,7 @@ class MoundEdgeGame:
     slate_subtitle: str = ""
     game_time: str = ""
     venue: str = ""
+    game_number: int = 1  # parsed from a "DH Game N" meta span - see _parse_game
     weather_text: str = ""
     park_factor_text: str = ""
     weather_net_pct: float | None = None
@@ -189,6 +190,14 @@ def _parse_game(game_div):
     gmeta = game_div.select_one(".gmeta")
     if gmeta is not None:
         spans = [_clean(s.get_text()) for s in gmeta.find_all("span", recursive=False) if "d" not in (s.get("class") or [])]
+        # doubleheader cards insert a "DH Game N" span before the real time,
+        # which would otherwise get misread as game_time (and shift the
+        # actual time into the venue field) - split it off first so the
+        # rest of the parsing is identical to a normal single game.
+        dh_match = re.match(r"DH\s*Game\s*(\d+)", spans[0], re.I) if spans else None
+        if dh_match:
+            game.game_number = int(dh_match.group(1))
+            spans = spans[1:]
         if spans:
             game.game_time = spans[0]
         if len(spans) > 1:

@@ -53,6 +53,11 @@ TOTAL_SERIES = "KXMLBTOTAL"
 ET = ZoneInfo("America/New_York")
 
 _TRAILING_LETTERS_RE = re.compile(r"([A-Z]+)$")
+_TICKER_DT_RE = re.compile(r"-(\d{2})([A-Z]{3})(\d{2})(\d{4})[A-Z]")
+_MONTH_ABBREV = {
+    "JAN": 1, "FEB": 2, "MAR": 3, "APR": 4, "MAY": 5, "JUN": 6,
+    "JUL": 7, "AUG": 8, "SEP": 9, "OCT": 10, "NOV": 11, "DEC": 12,
+}
 
 
 @dataclass
@@ -65,8 +70,29 @@ class KalshiGame:
     over_pct: float | None = None  # 0-100, implied probability of Over
     game_ticker: str = ""
     total_ticker: str = ""
+    # the event ticker's own embedded local start time - e.g.
+    # "KXMLBGAME-26JUL221910BALBOS" -> 2026-07-22 19:10 ET (empirically
+    # Eastern, not UTC - occurrence_datetime trails this by ~3h, which
+    # looks like an estimated game-end/resolution time, not the start).
+    # Only used to disambiguate doubleheader games by proximity to the
+    # official schedule's start time - see build.py.
+    ticker_datetime_et: object = None
     volume: float | None = None
     raw: dict = field(default_factory=dict)
+
+
+def _parse_ticker_datetime_et(event_ticker):
+    m = _TICKER_DT_RE.search(event_ticker or "")
+    if not m:
+        return None
+    yy, mon, dd, hhmm = m.groups()
+    month = _MONTH_ABBREV.get(mon.upper())
+    if not month:
+        return None
+    try:
+        return datetime(2000 + int(yy), month, int(dd), int(hhmm[:2]), int(hhmm[2:]), tzinfo=ET)
+    except ValueError:
+        return None
 
 
 def _normalize_abbrev(code):
@@ -182,8 +208,16 @@ def _parse_game_market(market, today_iso, games_by_key):
     if pct is None:
         return
 
-    key = (away_ab, home_ab)
-    g = games_by_key.setdefault(key, KalshiGame(away_abbrev=away_ab, home_abbrev=home_ab))
+    # keyed by (away, home, ticker_datetime) rather than just (away, home) -
+    # a doubleheader has two real games for the same team pair, each with
+    # its own event_ticker/start time, and collapsing them into one
+    # KalshiGame would silently mix one game's win price with the other's
+    # total line. See build.py's doubleheader-matching comment.
+    ticker_dt = _parse_ticker_datetime_et(event_ticker)
+    key = (away_ab, home_ab, ticker_dt)
+    g = games_by_key.setdefault(
+        key, KalshiGame(away_abbrev=away_ab, home_abbrev=home_ab, ticker_datetime_et=ticker_dt)
+    )
     g.game_ticker = event_ticker
     g.volume = _dollars(market.get("volume_fp"))
     g.raw["game_market_" + this_team] = market
@@ -215,8 +249,11 @@ def _parse_total_market(market, today_iso, games_by_key):
     if market.get("strike_type") not in (None, "greater"):
         return
 
-    key = (away_ab, home_ab)
-    g = games_by_key.setdefault(key, KalshiGame(away_abbrev=away_ab, home_abbrev=home_ab))
+    ticker_dt = _parse_ticker_datetime_et(event_ticker)
+    key = (away_ab, home_ab, ticker_dt)
+    g = games_by_key.setdefault(
+        key, KalshiGame(away_abbrev=away_ab, home_abbrev=home_ab, ticker_datetime_et=ticker_dt)
+    )
     g.total_line = line
     g.total_ticker = event_ticker
     g.over_pct = pct

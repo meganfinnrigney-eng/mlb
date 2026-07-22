@@ -5,10 +5,15 @@ in the project brief. Pure analysis - no fetching, no rendering, no betting
 recommendations of any kind (no stakes, no "plays").
 """
 
+import re
 from collections import Counter
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
 
 from mlb_daily.teams import abbrev_from_name, full_name
+
+ET = ZoneInfo("America/New_York")
 
 TOTAL_GAP_THRESHOLD = 1.0          # runs: model total vs market total (trigger a)
 BPP_DISAGREEMENT_THRESHOLD = 1.0   # runs: DRatings vs BPP total disagreement (trigger b)
@@ -102,6 +107,8 @@ class Flag:
 class Matchup:
     away_abbrev: str
     home_abbrev: str
+    game_number: int = 1  # from the official schedule spine - see _resolve_source_by_game
+    game_pk: int | None = None
     away_name: str = ""
     home_name: str = ""
     game_time: str = ""
@@ -178,15 +185,141 @@ def _totals_sparkline(m):
     ]
 
 
-def _match_dratings_to_abbrev(dr_games):
-    """Returns {(away_abbrev, home_abbrev): DRatingsGame}."""
+def _group_dratings_by_pair(dr_games):
+    """Returns {(away_abbrev, home_abbrev): [DRatingsGame, ...]} - a LIST per
+    pair (not a single game) because a doubleheader has two real DRatings
+    rows for the same team pair; collapsing to one dict entry per pair is
+    exactly the bug _resolve_source_by_game exists to avoid."""
     out = {}
     for g in dr_games:
         away_ab = abbrev_from_name(g.away_team)
         home_ab = abbrev_from_name(g.home_team)
         if away_ab and home_ab:
-            out[(away_ab, home_ab)] = g
+            out.setdefault((away_ab, home_ab), []).append(g)
     return out
+
+
+def _group_by_pair(games, away_attr, home_attr):
+    out = {}
+    for g in games:
+        away_ab, home_ab = getattr(g, away_attr), getattr(g, home_attr)
+        if away_ab and home_ab:
+            out.setdefault((away_ab, home_ab), []).append(g)
+    return out
+
+
+_DRATINGS_TIME_RE = re.compile(r"(\d{1,2})/(\d{1,2})/(\d{4})\s+(\d{1,2}):(\d{2})\s*([AP]M)", re.I)
+
+
+def _parse_dratings_time_utc(time_text):
+    """DRatings' raw 'Time' cell (e.g. '07/22/2026 11:05 PM') - empirically
+    matches MLB's own official UTC schedule time exactly (confirmed against
+    real doubleheader data, not from any documented DRatings convention).
+    Only used to disambiguate doubleheader rows by proximity to the
+    official schedule; returns None rather than guessing if it doesn't
+    parse cleanly."""
+    if not time_text:
+        return None
+    m = _DRATINGS_TIME_RE.search(time_text)
+    if not m:
+        return None
+    mo, day, year, hour, minute, ampm = m.groups()
+    hour = int(hour) % 12
+    if ampm.upper() == "PM":
+        hour += 12
+    try:
+        return datetime(int(year), int(mo), int(day), hour, int(minute), tzinfo=timezone.utc)
+    except ValueError:
+        return None
+
+
+_MOUNDEDGE_TIME_RE = re.compile(r"(\d{1,2}):(\d{2})\s*([AP]M)", re.I)
+
+
+def _parse_moundedge_time_et(game_time_text, today_iso):
+    """MoundEdge's game_time text (e.g. '7:05 pm ET', or '1:05 pm' for a
+    doubleheader card - see moundedge.py's _parse_game) has no date of its
+    own, so it's combined with today_iso and read as Eastern time."""
+    if not game_time_text or not today_iso:
+        return None
+    m = _MOUNDEDGE_TIME_RE.search(game_time_text)
+    if not m:
+        return None
+    hour, minute, ampm = m.groups()
+    hour = int(hour) % 12
+    if ampm.upper() == "PM":
+        hour += 12
+    try:
+        y, mo, d = (int(x) for x in today_iso.split("-"))
+        return datetime(y, mo, d, hour, int(minute), tzinfo=ET)
+    except ValueError:
+        return None
+
+
+def _parse_iso_utc(iso_text):
+    if not iso_text:
+        return None
+    try:
+        return datetime.fromisoformat(iso_text.replace("Z", "+00:00")).astimezone(timezone.utc)
+    except ValueError:
+        return None
+
+
+def _resolve_source_by_game(candidates, schedule_entries, number_fn, time_fn):
+    """Assigns each of a source's candidate rows for one team pair to the
+    correct real game_number, instead of collapsing them into one. See
+    module docstring addendum below _build_matchups for why this exists.
+
+    schedule_entries: [(game_number, sched_dt_utc), ...] for this pair,
+    from the official schedule spine (mlb_daily.fetch.schedule) - the
+    ground truth for "how many real games are there and when."
+
+    number_fn(candidate) -> an explicit game number if this source
+    confidently provides one (My model: straight from the same official
+    API; MoundEdge: parsed "DH Game N" label), else None.
+    time_fn(candidate) -> an inferred aware datetime for nearest-time
+    matching, used only when number_fn can't resolve a candidate (DRatings'
+    raw Time cell, Kalshi's ticker-embedded time) - never used to override
+    an explicit number_fn match.
+
+    A candidate that can't be confidently placed is dropped rather than
+    guessed onto a game_number - better to show "no data from this source
+    for this game" than to silently attribute the wrong game's numbers."""
+    result = {gn: None for gn, _ in schedule_entries}
+    if not candidates:
+        return result
+    if len(schedule_entries) == 1:
+        result[schedule_entries[0][0]] = candidates[0]
+        return result
+
+    remaining = list(candidates)
+    unclaimed = dict(schedule_entries)
+
+    for c in list(remaining):
+        gn = number_fn(c)
+        if gn is not None and gn in unclaimed:
+            result[gn] = c
+            remaining.remove(c)
+            del unclaimed[gn]
+
+    if remaining and unclaimed:
+        scored = []
+        for c in remaining:
+            dt = time_fn(c)
+            if dt is None:
+                continue
+            for gn, sched_dt in unclaimed.items():
+                scored.append((abs((dt.astimezone(timezone.utc) - sched_dt).total_seconds()), c, gn))
+        scored.sort(key=lambda p: p[0])
+        used_slots, used_candidates = set(), set()
+        for _, c, gn in scored:
+            if gn in used_slots or id(c) in used_candidates:
+                continue
+            result[gn] = c
+            used_slots.add(gn)
+            used_candidates.add(id(c))
+
+    return result
 
 
 def _winner(away_val, home_val):
@@ -332,24 +465,97 @@ ALL_CHECKS = [
 ]
 
 
-def _build_matchups(dr_games, me_games, reddit_result, kalshi_games=None, mymodel_games=None):
-    dr_by_abbrev = _match_dratings_to_abbrev(dr_games)
-    kalshi_by_abbrev = {(g.away_abbrev, g.home_abbrev): g for g in (kalshi_games or [])}
-    mymodel_by_abbrev = {(g.away_abbrev, g.home_abbrev): g for g in (mymodel_games or [])}
+def _build_matchups(dr_games, me_games, reddit_result, kalshi_games=None, mymodel_games=None,
+                     today_iso=None, schedule_games=None):
+    """One Matchup per (away_abbrev, home_abbrev, game_number). Doubleheaders
+    are the reason game_number exists at all: DRatings, MoundEdge, and
+    Kalshi are each scraped/market data that doesn't reliably self-label
+    "Game 1" vs "Game 2" the same way (or, for Kalshi, used to even keep
+    them apart internally), so joining everything by (away, home) alone
+    used to silently collapse a doubleheader's two real games into one
+    Matchup - mixing one source's Game 1 row with another source's Game 2
+    row. schedule_games (mlb_daily.fetch.schedule.fetch_today_schedule) is
+    the authoritative spine that fixes this: for each team pair, it's the
+    ground truth for how many real games there are today, and each
+    source's row(s) get matched to the correct game_number via
+    _resolve_source_by_game (exact match where a source gives one, nearest
+    scheduled start time otherwise - see that function).
+
+    If schedule_games isn't available (fetch failed - this is a 5th
+    optional data dependency, so it must degrade gracefully like every
+    other source here), every pair falls back to the old single-game-per-
+    pair behavior instead of blocking the whole report."""
+    dr_by_pair = _group_dratings_by_pair(dr_games)
+    me_by_pair = {}
+    for g in me_games:
+        me_by_pair.setdefault((g.away.abbrev, g.home.abbrev), []).append(g)
+    kalshi_by_pair = _group_by_pair(kalshi_games or [], "away_abbrev", "home_abbrev")
+    mymodel_by_pair = _group_by_pair(mymodel_games or [], "away_abbrev", "home_abbrev")
+
+    schedule_by_pair = {}
+    for entry in (schedule_games or []):
+        sched_dt = _parse_iso_utc(entry.get("game_datetime_utc"))
+        key = (entry["away_abbrev"], entry["home_abbrev"])
+        schedule_by_pair.setdefault(key, []).append(
+            (entry.get("game_number", 1), sched_dt, entry.get("game_pk"))
+        )
+    for key in schedule_by_pair:
+        schedule_by_pair[key].sort(key=lambda e: e[0])
+
+    all_pairs = set(dr_by_pair) | set(me_by_pair) | set(kalshi_by_pair) | set(mymodel_by_pair) | set(schedule_by_pair)
+
+    # (away_ab, home_ab, game_number, game_pk, dr, me, kalshi, mymodel) tuples,
+    # resolved per pair before building any Matchup objects
+    resolved = []
+    for away_ab, home_ab in all_pairs:
+        dr_candidates = dr_by_pair.get((away_ab, home_ab), [])
+        me_candidates = me_by_pair.get((away_ab, home_ab), [])
+        kalshi_candidates = kalshi_by_pair.get((away_ab, home_ab), [])
+        mymodel_candidates = mymodel_by_pair.get((away_ab, home_ab), [])
+        schedule_entries = schedule_by_pair.get((away_ab, home_ab))
+
+        if not schedule_entries:
+            # schedule doesn't know this pair (fetch failed, or a rare
+            # mismatch) - old behavior, single game, first candidate wins
+            resolved.append((
+                away_ab, home_ab, 1, None,
+                dr_candidates[0] if dr_candidates else None,
+                me_candidates[0] if me_candidates else None,
+                kalshi_candidates[0] if kalshi_candidates else None,
+                mymodel_candidates[0] if mymodel_candidates else None,
+            ))
+            continue
+
+        sched_pairs = [(gn, dt) for gn, dt, _pk in schedule_entries]
+        game_pk_by_number = {gn: pk for gn, _dt, pk in schedule_entries}
+
+        dr_by_game = _resolve_source_by_game(
+            dr_candidates, sched_pairs, lambda c: None, lambda c: _parse_dratings_time_utc(c.time_text)
+        )
+        me_by_game = _resolve_source_by_game(
+            me_candidates, sched_pairs, lambda c: c.game_number,
+            lambda c: _parse_moundedge_time_et(c.game_time, today_iso),
+        )
+        kalshi_by_game = _resolve_source_by_game(
+            kalshi_candidates, sched_pairs, lambda c: None, lambda c: c.ticker_datetime_et
+        )
+        mymodel_by_game = _resolve_source_by_game(
+            mymodel_candidates, sched_pairs, lambda c: c.game_number, lambda c: None
+        )
+
+        for gn, _dt in sched_pairs:
+            resolved.append((
+                away_ab, home_ab, gn, game_pk_by_number.get(gn),
+                dr_by_game.get(gn), me_by_game.get(gn), kalshi_by_game.get(gn), mymodel_by_game.get(gn),
+            ))
+
     matchups = []
-
-    me_keys = {(g.away.abbrev, g.home.abbrev) for g in me_games}
-    all_keys = set(dr_by_abbrev) | me_keys | set(kalshi_by_abbrev) | set(mymodel_by_abbrev)
-
-    for away_ab, home_ab in all_keys:
-        dr = dr_by_abbrev.get((away_ab, home_ab))
-        me = next((g for g in me_games if g.away.abbrev == away_ab and g.home.abbrev == home_ab), None)
-
-        m = Matchup(away_abbrev=away_ab, home_abbrev=home_ab)
+    for away_ab, home_ab, game_number, game_pk, dr, me, kalshi_g, mymodel_g in resolved:
+        m = Matchup(away_abbrev=away_ab, home_abbrev=home_ab, game_number=game_number, game_pk=game_pk)
         m.dratings = dr
         m.moundedge = me
-        m.kalshi = kalshi_by_abbrev.get((away_ab, home_ab))
-        m.mymodel = mymodel_by_abbrev.get((away_ab, home_ab))
+        m.kalshi = kalshi_g
+        m.mymodel = mymodel_g
         m.away_name = full_name(away_ab)
         m.home_name = full_name(home_ab)
         m.game_time = me.game_time if me else ""
@@ -390,7 +596,7 @@ def _build_matchups(dr_games, me_games, reddit_result, kalshi_games=None, mymode
 
         matchups.append(m)
 
-    matchups.sort(key=lambda m: (m.game_time == "", m.game_time, m.away_abbrev))
+    matchups.sort(key=lambda m: (m.game_time == "", m.game_time, m.away_abbrev, m.game_number))
     return matchups
 
 
@@ -657,9 +863,13 @@ def _totals_conviction_row(m):
 
 
 def build_report_data(
-    dr_games, me_games, reddit_result, today_iso, today_display, slate_subtitle, kalshi_games=None, mymodel_games=None
+    dr_games, me_games, reddit_result, today_iso, today_display, slate_subtitle, kalshi_games=None,
+    mymodel_games=None, schedule_games=None,
 ):
-    matchups = _build_matchups(dr_games, me_games, reddit_result, kalshi_games, mymodel_games)
+    matchups = _build_matchups(
+        dr_games, me_games, reddit_result, kalshi_games, mymodel_games,
+        today_iso=today_iso, schedule_games=schedule_games,
+    )
 
     # most-flagged games first within the notable-games table itself
     notable_games = sorted((m for m in matchups if m.flags), key=lambda m: len(m.flags), reverse=True)

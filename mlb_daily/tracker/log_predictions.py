@@ -13,11 +13,15 @@ call to any trading endpoint.
 
 Proof-of-concept scope (this file): log today's per-game predictions
 from DRatings, BPP, My model, and Kalshi's implied price to a running
-CSV, one row per (date, away, home), upserted so repeated runs on the
-same day (e.g. manual test triggers) overwrite that day's row instead of
-duplicating it. Fetching actual final scores and scoring accuracy is a
-separate, not-yet-built step - see the module docstring in this
-package's future results.py.
+CSV, one row per (date, away, home, game_number), upserted so repeated
+runs on the same day (e.g. manual test triggers) overwrite that game's
+row instead of duplicating it. Every row carries a unique game_id
+("{date}_{away}_{home}_G{game_number}") built from build.py's own
+doubleheader-aware Matchup.game_number - never (date, away, home) alone,
+which would collide Game 1 and Game 2 of a doubleheader onto the same
+row. Fetching actual final scores and scoring accuracy is a separate,
+not-yet-built step - see the module docstring in this package's future
+results.py.
 """
 
 import csv
@@ -31,7 +35,7 @@ ET = ZoneInfo("America/New_York")
 DEFAULT_LOG_PATH = Path(__file__).resolve().parent.parent / "data" / "predictions_log.csv"
 
 FIELDNAMES = [
-    "date", "logged_at", "away_abbrev", "home_abbrev", "game_time",
+    "game_id", "date", "game_number", "logged_at", "away_abbrev", "home_abbrev", "game_time",
     "dratings_pick", "dratings_away_proj", "dratings_home_proj", "dratings_total_proj",
     "bpp_pick", "bpp_away_proj", "bpp_home_proj", "bpp_total_proj",
     "mymodel_pick", "mymodel_away_proj", "mymodel_home_proj", "mymodel_total_proj",
@@ -43,7 +47,9 @@ FIELDNAMES = [
 
 @dataclass
 class PredictionRow:
+    game_id: str
     date: str
+    game_number: int
     logged_at: str
     away_abbrev: str
     home_abbrev: str
@@ -106,8 +112,13 @@ def _row_from_matchup(m, today_iso, logged_at):
 
     market_total = (me.market_total if me else None) or (dr.market_total if dr else None)
 
+    game_number = getattr(m, "game_number", 1) or 1
+    game_id = f"{today_iso}_{m.away_abbrev}_{m.home_abbrev}_G{game_number}"
+
     return PredictionRow(
+        game_id=game_id,
         date=today_iso,
+        game_number=game_number,
         logged_at=logged_at,
         away_abbrev=m.away_abbrev,
         home_abbrev=m.home_abbrev,
@@ -142,19 +153,21 @@ def _read_existing_rows(csv_path):
 
 
 def log_todays_predictions(matchups, today_iso, csv_path=DEFAULT_LOG_PATH, now=None):
-    """Upserts one row per (date, away_abbrev, home_abbrev) into the running
-    CSV - re-running this on the same day (manual test triggers, retries)
-    overwrites that day's row for a game rather than piling up duplicates
-    that would double-count in the accuracy stats later. Returns the list
-    of PredictionRow objects written for this call, so callers (main.py,
-    this module's own POC runner) can show/print what was logged."""
+    """Upserts one row per game_id into the running CSV - re-running this on
+    the same day (manual test triggers, retries) overwrites that game's row
+    rather than piling up duplicates that would double-count in the
+    accuracy stats later. Keyed by game_id (not date+away+home alone) so a
+    doubleheader's two games never collide onto the same row. Returns the
+    list of PredictionRow objects written for this call, so callers
+    (main.py, this module's own POC runner) can show/print what was
+    logged."""
     logged_at = (now or datetime.now(ET)).isoformat()
     new_rows = [_row_from_matchup(m, today_iso, logged_at) for m in matchups]
 
     existing = _read_existing_rows(csv_path)
-    by_key = {(r["date"], r["away_abbrev"], r["home_abbrev"]): r for r in existing}
+    by_key = {r["game_id"]: r for r in existing if r.get("game_id")}
     for row in new_rows:
-        by_key[(row.date, row.away_abbrev, row.home_abbrev)] = row.as_dict()
+        by_key[row.game_id] = row.as_dict()
 
     csv_path.parent.mkdir(parents=True, exist_ok=True)
     with csv_path.open("w", newline="", encoding="utf-8") as f:

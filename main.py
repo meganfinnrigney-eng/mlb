@@ -14,7 +14,7 @@ from pathlib import Path
 from zoneinfo import ZoneInfo
 
 from mlb_daily.analysis.build import build_report_data
-from mlb_daily.fetch import dratings, kalshi, moundedge, mymodel, reddit, sportsbettingdime
+from mlb_daily.fetch import dratings, kalshi, moundedge, mymodel, reddit, schedule, sportsbettingdime
 from mlb_daily.report import fonts
 from mlb_daily.report.render import render_artifact_fragment, render_report
 from mlb_daily.tracker.log_predictions import log_todays_predictions
@@ -78,9 +78,16 @@ def main():
     mymodel_games = _fetch_safe("My model", lambda: mymodel.fetch_today_games(today_iso), [])
     print(f"My model: {len(mymodel_games)} games")
 
+    # official MLB schedule (gamePk/gameNumber per real game) - the spine
+    # build.py uses to keep doubleheader games separate instead of
+    # silently collapsing them; degrades gracefully to the old per-pair
+    # behavior if this fetch fails, same as every other source here.
+    schedule_games = _fetch_safe("Schedule", lambda: schedule.fetch_today_schedule(today_iso), [])
+    print(f"Schedule: {len(schedule_games)} games")
+
     report_data = build_report_data(
         dr_games, me_games, reddit_result, today_iso, today_display, slate_subtitle,
-        kalshi_games=kalshi_games, mymodel_games=mymodel_games,
+        kalshi_games=kalshi_games, mymodel_games=mymodel_games, schedule_games=schedule_games,
     )
     report_data["sbd_status_note"] = sbd_status.note
 

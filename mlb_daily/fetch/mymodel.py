@@ -87,6 +87,7 @@ class PitcherRollingStats:
 class MyModelGame:
     away_abbrev: str
     home_abbrev: str
+    game_number: int = 1  # from MLB Stats API's own gameNumber - disambiguates doubleheaders
     away_pitcher_id: int | None = None
     away_pitcher_name: str = ""
     home_pitcher_id: int | None = None
@@ -121,6 +122,7 @@ def _fetch_probable_pitchers(today_iso, timeout=20):
                 {
                     "away_abbrev": away_ab,
                     "home_abbrev": home_ab,
+                    "game_number": g.get("gameNumber", 1),
                     "away_pitcher_id": away.get("probablePitcher", {}).get("id"),
                     "away_pitcher_name": away.get("probablePitcher", {}).get("fullName", ""),
                     "home_pitcher_id": home.get("probablePitcher", {}).get("id"),
@@ -312,6 +314,7 @@ def fetch_today_games(today_iso, today=None):
             mg = MyModelGame(
                 away_abbrev=away_ab,
                 home_abbrev=home_ab,
+                game_number=g.get("game_number", 1),
                 away_pitcher_id=g["away_pitcher_id"],
                 away_pitcher_name=g["away_pitcher_name"],
                 home_pitcher_id=g["home_pitcher_id"],
