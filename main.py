@@ -14,7 +14,7 @@ from pathlib import Path
 from zoneinfo import ZoneInfo
 
 from mlb_daily.analysis.build import build_report_data
-from mlb_daily.fetch import dratings, kalshi, moundedge, reddit, sportsbettingdime
+from mlb_daily.fetch import dratings, kalshi, moundedge, mymodel, reddit, sportsbettingdime
 from mlb_daily.report import fonts
 from mlb_daily.report.render import render_artifact_fragment, render_report
 
@@ -74,8 +74,12 @@ def main():
     kalshi_games = _fetch_safe("Kalshi", lambda: kalshi.fetch_today_games(today_iso), [])
     print(f"Kalshi: {len(kalshi_games)} games")
 
+    mymodel_games = _fetch_safe("My model", lambda: mymodel.fetch_today_games(today_iso), [])
+    print(f"My model: {len(mymodel_games)} games")
+
     report_data = build_report_data(
-        dr_games, me_games, reddit_result, today_iso, today_display, slate_subtitle, kalshi_games=kalshi_games
+        dr_games, me_games, reddit_result, today_iso, today_display, slate_subtitle,
+        kalshi_games=kalshi_games, mymodel_games=mymodel_games,
     )
     report_data["sbd_status_note"] = sbd_status.note
 

@@ -8,7 +8,7 @@ than exact full-name string matching)."""
 # one whose game-card ids anchor the cross-source join) - notably KCR, SDP,
 # SFG, TBR, WSN, CHW rather than the shorter forms other sites sometimes use.
 TEAMS = [
-    ("Diamondbacks", "ARI", ["D-backs"]),
+    ("Diamondbacks", "ARI", ["D-backs", "AZ"]),
     ("Braves", "ATL", []),
     ("Orioles", "BAL", []),
     ("Red Sox", "BOS", []),

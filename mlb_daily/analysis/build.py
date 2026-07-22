@@ -22,6 +22,7 @@ SOURCE_URLS = {
     "DRatings": "https://www.dratings.com/predictor/mlb-baseball-predictions/",
     "MoundEdge": "https://moundedge.github.io/MLB-Summaries/",
     "Kalshi": "https://kalshi.com/markets/kxmlbgame/mlb-game-winner",
+    "Baseball Savant (My model's data)": "https://baseballsavant.mlb.com/",
 }
 
 _CONDITION_ICONS = [
@@ -110,6 +111,7 @@ class Matchup:
     dratings: object = None
     moundedge: object = None
     kalshi: object = None
+    mymodel: object = None  # MyModelGame - see mlb_daily/fetch/mymodel.py
     reddit_away: object = None
     reddit_home: object = None
 
@@ -329,13 +331,14 @@ ALL_CHECKS = [
 ]
 
 
-def _build_matchups(dr_games, me_games, reddit_result, kalshi_games=None):
+def _build_matchups(dr_games, me_games, reddit_result, kalshi_games=None, mymodel_games=None):
     dr_by_abbrev = _match_dratings_to_abbrev(dr_games)
     kalshi_by_abbrev = {(g.away_abbrev, g.home_abbrev): g for g in (kalshi_games or [])}
+    mymodel_by_abbrev = {(g.away_abbrev, g.home_abbrev): g for g in (mymodel_games or [])}
     matchups = []
 
     me_keys = {(g.away.abbrev, g.home.abbrev) for g in me_games}
-    all_keys = set(dr_by_abbrev) | me_keys | set(kalshi_by_abbrev)
+    all_keys = set(dr_by_abbrev) | me_keys | set(kalshi_by_abbrev) | set(mymodel_by_abbrev)
 
     for away_ab, home_ab in all_keys:
         dr = dr_by_abbrev.get((away_ab, home_ab))
@@ -345,6 +348,7 @@ def _build_matchups(dr_games, me_games, reddit_result, kalshi_games=None):
         m.dratings = dr
         m.moundedge = me
         m.kalshi = kalshi_by_abbrev.get((away_ab, home_ab))
+        m.mymodel = mymodel_by_abbrev.get((away_ab, home_ab))
         m.away_name = full_name(away_ab)
         m.home_name = full_name(home_ab)
         m.game_time = me.game_time if me else ""
@@ -550,8 +554,10 @@ def _totals_alignment_for_game(m):
     }
 
 
-def build_report_data(dr_games, me_games, reddit_result, today_iso, today_display, slate_subtitle, kalshi_games=None):
-    matchups = _build_matchups(dr_games, me_games, reddit_result, kalshi_games)
+def build_report_data(
+    dr_games, me_games, reddit_result, today_iso, today_display, slate_subtitle, kalshi_games=None, mymodel_games=None
+):
+    matchups = _build_matchups(dr_games, me_games, reddit_result, kalshi_games, mymodel_games)
 
     # most-flagged games first within the notable-games table itself
     notable_games = sorted((m for m in matchups if m.flags), key=lambda m: len(m.flags), reverse=True)

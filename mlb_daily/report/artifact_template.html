@@ -519,9 +519,9 @@ Kalshi market data isn't available today - either no markets were found for toda
 {% endif %}
 
 <div class="eyebrow" id="dd-predictions"><span class="label">Model Predictions</span><span class="rule"></span></div>
-<div class="disclaimer-strip">Three independent projections per game — they won't always agree with each other, which is normal and part of the point of tracking them.</div>
+<div class="disclaimer-strip">Four independent projections per game — they won't always agree with each other, which is normal and part of the point of tracking them. "My model" is the only one built from scratch here (raw Statcast pitcher/team stats, see the Glossary); DRatings, MoundEdge, and BPP are each other sites' own aggregated projections.</div>
 <div class="table-wrap"><table>
-<thead><tr><th>Matchup</th><th class="num">DRatings</th><th>Winner</th><th class="num">MoundEdge Model</th><th class="num">BPP sim</th><th>BPP winner</th></tr></thead>
+<thead><tr><th>Matchup</th><th class="num">DRatings</th><th>Winner</th><th class="num">MoundEdge Model</th><th class="num">BPP sim</th><th>BPP winner</th><th class="num">My model</th><th>My model winner</th></tr></thead>
 <tbody>
 {% for m in r.games %}
 <tr>
@@ -531,6 +531,8 @@ Kalshi market data isn't available today - either no markets were found for toda
   <td class="num">{% if m.moundedge and m.moundedge.model_away_runs is not none %}{{ "%.1f"|format(m.moundedge.model_away_runs) }}–{{ "%.1f"|format(m.moundedge.model_home_runs) }}{% else %}—{% endif %}</td>
   <td class="num">{% if m.moundedge and m.moundedge.bpp_away_runs is not none %}{{ "%.1f"|format(m.moundedge.bpp_away_runs) }}–{{ "%.1f"|format(m.moundedge.bpp_home_runs) }}{% else %}—{% endif %}</td>
   <td>{% if m.moundedge and m.moundedge.bpp_away_runs is not none %}{{ m.away_abbrev if m.moundedge.bpp_away_runs > m.moundedge.bpp_home_runs else m.home_abbrev }}{% else %}—{% endif %}</td>
+  <td class="num">{% if m.mymodel and m.mymodel.away_projected_runs is not none and m.mymodel.home_projected_runs is not none %}{{ "%.1f"|format(m.mymodel.away_projected_runs) }}–{{ "%.1f"|format(m.mymodel.home_projected_runs) }}{% else %}—{% endif %}</td>
+  <td>{% if m.mymodel and m.mymodel.away_projected_runs is not none and m.mymodel.home_projected_runs is not none %}{{ m.away_abbrev if m.mymodel.away_projected_runs > m.mymodel.home_projected_runs else m.home_abbrev }}{% else %}—{% endif %}</td>
 </tr>
 {% endfor %}
 </tbody>
@@ -545,6 +547,7 @@ Kalshi market data isn't available today - either no markets were found for toda
 <tr><td style="white-space:nowrap">MoundEdge</td><td>BPP sim projected score (separate from its own "Model" projection), weather/park run-environment effect, starting-pitcher splits, hitting/bullpen trend arrows vs season stats, market lines, and embedded betting splits.</td></tr>
 <tr><td style="white-space:nowrap">Reddit</td><td>Today's MLB daily discussion thread, fetched via the unauthenticated .json endpoint. Recurring team mentions and their stated reasoning.</td></tr>
 <tr><td style="white-space:nowrap">Kalshi</td><td>Real-money prediction market: implied win probability and a total-runs over/under line, from Kalshi's public market-data API. Shown for reference (Market Probabilities table + probability bars above) and counted toward the Alignment Check's agreement column, but not folded into the confidence score.</td></tr>
+<tr><td style="white-space:nowrap">My model</td><td>A from-scratch projection built directly from raw Baseball Savant/Statcast data (starting pitcher rolling stats, team batting xwOBA) plus a hand-maintained park factor - not aggregated from another site's predictions, unlike DRatings/MoundEdge. Shown in the Model Predictions table for side-by-side comparison only.</td></tr>
 </tbody>
 </table></div>
 
@@ -589,6 +592,8 @@ Reddit sentiment isn't available today. Reddit blocks most automated requests ou
   <dt>Total / Over-Under</dt><dd>A bet on whether the combined final score of both teams will be above or below a set number.</dd>
   <dt>Bets% vs money%</dt><dd>% of individual bets placed on a side vs. % of total dollars wagered on it. When these two disagree a lot, it usually means a small number of large bettors are on the opposite side of the general public.</dd>
   <dt>Home/road split</dt><dd>How much better or worse a pitcher performs at home vs. on the road, compared to their season average.</dd>
+  <dt>xwOBA</dt><dd>Expected weighted on-base average - like wOBA (a single number blending every outcome: walks, hits, power), but based on how hard/well a ball was actually hit rather than what happened to it after (removes some luck/defense). Higher is better for a hitter, lower is better for a pitcher (allowed).</dd>
+  <dt>My model</dt><dd>Built from scratch here (not aggregated from another site): each team's recent Statcast xwOBA times the opposing starter's recent xwOBA-allowed, both relative to the league average, times a park factor, times the league's average runs per game. Simple and transparent on purpose - see mlb_daily/fetch/mymodel.py for the exact formula.</dd>
 </dl>
 </div>
 
