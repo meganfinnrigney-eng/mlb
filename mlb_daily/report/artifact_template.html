@@ -118,10 +118,10 @@
 
   /* Hero cards: elevated surface, rounded, soft shadow - the "broadcast
      graphic" card language. Left-rule color is the only difference between
-     the two (grass for the Tigers/Mariners spotlight, gold for Highest
-     Conviction) - both are structural accents, not "pay attention" signals,
-     so they stay distinct from --accent (clay), which is reserved for
-     Mixed/Conflict/Differs-from-market. */
+     the two (grass for the Tigers/Mariners spotlight, gold for the
+     Conviction Board) - both are structural accents, not "pay attention"
+     signals, so they stay distinct from --accent (clay), which is reserved
+     for Mixed/Conflict/Differs-from-market. */
   .hero-card { background: var(--card); border-radius: 16px; box-shadow: var(--shadow-card);
     padding: 18px 22px; margin-bottom: 22px; border-left: 4px solid var(--accent-2); }
   .hero-card.conviction { border-left-color: var(--accent-3); }
@@ -137,6 +137,24 @@
     margin: 0 0 10px; }
   .cg-badges { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
   .cg-note { font-size: 13.5px; color: var(--muted); margin-top: 10px; }
+
+  /* Conviction Board: two independently-ranked lists (moneyline agreement,
+     totals agreement) - dots make the agreement count scannable at a
+     glance, the text spells out exactly which sources agree/dissent so
+     "conviction" is never asserted without showing its reasoning. */
+  .board-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  @media (max-width: 640px) { .board-grid { grid-template-columns: 1fr; } }
+  .board-col .board-heading { font-family: var(--font-display); font-size: 11.5px; font-weight: 700;
+    letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+  .board-row + .board-row { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); }
+  .board-row .br-matchup { font-family: var(--font-display); font-weight: 700; font-size: 14.5px; }
+  .board-row .br-time { color: var(--muted); font-weight: 400; font-size: 12px; margin-left: 6px; }
+  .board-dots { margin: 6px 0 4px; letter-spacing: 2px; font-size: 13px; }
+  .board-dots .dot-on { color: var(--accent-3); }
+  .board-dots .dot-off { color: var(--line); }
+  .board-verdict { font-size: 13.5px; }
+  .board-verdict strong { font-weight: 700; }
+  .board-dissent { font-size: 12.5px; color: var(--muted); margin-top: 2px; }
 
   /* Sparkline: totals-runs ticks (DRatings/BPP/Model/Market) on one line,
      each positioned by its precomputed 0-100 x (see _totals_sparkline in
@@ -278,6 +296,32 @@
 </div>
 {% endmacro %}
 
+{% macro board_dots(agree_count, total_count) %}
+<span class="board-dots">{% for i in range(total_count) %}{% if i < agree_count %}<span class="dot-on">●</span>{% else %}<span class="dot-off">○</span>{% endif %}{% endfor %}</span>
+{% endmacro %}
+
+{% macro moneyline_board_row(row) %}
+<div class="board-row">
+  <div class="br-matchup">{{ row.matchup.away_name }} @ {{ row.matchup.home_name }}{% if row.matchup.game_time %}<span class="br-time">{{ row.matchup.game_time }}</span>{% endif %}</div>
+  {{ board_dots(row.agree_count, row.total_count) }}
+  <div class="board-verdict">{{ row.agree_count }}/{{ row.total_count }} agree: <strong>{{ row.team }}</strong> <span class="muted">({{ row.team_name }})</span></div>
+  {% if row.dissenting %}
+  <div class="board-dissent">{% for src, team in row.dissenting %}{{ src }} leans {{ team }}{% if not loop.last %}; {% endif %}{% endfor %}</div>
+  {% endif %}
+</div>
+{% endmacro %}
+
+{% macro totals_board_row(row) %}
+<div class="board-row">
+  <div class="br-matchup">{{ row.matchup.away_name }} @ {{ row.matchup.home_name }}{% if row.matchup.game_time %}<span class="br-time">{{ row.matchup.game_time }}</span>{% endif %}</div>
+  {{ board_dots(row.agree_count, row.total_count) }}
+  <div class="board-verdict">{{ row.agree_count }}/{{ row.total_count }} lean <strong>{{ row.direction|upper }}</strong></div>
+  {% if row.dissenting %}
+  <div class="board-dissent">{% for src, direction in row.dissenting %}{{ src }} leans {{ direction }}{% if not loop.last %}; {% endif %}{% endfor %}</div>
+  {% endif %}
+</div>
+{% endmacro %}
+
 {% macro kalshi_bars(m) %}
 {% if m.kalshi and m.kalshi.away_win_pct is not none and m.kalshi.home_win_pct is not none %}
 <div class="prob-bar-list">
@@ -354,27 +398,28 @@
 <div class="also-note">Neither the Detroit Tigers nor the Seattle Mariners play today.</div>
 {% endif %}
 
-{% if r.highest_conviction %}
-  {% if r.highest_conviction_is_spotlight %}
-  <div class="also-note">Today's highest-conviction game is also a Tigers/Mariners game — see above.</div>
-  {% else %}
-  {% set hc = r.highest_conviction %}
-  <div class="hero-card conviction">
-    <div class="kicker">Highest conviction tonight</div>
-    <div class="callout-game">
-      <div class="g-row"><span class="g-head">{{ hc.matchup.away_name }} @ {{ hc.matchup.home_name }}</span>{% if hc.matchup.game_time %} <span class="g-time">{{ hc.matchup.game_time }}</span>{% endif %}</div>
-      <div class="cg-score">{{ score_line(hc.matchup) }}</div>
-      {{ hero_pct(hc.matchup) }}
-      {{ sparkline(hc.matchup) }}
-      {{ kalshi_bars(hc.matchup) }}
-      <div class="cg-badges">{{ badges(hc.matchup) }}</div>
-      <div class="cg-note">{% if hc.reddit_direction_team %}Reddit chatter leans the same way too. {% endif %}That's about as much agreement across sources as you'll find on tonight's slate.</div>
+<div class="hero-card conviction">
+  <div class="kicker">Conviction Board</div>
+  <div class="also-note" style="margin-bottom:16px">Where do DRatings, BPP, Kalshi, and My model actually agree? Two separate questions - who wins, and whether the total goes over or under - each ranked by how many of the four sources land on the same answer. Only games with full or near-full agreement (at least 3 of 4 sources present, at most one dissenting) show up below; there's no forced "pick of the day."</div>
+  <div class="board-grid">
+    <div class="board-col">
+      <div class="board-heading">Moneyline agreement</div>
+      {% if r.moneyline_board %}
+      {% for row in r.moneyline_board %}{{ moneyline_board_row(row) }}{% endfor %}
+      {% else %}
+      <div class="also-note">No game hit full or near-full agreement on the winner today.</div>
+      {% endif %}
+    </div>
+    <div class="board-col">
+      <div class="board-heading">Totals agreement</div>
+      {% if r.totals_board %}
+      {% for row in r.totals_board %}{{ totals_board_row(row) }}{% endfor %}
+      {% else %}
+      <div class="also-note">No game hit full or near-full agreement on over/under today.</div>
+      {% endif %}
     </div>
   </div>
-  {% endif %}
-{% else %}
-<div class="also-note">No game shows full agreement across model, betting money, and Reddit today.</div>
-{% endif %}
+</div>
 
 {% if r.rest_clear_games or r.rest_toss_up_games %}
 <div class="icon-legend">A "Differs from market" badge only appears in the Total column when the model's projected total is notably off from the betting market's number — most games are left blank there.</div>

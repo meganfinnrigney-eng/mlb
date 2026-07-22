@@ -5,6 +5,7 @@ in the project brief. Pure analysis - no fetching, no rendering, no betting
 recommendations of any kind (no stakes, no "plays").
 """
 
+from collections import Counter
 from dataclasses import dataclass, field
 
 from mlb_daily.teams import abbrev_from_name, full_name
@@ -554,6 +555,107 @@ def _totals_alignment_for_game(m):
     }
 
 
+CONVICTION_MIN_SOURCES = 3   # need at least this many sources present to count
+CONVICTION_MAX_DISSENT = 1   # "near-full" = at most this many sources disagree
+
+
+def _moneyline_votes(m):
+    """Conviction Board votes for who wins: DRatings' win-probability pick,
+    MoundEdge's BPP sim pick, Kalshi's win-market lean, and My model's own
+    projected-score pick - four independent predictions. Deliberately NOT
+    the betting split, which measures where the public's money is going,
+    not a prediction - that's a different question (see the Alignment
+    Check table below, which already covers split/Reddit agreement)."""
+    votes = []
+    if m.dratings and m.dratings.away_win_pct is not None and m.dratings.home_win_pct is not None:
+        d = _winner(m.dratings.away_win_pct, m.dratings.home_win_pct)
+        if d and d != "tie":
+            votes.append(("DRatings", d))
+    if m.moundedge and m.moundedge.bpp_away_runs is not None and m.moundedge.bpp_home_runs is not None:
+        d = _winner(m.moundedge.bpp_away_runs, m.moundedge.bpp_home_runs)
+        if d and d != "tie":
+            votes.append(("BPP", d))
+    if m.kalshi and m.kalshi.away_win_pct is not None and m.kalshi.home_win_pct is not None:
+        d = _winner(m.kalshi.away_win_pct, m.kalshi.home_win_pct)
+        if d and d != "tie":
+            votes.append(("Kalshi", d))
+    if m.mymodel and m.mymodel.away_projected_runs is not None and m.mymodel.home_projected_runs is not None:
+        d = _winner(m.mymodel.away_projected_runs, m.mymodel.home_projected_runs)
+        if d and d != "tie":
+            votes.append(("My model", d))
+    return votes
+
+
+def _totals_votes(m):
+    """Conviction Board votes for over/under: DRatings' total vs. the
+    market line, BPP's total vs. the market line, Kalshi's total-market
+    lean, and the betting split's lean on the total (money on Over vs.
+    Under) - the closest thing to a fourth independent read on the total,
+    since neither DRatings nor My model publishes its own market-implied
+    O/U lean."""
+    votes = []
+    market_total = (m.moundedge.market_total if m.moundedge else None) or (
+        m.dratings.market_total if m.dratings else None
+    )
+    if market_total is not None:
+        if m.dratings and m.dratings.total_projected_runs is not None:
+            votes.append(("DRatings", "over" if m.dratings.total_projected_runs > market_total else "under"))
+        if m.moundedge and m.moundedge.bpp_total is not None:
+            votes.append(("BPP", "over" if m.moundedge.bpp_total > market_total else "under"))
+    if m.kalshi and m.kalshi.over_pct is not None:
+        votes.append(("Kalshi", "over" if m.kalshi.over_pct > 50 else "under"))
+    if (
+        m.moundedge
+        and m.moundedge.split_total_over_money is not None
+        and m.moundedge.split_total_under_money is not None
+    ):
+        votes.append(
+            ("Betting split", "over" if m.moundedge.split_total_over_money > m.moundedge.split_total_under_money else "under")
+        )
+    return votes
+
+
+def _conviction_row(m, votes, direction_to_label):
+    """Shared scoring for both Conviction Board lists: tallies the votes,
+    finds the majority direction, and reports which sources agree/dissent.
+    direction_to_label converts a raw direction ('away'/'home' or
+    'over'/'under') into the text shown for that direction."""
+    if len(votes) < CONVICTION_MIN_SOURCES:
+        return None
+    counts = Counter(d for _, d in votes)
+    top_dir, top_count = counts.most_common(1)[0]
+    total = len(votes)
+    if total - top_count > CONVICTION_MAX_DISSENT:
+        return None
+    agreeing = [src for src, d in votes if d == top_dir]
+    dissenting = [(src, direction_to_label(d)) for src, d in votes if d != top_dir]
+    return {
+        "matchup": m,
+        "label": direction_to_label(top_dir),
+        "agree_count": top_count,
+        "total_count": total,
+        "agreeing_sources": agreeing,
+        "dissenting": dissenting,
+    }
+
+
+def _moneyline_conviction_row(m):
+    votes = _moneyline_votes(m)
+    row = _conviction_row(m, votes, lambda d: m.away_abbrev if d == "away" else m.home_abbrev)
+    if row:
+        row["team"] = row["label"]
+        row["team_name"] = full_name(row["label"])
+    return row
+
+
+def _totals_conviction_row(m):
+    votes = _totals_votes(m)
+    row = _conviction_row(m, votes, lambda d: d)
+    if row:
+        row["direction"] = row["label"]
+    return row
+
+
 def build_report_data(
     dr_games, me_games, reddit_result, today_iso, today_display, slate_subtitle, kalshi_games=None, mymodel_games=None
 ):
@@ -578,30 +680,27 @@ def build_report_data(
     for m in matchups:
         m.prose = _prose_signals(m)
 
-    # headline: the game with the strongest agreement across model/money/Reddit,
-    # not the game with the most disagreement (that's the flags table below)
-    aligned_matchups = [m for m in matchups if m.prose["agree"] and m.prose["signal_count"] > 0]
-    highest_conviction_matchup = max(
-        aligned_matchups,
-        key=lambda m: m.prose["signal_count"] * 1000 + m.prose["score"],
-        default=None,
-    )
-    highest_conviction = highest_conviction_matchup.alignment if highest_conviction_matchup else None
-
     totals_rows = sorted(
         (_totals_alignment_for_game(m) for m in matchups if m.flags), key=lambda row: row["agree"]
     )
     totals_disagreements = [row for row in totals_rows if not row["agree"]]
 
+    # Conviction Board: two independently-ranked lists (who wins, over/under)
+    # instead of one collapsed "highest conviction" game - see build_report_data's
+    # module docstring update / the feature request for why these can't be
+    # merged into a single score.
+    moneyline_board = sorted(
+        (row for row in (_moneyline_conviction_row(m) for m in matchups) if row),
+        key=lambda row: (-row["agree_count"], -row["total_count"]),
+    )
+    totals_board = sorted(
+        (row for row in (_totals_conviction_row(m) for m in matchups) if row),
+        key=lambda row: (-row["agree_count"], -row["total_count"]),
+    )
+
     spotlight_games = [m for m in matchups if m.away_abbrev in SPOTLIGHT_TEAMS or m.home_abbrev in SPOTLIGHT_TEAMS]
     spotlight_keys = {(m.away_abbrev, m.home_abbrev) for m in spotlight_games}
-    headline_key = (
-        (highest_conviction_matchup.away_abbrev, highest_conviction_matchup.home_abbrev)
-        if highest_conviction_matchup else None
-    )
-    highest_conviction_is_spotlight = headline_key in spotlight_keys if headline_key else False
 
-    # everything not already covered by the spotlight or the headline callout.
     # "Clear" = signals agree AND are strong enough to clear the toss-up bar;
     # everything else (weak signals, OR strong-but-conflicting "mixed
     # signals") goes in the toss-up group, per-request. Sorting by
@@ -611,7 +710,7 @@ def build_report_data(
         return m.prose["agree"] and m.prose["score"] >= TOSS_UP_THRESHOLD
 
     rest_of_slate = sorted(
-        (m for m in matchups if (m.away_abbrev, m.home_abbrev) not in spotlight_keys and (m.away_abbrev, m.home_abbrev) != headline_key),
+        (m for m in matchups if (m.away_abbrev, m.home_abbrev) not in spotlight_keys),
         key=lambda m: (not _is_clear(m), -m.prose["score"]),
     )
     rest_clear_games = [m for m in rest_of_slate if _is_clear(m)]
@@ -624,8 +723,8 @@ def build_report_data(
         "games": matchups,
         "notable_games": notable_games,
         "most_flagged": most_flagged,
-        "highest_conviction": highest_conviction,
-        "highest_conviction_is_spotlight": highest_conviction_is_spotlight,
+        "moneyline_board": moneyline_board,
+        "totals_board": totals_board,
         "rest_clear_games": rest_clear_games,
         "rest_toss_up_games": rest_toss_up_games,
         "alignment_rows": alignment_rows,
