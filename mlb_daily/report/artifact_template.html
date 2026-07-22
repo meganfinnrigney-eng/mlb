@@ -454,9 +454,9 @@
 </tbody>
 </table></div>
 
-<div class="eyebrow" id="dd-alignment"><span class="label">Alignment Check</span><span class="sub">model vs. betting split vs. Reddit, disagreements first</span><span class="rule"></span></div>
+<div class="eyebrow" id="dd-alignment"><span class="label">Alignment Check</span><span class="sub">model vs. betting split vs. Reddit vs. Kalshi, disagreements first</span><span class="rule"></span></div>
 <div class="table-wrap"><table>
-<thead><tr><th>Matchup</th><th>Model favors</th><th>Split favors</th><th>Reddit favors</th><th>Verdict</th></tr></thead>
+<thead><tr><th>Matchup</th><th>Model favors</th><th>Split favors</th><th>Reddit favors</th><th>Kalshi favors</th><th>Verdict</th></tr></thead>
 <tbody>
 {% for row in r.alignment_rows %}
 <tr>
@@ -464,15 +464,16 @@
   <td>{{ row.model_direction or "—" }}</td>
   <td>{{ row.split_direction or "—" }}</td>
   <td>{{ row.reddit_direction or "—" }}</td>
+  <td>{{ row.kalshi_direction or "—" }}</td>
   <td>{% if row.agree %}<span class="verdict yes"><span class="dot dot-quiet"></span>Aligned</span>{% else %}<span class="verdict no"><span class="dot"></span>Conflict</span>{% endif %}</td>
 </tr>
 {% endfor %}
 </tbody>
 </table></div>
 
-<div class="eyebrow" id="dd-totals"><span class="label">Totals Alignment</span><span class="sub">over/under only, flagged games, disagreements first</span><span class="rule"></span></div>
+<div class="eyebrow" id="dd-totals"><span class="label">Totals Alignment</span><span class="sub">over/under only, flagged games, disagreements first (Kalshi lean shown for reference, not counted in the verdict)</span><span class="rule"></span></div>
 <div class="table-wrap"><table>
-<thead><tr><th>Matchup</th><th class="num">DRatings</th><th class="num">BPP</th><th class="num">Model</th><th class="num">Market</th><th>Model lean</th><th>Split lean</th><th>Verdict</th></tr></thead>
+<thead><tr><th>Matchup</th><th class="num">DRatings</th><th class="num">BPP</th><th class="num">Model</th><th class="num">Market</th><th>Model lean</th><th>Split lean</th><th>Kalshi lean</th><th>Verdict</th></tr></thead>
 <tbody>
 {% for row in r.totals_rows %}
 <tr>
@@ -483,10 +484,11 @@
   <td class="num">{{ row.market_total if row.market_total is not none else "—" }}</td>
   <td>{{ row.model_lean or "—" }}</td>
   <td>{{ row.split_lean or "—" }}</td>
+  <td>{{ row.kalshi_lean or "—" }}</td>
   <td>{% if row.agree %}<span class="verdict yes"><span class="dot dot-quiet"></span>Aligned</span>{% else %}<span class="verdict no"><span class="dot"></span>Conflict</span>{% endif %}</td>
 </tr>
 {% else %}
-<tr><td colspan="8">No flagged games to show totals alignment for.</td></tr>
+<tr><td colspan="9">No flagged games to show totals alignment for.</td></tr>
 {% endfor %}
 </tbody>
 </table></div>
@@ -542,6 +544,7 @@ Kalshi market data isn't available today - either no markets were found for toda
 <tr><td style="white-space:nowrap">DRatings</td><td>Model projected score per team, win probability, and best available market moneyline/spread/total across tracked sportsbooks.</td></tr>
 <tr><td style="white-space:nowrap">MoundEdge</td><td>BPP sim projected score (separate from its own "Model" projection), weather/park run-environment effect, starting-pitcher splits, hitting/bullpen trend arrows vs season stats, market lines, and embedded betting splits.</td></tr>
 <tr><td style="white-space:nowrap">Reddit</td><td>Today's MLB daily discussion thread, fetched via the unauthenticated .json endpoint. Recurring team mentions and their stated reasoning.</td></tr>
+<tr><td style="white-space:nowrap">Kalshi</td><td>Real-money prediction market: implied win probability and a total-runs over/under line, from Kalshi's public market-data API. Shown for reference (Market Probabilities table + probability bars above) and counted toward the Alignment Check's agreement column, but not folded into the confidence score.</td></tr>
 </tbody>
 </table></div>
 

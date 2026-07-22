@@ -21,6 +21,7 @@ SOURCE_URLS = {
     "SportsBettingDime": "https://www.sportsbettingdime.com/mlb/public-betting-trends/",
     "DRatings": "https://www.dratings.com/predictor/mlb-baseball-predictions/",
     "MoundEdge": "https://moundedge.github.io/MLB-Summaries/",
+    "Kalshi": "https://kalshi.com/markets/kxmlbgame/mlb-game-winner",
 }
 
 _CONDITION_ICONS = [
@@ -328,12 +329,13 @@ ALL_CHECKS = [
 ]
 
 
-def _build_matchups(dr_games, me_games, reddit_result):
+def _build_matchups(dr_games, me_games, reddit_result, kalshi_games=None):
     dr_by_abbrev = _match_dratings_to_abbrev(dr_games)
+    kalshi_by_abbrev = {(g.away_abbrev, g.home_abbrev): g for g in (kalshi_games or [])}
     matchups = []
 
     me_keys = {(g.away.abbrev, g.home.abbrev) for g in me_games}
-    all_keys = set(dr_by_abbrev) | me_keys
+    all_keys = set(dr_by_abbrev) | me_keys | set(kalshi_by_abbrev)
 
     for away_ab, home_ab in all_keys:
         dr = dr_by_abbrev.get((away_ab, home_ab))
@@ -342,6 +344,7 @@ def _build_matchups(dr_games, me_games, reddit_result):
         m = Matchup(away_abbrev=away_ab, home_abbrev=home_ab)
         m.dratings = dr
         m.moundedge = me
+        m.kalshi = kalshi_by_abbrev.get((away_ab, home_ab))
         m.away_name = full_name(away_ab)
         m.home_name = full_name(home_ab)
         m.game_time = me.game_time if me else ""
@@ -405,7 +408,17 @@ def _alignment_for_game(m):
         if away_count != home_count:
             reddit_dir = "away" if away_count > home_count else "home"
 
-    directions = [d for d in (model_dir, split_dir, reddit_dir) if d]
+    # Kalshi (real-money prediction market) - display-only for now: it counts
+    # toward direction agreement here and in the prose section's signal
+    # count, but its margin is deliberately NOT added to _confidence_score's
+    # magnitude sum below, so it doesn't silently re-grade every game's
+    # confidence label until its numbers have been sanity-checked over a
+    # few real days (see _confidence_score's docstring).
+    kalshi_dir = None
+    if m.kalshi and m.kalshi.away_win_pct is not None and m.kalshi.home_win_pct is not None:
+        kalshi_dir = _winner(m.kalshi.away_win_pct, m.kalshi.home_win_pct)
+
+    directions = [d for d in (model_dir, split_dir, reddit_dir, kalshi_dir) if d]
     agree = len(set(directions)) <= 1 if directions else True
 
     def _team(direction):
@@ -416,10 +429,12 @@ def _alignment_for_game(m):
         "model_direction": model_dir,
         "split_direction": split_dir,
         "reddit_direction": reddit_dir,
+        "kalshi_direction": kalshi_dir,
         # same directions, resolved to the actual team abbreviation for prose use
         "model_direction_team": _team(model_dir),
         "split_direction_team": _team(split_dir),
         "reddit_direction_team": _team(reddit_dir),
+        "kalshi_direction_team": _team(kalshi_dir),
         "agree": agree,
     }
     row["confidence_score"] = _confidence_score(row)
@@ -473,9 +488,10 @@ def _prose_signals(m):
     a = m.alignment
     split_team = a["split_direction_team"] if a else None
     reddit_team = a["reddit_direction_team"] if a else None
+    kalshi_team = a["kalshi_direction_team"] if a else None
     model_team = m.prediction_winner
 
-    signals = [t for t in (model_team, split_team, reddit_team) if t and t != "tie"]
+    signals = [t for t in (model_team, split_team, reddit_team, kalshi_team) if t and t != "tie"]
     agree = len(set(signals)) <= 1 if signals else True
     score = a["confidence_score"] if a else 0.0
     label = _confidence_label(score, agree)
@@ -485,6 +501,7 @@ def _prose_signals(m):
         "model_team": model_team,
         "split_team": split_team,
         "reddit_team": reddit_team,
+        "kalshi_team": kalshi_team,
         "signal_count": len(signals),
         "agree": agree,
         "score": score,
@@ -507,6 +524,13 @@ def _totals_alignment_for_game(m):
     if m.moundedge and m.moundedge.split_total_over_money is not None and m.moundedge.split_total_under_money is not None:
         split_lean = "over" if m.moundedge.split_total_over_money > m.moundedge.split_total_under_money else "under"
 
+    # Kalshi's total-runs lean - display only, same reasoning as
+    # kalshi_direction in _alignment_for_game: not folded into `agree` below
+    # until its numbers have been sanity-checked over a few real days.
+    kalshi_lean = None
+    if m.kalshi and m.kalshi.over_pct is not None:
+        kalshi_lean = "over" if m.kalshi.over_pct > 50 else "under"
+
     totals = [t for t in (dr_total, bpp_total, model_total) if t is not None]
     model_lean = None
     if totals and market_total is not None:
@@ -521,12 +545,13 @@ def _totals_alignment_for_game(m):
         "market_total": market_total,
         "model_lean": model_lean,
         "split_lean": split_lean,
+        "kalshi_lean": kalshi_lean,
         "agree": (model_lean == split_lean) if (model_lean and split_lean) else True,
     }
 
 
-def build_report_data(dr_games, me_games, reddit_result, today_iso, today_display, slate_subtitle):
-    matchups = _build_matchups(dr_games, me_games, reddit_result)
+def build_report_data(dr_games, me_games, reddit_result, today_iso, today_display, slate_subtitle, kalshi_games=None):
+    matchups = _build_matchups(dr_games, me_games, reddit_result, kalshi_games)
 
     # most-flagged games first within the notable-games table itself
     notable_games = sorted((m for m in matchups if m.flags), key=lambda m: len(m.flags), reverse=True)
