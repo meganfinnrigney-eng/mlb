@@ -102,3 +102,47 @@ def full_name(abbrev):
     """City + nickname for an abbreviation (e.g. "DET" -> "Detroit Tigers"),
     falling back to the abbreviation itself for anything unrecognized."""
     return ABBREV_TO_FULL_NAME.get(abbrev, abbrev)
+
+
+# Each team's official primary brand color only (not the full secondary/
+# tertiary palette) - for small identifying chips next to team names in the
+# report, not section theming. DET/SEA match the navy values already used
+# for the Tigers/Mariners spotlight accent border.
+TEAM_PRIMARY_COLOR = {
+    "ARI": "#A71930",
+    "ATL": "#13274F",
+    "BAL": "#DF4601",
+    "BOS": "#BD3039",
+    "CHC": "#0E3386",
+    "CHW": "#27251F",
+    "CIN": "#C6011F",
+    "CLE": "#0C2340",
+    "COL": "#33006F",
+    "DET": "#0C2340",
+    "HOU": "#002D62",
+    "KCR": "#004687",
+    "LAA": "#BA0021",
+    "LAD": "#005A9C",
+    "MIA": "#00A3E0",
+    "MIL": "#12284B",
+    "MIN": "#002B5C",
+    "NYM": "#002D72",
+    "NYY": "#003087",
+    "ATH": "#003831",
+    "PHI": "#E81828",
+    "PIT": "#27251F",
+    "SDP": "#2F241D",
+    "SEA": "#0C2C56",
+    "SFG": "#FD5A1E",
+    "STL": "#C41E3A",
+    "TBR": "#092C5C",
+    "TEX": "#003278",
+    "TOR": "#134A8E",
+    "WSN": "#AB0003",
+}
+
+
+def team_color(abbrev):
+    """Primary brand color for an abbreviation, falling back to a neutral
+    gray for anything unrecognized."""
+    return TEAM_PRIMARY_COLOR.get(abbrev, "#9aa39a")
