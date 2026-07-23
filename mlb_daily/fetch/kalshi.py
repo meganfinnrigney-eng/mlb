@@ -52,6 +52,14 @@ TOTAL_SERIES = "KXMLBTOTAL"
 
 ET = ZoneInfo("America/New_York")
 
+# A market flagged "thin" either traded very little in the last 24h or has
+# a wide bid/ask spread - either way its quoted price is easy to move and
+# less trustworthy as a signal. Verified against real payloads via
+# probe_kalshi(): every market carries yes_bid/yes_ask_dollars,
+# no_bid/no_ask_dollars, and volume_24h_fp directly, no inference needed.
+THIN_VOLUME_THRESHOLD = 100    # contracts, trailing 24h
+THIN_SPREAD_THRESHOLD = 0.05   # dollars (5 cents) between bid and ask
+
 _TRAILING_LETTERS_RE = re.compile(r"([A-Z]+)$")
 _TICKER_DT_RE = re.compile(r"-(\d{2})([A-Z]{3})(\d{2})(\d{4})[A-Z]")
 _MONTH_ABBREV = {
@@ -77,8 +85,28 @@ class KalshiGame:
     # Only used to disambiguate doubleheader games by proximity to the
     # official schedule's start time - see build.py.
     ticker_datetime_et: object = None
-    volume: float | None = None
     raw: dict = field(default_factory=dict)
+
+    # liquidity depth, for the Kalshi Market Depth section - each team has
+    # its own separate market (own order book) in KXMLBGAME, so away/home
+    # each get independent bid/ask/volume; KXMLBTOTAL is one market per
+    # line, with the "no" side giving Under's own bid/ask directly (not
+    # inferred as 1 - Over).
+    away_bid: float | None = None
+    away_ask: float | None = None
+    away_volume_24h: float | None = None
+    away_thin: bool = False
+    home_bid: float | None = None
+    home_ask: float | None = None
+    home_volume_24h: float | None = None
+    home_thin: bool = False
+    total_over_bid: float | None = None
+    total_over_ask: float | None = None
+    total_under_bid: float | None = None
+    total_under_ask: float | None = None
+    total_volume_24h: float | None = None
+    total_over_thin: bool = False
+    total_under_thin: bool = False
 
 
 def _parse_ticker_datetime_et(event_ticker):
@@ -158,6 +186,14 @@ def _mid_price_pct(market):
     return round(last * 100, 1) if last is not None else None
 
 
+def _is_thin(bid, ask, volume_24h):
+    if volume_24h is not None and volume_24h < THIN_VOLUME_THRESHOLD:
+        return True
+    if bid is not None and ask is not None and (ask - bid) > THIN_SPREAD_THRESHOLD:
+        return True
+    return False
+
+
 def _is_today(market, today_iso):
     occurrence = market.get("occurrence_datetime")
     if not occurrence or not today_iso:
@@ -219,12 +255,17 @@ def _parse_game_market(market, today_iso, games_by_key):
         key, KalshiGame(away_abbrev=away_ab, home_abbrev=home_ab, ticker_datetime_et=ticker_dt)
     )
     g.game_ticker = event_ticker
-    g.volume = _dollars(market.get("volume_fp"))
     g.raw["game_market_" + this_team] = market
+
+    bid, ask = _dollars(market.get("yes_bid_dollars")), _dollars(market.get("yes_ask_dollars"))
+    volume_24h = _dollars(market.get("volume_24h_fp"))
+    thin = _is_thin(bid, ask, volume_24h)
     if this_team == away_ab:
         g.away_win_pct = pct
+        g.away_bid, g.away_ask, g.away_volume_24h, g.away_thin = bid, ask, volume_24h, thin
     else:
         g.home_win_pct = pct
+        g.home_bid, g.home_ask, g.home_volume_24h, g.home_thin = bid, ask, volume_24h, thin
 
 
 def _parse_total_market(market, today_iso, games_by_key):
@@ -258,6 +299,14 @@ def _parse_total_market(market, today_iso, games_by_key):
     g.total_ticker = event_ticker
     g.over_pct = pct
     g.raw["total_market"] = market
+
+    g.total_over_bid = _dollars(market.get("yes_bid_dollars"))
+    g.total_over_ask = _dollars(market.get("yes_ask_dollars"))
+    g.total_under_bid = _dollars(market.get("no_bid_dollars"))
+    g.total_under_ask = _dollars(market.get("no_ask_dollars"))
+    g.total_volume_24h = _dollars(market.get("volume_24h_fp"))
+    g.total_over_thin = _is_thin(g.total_over_bid, g.total_over_ask, g.total_volume_24h)
+    g.total_under_thin = _is_thin(g.total_under_bid, g.total_under_ask, g.total_volume_24h)
 
 
 def fetch_today_games(today_iso, timeout=20):
