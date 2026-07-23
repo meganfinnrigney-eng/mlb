@@ -184,17 +184,21 @@
   .cg-badges { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
   .cg-note { font-size: var(--fs-body); color: var(--muted); margin-top: 10px; }
 
-  /* Conviction Board: two independently-ranked lists (moneyline agreement,
+  /* Conviction Board: two independently-ranked tables (moneyline agreement,
      totals agreement) - dots make the agreement count scannable at a
-     glance, the text spells out exactly which sources agree/dissent so
-     "conviction" is never asserted without showing its reasoning. Each
-     list gets its own panel treatment (top border + tint + icon) using
-     --panel-money/--panel-totals, two neutral tones distinct from any
-     team color, so the two questions ("who wins" vs. "over/under") read
-     as separate panels even on a quick scroll. */
-  .board-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
-  @media (max-width: 640px) { .board-grid { grid-template-columns: 1fr; } }
-  .board-col { border-radius: 10px; padding: 14px 14px 4px; border-top: 3px solid var(--line); }
+     glance, the Dissenting column spells out exactly which sources
+     agree/dissent so "conviction" is never asserted without showing its
+     reasoning. Each table gets its own panel treatment (top border + tint
+     + icon) using --panel-money/--panel-totals, two neutral tones distinct
+     from any team color, so the two questions ("who wins" vs.
+     "over/under") read as separate panels even on a quick scroll. Stacked
+     full-width (not side-by-side) since a 5-column table needs more room
+     than the old card layout did. */
+  .board-grid { display: grid; grid-template-columns: 1fr; gap: 18px; }
+  /* min-width:0 overrides the grid item default of min-width:auto - without
+     it, .board-col would stretch to the table's full content width instead
+     of letting .table-wrap's overflow-x:auto scroll internally. */
+  .board-col { min-width: 0; border-radius: 10px; padding: 14px 14px 4px; border-top: 3px solid var(--line); }
   .board-col.money { border-top-color: var(--panel-money); background: var(--panel-money-tint); }
   .board-col.totals { border-top-color: var(--panel-totals); background: var(--panel-totals-tint); }
   .board-col .board-heading { display: flex; align-items: center; gap: 6px; font-family: var(--font-display);
@@ -203,15 +207,9 @@
   .board-col.money .board-heading { color: var(--panel-money); }
   .board-col.totals .board-heading { color: var(--panel-totals); }
   .board-heading .bh-icon { font-size: 14px; line-height: 1; }
-  .board-row + .board-row { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); }
-  .board-row .br-matchup { font-family: var(--font-display); font-weight: 700; font-size: var(--fs-name); }
-  .board-row .br-time { color: var(--muted); font-weight: 400; font-size: var(--fs-fine); margin-left: 6px; }
-  .board-dots { margin: 6px 0 4px; letter-spacing: 2px; font-size: var(--fs-body); }
+  .board-dots { letter-spacing: 2px; font-size: var(--fs-body); }
   .board-dots .dot-on { color: var(--accent-3); }
   .board-dots .dot-off { color: var(--line); }
-  .board-verdict { font-size: var(--fs-body); }
-  .board-verdict strong { font-weight: 700; }
-  .board-dissent { font-size: var(--fs-fine); color: var(--muted); margin-top: 2px; }
 
   /* Sparkline: totals-runs ticks (DRatings/BPP/Model/Market) on one line,
      each positioned by its precomputed 0-100 x (see _totals_sparkline in
@@ -386,25 +384,39 @@
 {% endmacro %}
 
 {% macro moneyline_board_row(row) %}
-<div class="board-row">
-  <div class="br-matchup">{{ team_chip(row.matchup.away_abbrev) }}{{ row.matchup.away_name }} @ {{ team_chip(row.matchup.home_abbrev) }}{{ row.matchup.home_name }}{% if row.matchup.game_time %}<span class="br-time">{{ row.matchup.game_time }}</span>{% endif %}</div>
-  {{ board_dots(row.agree_count, row.total_count) }}
-  <div class="board-verdict">{{ row.agree_count }}/{{ row.total_count }} agree: {{ team_chip(row.team) }}<strong>{{ row.team }}</strong> <span class="muted">({{ row.team_name }})</span></div>
-  {% if row.dissenting %}
-  <div class="board-dissent">{% for src, team in row.dissenting %}{{ src }} leans {{ team }}{% if not loop.last %}; {% endif %}{% endfor %}</div>
-  {% endif %}
-</div>
+<tr>
+  <td style="font-weight:600; white-space:nowrap">{{ team_chip(row.matchup.away_abbrev) }}{{ row.matchup.away_name }} @ {{ team_chip(row.matchup.home_abbrev) }}{{ row.matchup.home_name }}</td>
+  <td style="white-space:nowrap">{{ row.matchup.game_time or "—" }}</td>
+  <td style="white-space:nowrap">{{ board_dots(row.agree_count, row.total_count) }}<span style="margin-left:4px">{{ row.agree_count }}/{{ row.total_count }}</span></td>
+  <td style="white-space:nowrap">{{ team_chip(row.team) }}<strong>{{ row.team }}</strong> <span class="muted">({{ row.team_name }})</span></td>
+  <td>
+    {% set parts = [] %}
+    {% for src, team in row.dissenting %}{% set _ = parts.append(src ~ " leans " ~ team) %}{% endfor %}
+    {% for src, team in row.reference %}{% set _ = parts.append(src ~ ": " ~ team ~ " (ref)") %}{% endfor %}
+    {{ parts|join("; ") if parts else "—" }}
+  </td>
+</tr>
 {% endmacro %}
 
 {% macro totals_board_row(row) %}
-<div class="board-row">
-  <div class="br-matchup">{{ team_chip(row.matchup.away_abbrev) }}{{ row.matchup.away_name }} @ {{ team_chip(row.matchup.home_abbrev) }}{{ row.matchup.home_name }}{% if row.matchup.game_time %}<span class="br-time">{{ row.matchup.game_time }}</span>{% endif %}</div>
-  {{ board_dots(row.agree_count, row.total_count) }}
-  <div class="board-verdict">{{ row.agree_count }}/{{ row.total_count }} lean <strong>{{ row.direction|upper }}</strong>{% if row.avg_gap is not none %} by {{ "%.1f"|format(row.avg_gap|abs) }} runs (avg){% endif %}</div>
-  {% if row.dissenting %}
-  <div class="board-dissent">{% for src, direction, gap in row.dissenting %}{{ src }} leans {{ direction }}{% if gap is not none %} by {{ "%.1f"|format(gap|abs) }}{% endif %}{% if not loop.last %}; {% endif %}{% endfor %}</div>
-  {% endif %}
-</div>
+<tr>
+  <td style="font-weight:600; white-space:nowrap">{{ team_chip(row.matchup.away_abbrev) }}{{ row.matchup.away_name }} @ {{ team_chip(row.matchup.home_abbrev) }}{{ row.matchup.home_name }}</td>
+  <td style="white-space:nowrap">{{ row.matchup.game_time or "—" }}</td>
+  <td style="white-space:nowrap">{{ board_dots(row.agree_count, row.total_count) }}<span style="margin-left:4px">{{ row.agree_count }}/{{ row.total_count }}</span></td>
+  <td style="white-space:nowrap">
+    {% if row.market_total is not none and row.sources_avg_total is not none %}
+    Market {{ row.market_total }} → sources avg {{ "%.1f"|format(row.sources_avg_total) }} (<strong>{{ row.direction|upper }}</strong>{% if row.avg_gap is not none %} by {{ "%.1f"|format(row.avg_gap|abs) }}{% endif %})
+    {% else %}
+    <strong>{{ row.direction|upper }}</strong>
+    {% endif %}
+  </td>
+  <td>
+    {% set parts = [] %}
+    {% for src, direction, gap in row.dissenting %}{% set _ = parts.append(src ~ " leans " ~ direction ~ (" by %.1f"|format(gap|abs) if gap is not none else "")) %}{% endfor %}
+    {% for src, direction in row.reference %}{% set _ = parts.append(src ~ ": " ~ direction ~ " (ref)") %}{% endfor %}
+    {{ parts|join("; ") if parts else "—" }}
+  </td>
+</tr>
 {% endmacro %}
 
 {% macro kalshi_bars(m) %}
@@ -486,12 +498,17 @@
 
 <div class="hero-card conviction">
   <div class="kicker">Conviction Board</div>
-  <div class="also-note" style="margin-bottom:16px">Where do DRatings, BPP, Kalshi, and My model actually agree? Two separate questions - who wins, and whether the total goes over or under - each ranked by how many of the four sources land on the same answer. Only games with full or near-full agreement (at least 3 of 4 sources present, at most one dissenting) show up below; there's no forced "pick of the day."</div>
+  <div class="also-note" style="margin-bottom:16px">Where do DRatings, BPP, and My model actually agree? Two separate questions - who wins, and whether the total goes over or under - each ranked by how many of these three independent predictions land on the same answer. Kalshi (and, for totals, the betting split) are shown alongside for reference but not counted - they're market/money signals, not predictions of their own. Only games with full or near-full agreement (at least 2 of 3 counted sources present, at most one dissenting) show up below; there's no forced "pick of the day."</div>
   <div class="board-grid">
     <div class="board-col money">
       <div class="board-heading"><span class="bh-icon">🏆</span>Moneyline agreement</div>
       {% if r.moneyline_board %}
+      <div class="table-wrap"><table>
+      <thead><tr><th>Matchup</th><th>Time</th><th>Agreement</th><th>Pick</th><th>Dissenting source(s)</th></tr></thead>
+      <tbody>
       {% for row in r.moneyline_board %}{{ moneyline_board_row(row) }}{% endfor %}
+      </tbody>
+      </table></div>
       {% else %}
       <div class="also-note">No game hit full or near-full agreement on the winner today.</div>
       {% endif %}
@@ -499,7 +516,12 @@
     <div class="board-col totals">
       <div class="board-heading"><span class="bh-icon">↕</span>Totals agreement</div>
       {% if r.totals_board %}
+      <div class="table-wrap"><table>
+      <thead><tr><th>Matchup</th><th>Time</th><th>Agreement</th><th>Pick</th><th>Dissenting source(s)</th></tr></thead>
+      <tbody>
       {% for row in r.totals_board %}{{ totals_board_row(row) }}{% endfor %}
+      </tbody>
+      </table></div>
       {% else %}
       <div class="also-note">No game hit full or near-full agreement on over/under today.</div>
       {% endif %}
@@ -615,7 +637,13 @@
   <td class="num">{{ "%.1f"|format(row.bpp_total) if row.bpp_total is not none else "—" }}{% if row.bpp_gap is not none %}<span class="muted"> ({{ "%+.1f"|format(row.bpp_gap) }})</span>{% endif %}</td>
   <td class="num">{{ "%.1f"|format(row.model_total) if row.model_total is not none else "—" }}{% if row.model_gap is not none %}<span class="muted"> ({{ "%+.1f"|format(row.model_gap) }})</span>{% endif %}</td>
   <td class="num">{{ row.market_total if row.market_total is not none else "—" }}</td>
-  <td>{{ row.model_lean or "—" }}{% if row.model_lean and row.avg_gap is not none %} by {{ "%.1f"|format(row.avg_gap|abs) }} (avg){% endif %}</td>
+  <td>
+    {% if row.model_lean and row.market_total is not none and row.sources_avg_total is not none %}
+    Market {{ row.market_total }} → sources avg {{ "%.1f"|format(row.sources_avg_total) }} ({{ row.model_lean|upper }}{% if row.avg_gap is not none %} by {{ "%.1f"|format(row.avg_gap|abs) }}{% endif %})
+    {% else %}
+    {{ row.model_lean or "—" }}
+    {% endif %}
+  </td>
   <td>{{ row.split_lean or "—" }}</td>
   <td>{{ row.kalshi_lean or "—" }}</td>
   <td>{% if row.agree %}<span class="verdict yes"><span class="dot dot-quiet"></span>Aligned</span>{% else %}<span class="verdict no"><span class="dot"></span>Conflict</span>{% endif %}</td>
@@ -743,7 +771,7 @@ No Kalshi market depth to show today - either today's highest-conviction picks (
 </tbody>
 </table></div>
 
-<div class="also-note" style="margin-top:10px">Accuracy shown is based on {{ r.track_record|length }} day(s) of tracking so far - treat this as a small early sample, not a proven track record yet. Only the single highest-conviction pick per category is shown per day (at least 3 of 4 sources agreeing, at most one dissenting - same bar as the Conviction Board above), and a day with no game clearing that bar shows "—" rather than a forced pick.</div>
+<div class="also-note" style="margin-top:10px">Accuracy shown is based on {{ r.track_record|length }} day(s) of tracking so far - treat this as a small early sample, not a proven track record yet. Only the single highest-conviction pick per category is shown per day (at least 2 of 3 counted sources agreeing, at most one dissenting - same bar as the Conviction Board above), and a day with no game clearing that bar shows "—" rather than a forced pick.</div>
 {% else %}
 <div class="card boxed">
 No track record yet - this fills in once predictions_log.csv and results_log.csv have a few days of history logged.

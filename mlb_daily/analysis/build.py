@@ -484,7 +484,14 @@ def _build_matchups(dr_games, me_games, reddit_result, kalshi_games=None, mymode
     If schedule_games isn't available (fetch failed - this is a 5th
     optional data dependency, so it must degrade gracefully like every
     other source here), every pair falls back to the old single-game-per-
-    pair behavior instead of blocking the whole report."""
+    pair behavior instead of blocking the whole report. But if the schedule
+    fetch DID succeed and simply doesn't recognize a pair some other source
+    reported, that pair is dropped rather than kept via the same fallback -
+    a scraped source occasionally still shows a game from a prior day (e.g.
+    a late-3ish source refresh), and since the official schedule is ground
+    truth for "what's actually being played today," a pair it doesn't know
+    about is stale/wrong, not a real game to silently include."""
+    schedule_available = bool(schedule_games)
     dr_by_pair = _group_dratings_by_pair(dr_games)
     me_by_pair = {}
     for g in me_games:
@@ -515,15 +522,20 @@ def _build_matchups(dr_games, me_games, reddit_result, kalshi_games=None, mymode
         schedule_entries = schedule_by_pair.get((away_ab, home_ab))
 
         if not schedule_entries:
-            # schedule doesn't know this pair (fetch failed, or a rare
-            # mismatch) - old behavior, single game, first candidate wins
-            resolved.append((
-                away_ab, home_ab, 1, None,
-                dr_candidates[0] if dr_candidates else None,
-                me_candidates[0] if me_candidates else None,
-                kalshi_candidates[0] if kalshi_candidates else None,
-                mymodel_candidates[0] if mymodel_candidates else None,
-            ))
+            if not schedule_available:
+                # schedule fetch failed entirely - old behavior, single
+                # game, first candidate wins
+                resolved.append((
+                    away_ab, home_ab, 1, None,
+                    dr_candidates[0] if dr_candidates else None,
+                    me_candidates[0] if me_candidates else None,
+                    kalshi_candidates[0] if kalshi_candidates else None,
+                    mymodel_candidates[0] if mymodel_candidates else None,
+                ))
+            # else: schedule fetch succeeded and doesn't recognize this
+            # pair - stale/wrong source data (e.g. yesterday's game still
+            # showing in a scraper), drop it rather than show a phantom
+            # "today" game
             continue
 
         sched_pairs = [(gn, dt) for gn, dt, _pk in schedule_entries]
@@ -748,10 +760,12 @@ def _totals_alignment_for_game(m):
     totals = [t for t in (dr_total, bpp_total, model_total) if t is not None]
     model_lean = None
     avg_gap = None
+    sources_avg_total = None
     if totals and market_total is not None:
         avg = sum(totals) / len(totals)
         model_lean = "over" if avg > market_total else "under"
         avg_gap = round(avg - market_total, 2)
+        sources_avg_total = round(avg, 2)
 
     return {
         "matchup": m,
@@ -761,6 +775,7 @@ def _totals_alignment_for_game(m):
         "market_total": market_total,
         "model_lean": model_lean,
         "avg_gap": avg_gap,
+        "sources_avg_total": sources_avg_total,
         "dratings_gap": _gap(dr_total),
         "bpp_gap": _gap(bpp_total),
         "model_gap": _gap(model_total),
@@ -770,17 +785,18 @@ def _totals_alignment_for_game(m):
     }
 
 
-CONVICTION_MIN_SOURCES = 3   # need at least this many sources present to count
-CONVICTION_MAX_DISSENT = 1   # "near-full" = at most this many sources disagree
+CONVICTION_MIN_SOURCES = 2   # need at least this many of the 3 counted sources present
+CONVICTION_MAX_DISSENT = 1   # "near-full" = at most this many of them disagree
 
 
 def _moneyline_votes(m):
     """Conviction Board votes for who wins: DRatings' win-probability pick,
-    MoundEdge's BPP sim pick, Kalshi's win-market lean, and My model's own
-    projected-score pick - four independent predictions. Deliberately NOT
-    the betting split, which measures where the public's money is going,
-    not a prediction - that's a different question (see the Alignment
-    Check table below, which already covers split/Reddit agreement)."""
+    MoundEdge's BPP sim pick, and My model's own projected-score pick -
+    three independent predictions. Kalshi is deliberately NOT counted here
+    (see _moneyline_reference) - it's a real-money market price, not an
+    independent prediction, same reasoning that already excluded the
+    betting split (see the Alignment Check table, which covers split/Reddit
+    agreement separately)."""
     votes = []
     if m.dratings and m.dratings.away_win_pct is not None and m.dratings.home_win_pct is not None:
         d = _winner(m.dratings.away_win_pct, m.dratings.home_win_pct)
@@ -790,10 +806,6 @@ def _moneyline_votes(m):
         d = _winner(m.moundedge.bpp_away_runs, m.moundedge.bpp_home_runs)
         if d and d != "tie":
             votes.append(("BPP", d))
-    if m.kalshi and m.kalshi.away_win_pct is not None and m.kalshi.home_win_pct is not None:
-        d = _winner(m.kalshi.away_win_pct, m.kalshi.home_win_pct)
-        if d and d != "tie":
-            votes.append(("Kalshi", d))
     if m.mymodel and m.mymodel.away_projected_runs is not None and m.mymodel.home_projected_runs is not None:
         d = _winner(m.mymodel.away_projected_runs, m.mymodel.home_projected_runs)
         if d and d != "tie":
@@ -801,18 +813,28 @@ def _moneyline_votes(m):
     return votes
 
 
+def _moneyline_reference(m):
+    """Kalshi's win-market lean - shown alongside the Moneyline agreement
+    count for reference (same team-abbrev direction as the counted votes
+    above) but never counted toward it."""
+    if m.kalshi and m.kalshi.away_win_pct is not None and m.kalshi.home_win_pct is not None:
+        d = _winner(m.kalshi.away_win_pct, m.kalshi.home_win_pct)
+        if d and d != "tie":
+            return [("Kalshi", m.away_abbrev if d == "away" else m.home_abbrev)]
+    return []
+
+
 def _totals_votes(m):
     """Conviction Board votes for over/under: DRatings' total vs. the
-    market line, BPP's total vs. the market line, Kalshi's total-market
-    lean, and the betting split's lean on the total (money on Over vs.
-    Under) - the closest thing to a fourth independent read on the total,
-    since neither DRatings nor My model publishes its own market-implied
-    O/U lean.
+    market line, BPP's total vs. the market line, and My model's own
+    projected total (away + home projected runs) vs. the market line -
+    three independent predictions. Kalshi and the betting split are
+    deliberately NOT counted here (see _totals_reference) - they're
+    market/money signals, not predictions.
 
-    Each vote is (source, direction, gap): gap is the signed runs
-    difference from the market total for DRatings/BPP, whose picks are
-    literal projected totals - None for Kalshi/Betting split, which are
-    probability-based and don't have a comparable runs figure."""
+    Returns (votes, market_total). Each vote is (source, direction, gap) -
+    gap is the signed runs difference from the market total, since all
+    three sources here publish a literal projected total."""
     votes = []
     market_total = (m.moundedge.market_total if m.moundedge else None) or (
         m.dratings.market_total if m.dratings else None
@@ -824,19 +846,32 @@ def _totals_votes(m):
         if m.moundedge and m.moundedge.bpp_total is not None:
             gap = m.moundedge.bpp_total - market_total
             votes.append(("BPP", "over" if gap > 0 else "under", gap))
+        if m.mymodel and m.mymodel.away_projected_runs is not None and m.mymodel.home_projected_runs is not None:
+            mymodel_total = m.mymodel.away_projected_runs + m.mymodel.home_projected_runs
+            gap = mymodel_total - market_total
+            votes.append(("My model", "over" if gap > 0 else "under", gap))
+    return votes, market_total
+
+
+def _totals_reference(m):
+    """Kalshi's total-market lean and the betting split's over/under lean -
+    shown alongside the Totals agreement count for reference, but never
+    counted toward it (see _totals_votes). Neither has a comparable runs
+    figure (both are probability/money-percentage based), so there's no
+    gap to report for them, same as before."""
+    ref = []
     if m.kalshi and m.kalshi.over_pct is not None:
-        votes.append(("Kalshi", "over" if m.kalshi.over_pct > 50 else "under", None))
+        ref.append(("Kalshi", "over" if m.kalshi.over_pct > 50 else "under"))
     if (
         m.moundedge
         and m.moundedge.split_total_over_money is not None
         and m.moundedge.split_total_under_money is not None
     ):
-        votes.append((
+        ref.append((
             "Betting split",
             "over" if m.moundedge.split_total_over_money > m.moundedge.split_total_under_money else "under",
-            None,
         ))
-    return votes
+    return ref
 
 
 def _conviction_row(m, votes, direction_to_label):
@@ -869,11 +904,12 @@ def _moneyline_conviction_row(m):
     if row:
         row["team"] = row["label"]
         row["team_name"] = full_name(row["label"])
+        row["reference"] = _moneyline_reference(m)
     return row
 
 
 def _totals_conviction_row(m):
-    votes = _totals_votes(m)
+    votes, market_total = _totals_votes(m)
     # _conviction_row only needs (source, direction) pairs to tally
     # agreement - magnitude is layered on afterward here so moneyline's
     # simpler 2-tuple votes don't have to carry an always-None gap (win
@@ -881,12 +917,18 @@ def _totals_conviction_row(m):
     row = _conviction_row(m, [(src, d) for src, d, _gap in votes], lambda d: d)
     if row:
         row["direction"] = row["label"]
+        row["market_total"] = market_total
         gaps_by_source = {src: gap for src, _d, gap in votes}
         agreeing_gaps = [gaps_by_source[src] for src in row["agreeing_sources"] if gaps_by_source.get(src) is not None]
         row["avg_gap"] = round(sum(agreeing_gaps) / len(agreeing_gaps), 2) if agreeing_gaps else None
+        row["sources_avg_total"] = (
+            round(market_total + row["avg_gap"], 2)
+            if (market_total is not None and row["avg_gap"] is not None) else None
+        )
         # (source, direction_label, gap) triples now, so a dissenting
         # numeric source's own gap can be shown too
         row["dissenting"] = [(src, label, gaps_by_source.get(src)) for src, label in row["dissenting"]]
+        row["reference"] = _totals_reference(m)
     return row
 
 
