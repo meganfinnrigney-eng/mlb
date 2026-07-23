@@ -14,8 +14,16 @@ def _env():
     )
 
 
-def render_report(report_data, generated_at):
-    return _env().get_template("template.html").render(r=report_data, generated_at=generated_at)
+def render_report(report_data, generated_at, inline_font_css=""):
+    """Full standalone page for docs/ (GitHub Pages). Wraps the same content
+    used for the Claude Artifact fragment in a <!doctype html><html>...
+    shell - the fragment's own leading <title>/<style> tags land in an
+    HTML5 "implied head" ahead of the body content, same as how the
+    Artifact tool itself wraps this file when publishing it directly."""
+    fragment = _env().get_template("artifact_template.html").render(
+        r=report_data, generated_at=generated_at, inline_font_css=inline_font_css
+    )
+    return f'<!doctype html>\n<html lang="en">\n{fragment}\n</html>\n'
 
 
 def render_artifact_fragment(report_data, generated_at, inline_font_css=""):

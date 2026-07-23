@@ -123,7 +123,7 @@ def main():
     if inline_font_css:
         print(f"Inline fonts: {len(inline_font_css) // 1024}KB embedded")
 
-    html = render_report(report_data, generated_at)
+    html = render_report(report_data, generated_at, inline_font_css)
     fragment_html = render_artifact_fragment(report_data, generated_at, inline_font_css)
 
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
