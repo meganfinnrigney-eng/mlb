@@ -1,0 +1,24 @@
+name: Probe Conviction Board Live
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch live index.html and check for the four fixes
+        run: |
+          curl -sS "https://meganfinnrigney-eng.github.io/mlb/" -o /tmp/live.html
+          echo "--- DET @ CHC leaked? ---"
+          grep -c "DET @ CHC" /tmp/live.html || true
+          echo "--- KCR @ DET present? ---"
+          grep -c "KCR @ DET" /tmp/live.html || true
+          echo "--- Conviction Board is a table now? ---"
+          grep -c "Dissenting source" /tmp/live.html || true
+          echo "--- (ref) annotation present? ---"
+          grep -c "(ref)" /tmp/live.html || true
+          echo "--- 'sources avg' market sentence present? ---"
+          grep -c "sources avg" /tmp/live.html || true
+          echo "--- any lingering 3 of 4 / four sources language? ---"
+          grep -c "3 of 4\|four sources\|four independent" /tmp/live.html || true
