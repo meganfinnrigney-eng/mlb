@@ -1,0 +1,38 @@
+name: Probe DET Schedule
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch today's MLB schedule and show DET/KCR/CHC games
+        run: |
+          curl -sS "https://statsapi.mlb.com/api/v1/schedule?sportId=1&date=2026-07-23&hydrate=team" -o /tmp/sched.json
+          python3 - << 'PYEOF'
+          import json
+          data = json.load(open('/tmp/sched.json'))
+          for d in data.get('dates', []):
+              print("DATE:", d.get('date'))
+              for g in d.get('games', []):
+                  away = g['teams']['away']['team'].get('name','')
+                  home = g['teams']['home']['team'].get('name','')
+                  print(f"  gamePk={g.get('gamePk')} gameNumber={g.get('gameNumber')} {away} @ {home}  gameDate={g.get('gameDate')} status={g.get('status',{}).get('detailedState')}")
+          PYEOF
+      - name: Also check the day before and after for boundary issues
+        run: |
+          for d in 2026-07-22 2026-07-24; do
+            echo "=== $d ==="
+            curl -sS "https://statsapi.mlb.com/api/v1/schedule?sportId=1&date=$d&hydrate=team" -o /tmp/sched2.json
+            python3 - << PYEOF
+          import json
+          data = json.load(open('/tmp/sched2.json'))
+          for dd in data.get('dates', []):
+              for g in dd.get('games', []):
+                  away = g['teams']['away']['team'].get('name','')
+                  home = g['teams']['home']['team'].get('name','')
+                  if 'Detroit' in (away, home) or 'Kansas City' in (away, home) or 'Chicago Cubs' in (away, home):
+                      print(f"  gamePk={g.get('gamePk')} gameNumber={g.get('gameNumber')} {away} @ {home}  gameDate={g.get('gameDate')}")
+          PYEOF
+          done
