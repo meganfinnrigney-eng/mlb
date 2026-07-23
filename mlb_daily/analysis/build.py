@@ -11,7 +11,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
 
-from mlb_daily.teams import abbrev_from_name, full_name
+from mlb_daily.teams import TEAM_PRIMARY_COLOR, abbrev_from_name, full_name
 
 ET = ZoneInfo("America/New_York")
 
@@ -944,6 +944,7 @@ def build_report_data(
         "spotlight_games": spotlight_games,
         "reddit": reddit_result,
         "source_urls": SOURCE_URLS,
+        "team_colors": TEAM_PRIMARY_COLOR,
         "thresholds": {
             "total_gap": TOTAL_GAP_THRESHOLD,
             "bpp_disagreement": BPP_DISAGREEMENT_THRESHOLD,
