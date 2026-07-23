@@ -17,7 +17,7 @@ from dataclasses import dataclass
 from mlb_daily.analysis.build import CONVICTION_MAX_DISSENT, CONVICTION_MIN_SOURCES
 from mlb_daily.teams import full_name
 
-_MONEYLINE_FIELDS = (("dratings_pick", "DRatings"), ("bpp_pick", "BPP"), ("mymodel_pick", "My model"), ("kalshi_pick", "Kalshi"))
+_MONEYLINE_FIELDS = (("dratings_pick", "DRatings"), ("bpp_pick", "BPP"), ("mymodel_pick", "My model"))
 _TOTALS_PROJ_FIELDS = (("dratings_total_proj", "DRatings"), ("bpp_total_proj", "BPP"), ("mymodel_total_proj", "My model"))
 
 
@@ -48,10 +48,17 @@ def _to_float(value):
 
 
 def _moneyline_votes(row):
+    """Counted votes only - DRatings, BPP, My model. Kalshi is a real-money
+    market price, not an independent prediction, so it's excluded from the
+    count here too (see build.py's _moneyline_votes for the live-board
+    equivalent)."""
     return [(label, row[field]) for field, label in _MONEYLINE_FIELDS if row.get(field)]
 
 
 def _totals_votes(row):
+    """Counted votes only - DRatings, BPP, My model's projected totals vs.
+    the market line. Kalshi's total-market lean is excluded from the count
+    here too, same reasoning as _moneyline_votes above."""
     votes = []
     market_total = _to_float(row.get("market_total"))
     if market_total is not None:
@@ -59,15 +66,12 @@ def _totals_votes(row):
             proj = _to_float(row.get(field))
             if proj is not None:
                 votes.append((label, "over" if proj > market_total else "under"))
-    kalshi_lean = row.get("kalshi_total_pick")
-    if kalshi_lean:
-        votes.append(("Kalshi", kalshi_lean))
     return votes
 
 
 def _highest_conviction(rows, votes_fn):
     """The single game (from a day's predictions_log rows) with the most
-    source agreement, same 'at least 3 of 4 sources, at most 1 dissenting'
+    source agreement, same 'at least 2 of 3 sources, at most 1 dissenting'
     bar as build.py's Conviction Board - never a forced pick if nothing
     clears it. Ties broken the same way the live board is sorted: more
     agreeing sources first, then more total sources present."""
