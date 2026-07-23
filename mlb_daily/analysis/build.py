@@ -742,11 +742,16 @@ def _totals_alignment_for_game(m):
     if m.kalshi and m.kalshi.over_pct is not None:
         kalshi_lean = "over" if m.kalshi.over_pct > 50 else "under"
 
+    def _gap(total):
+        return round(total - market_total, 2) if (total is not None and market_total is not None) else None
+
     totals = [t for t in (dr_total, bpp_total, model_total) if t is not None]
     model_lean = None
+    avg_gap = None
     if totals and market_total is not None:
         avg = sum(totals) / len(totals)
         model_lean = "over" if avg > market_total else "under"
+        avg_gap = round(avg - market_total, 2)
 
     return {
         "matchup": m,
@@ -755,6 +760,10 @@ def _totals_alignment_for_game(m):
         "model_total": model_total,
         "market_total": market_total,
         "model_lean": model_lean,
+        "avg_gap": avg_gap,
+        "dratings_gap": _gap(dr_total),
+        "bpp_gap": _gap(bpp_total),
+        "model_gap": _gap(model_total),
         "split_lean": split_lean,
         "kalshi_lean": kalshi_lean,
         "agree": (model_lean == split_lean) if (model_lean and split_lean) else True,
@@ -798,26 +807,35 @@ def _totals_votes(m):
     lean, and the betting split's lean on the total (money on Over vs.
     Under) - the closest thing to a fourth independent read on the total,
     since neither DRatings nor My model publishes its own market-implied
-    O/U lean."""
+    O/U lean.
+
+    Each vote is (source, direction, gap): gap is the signed runs
+    difference from the market total for DRatings/BPP, whose picks are
+    literal projected totals - None for Kalshi/Betting split, which are
+    probability-based and don't have a comparable runs figure."""
     votes = []
     market_total = (m.moundedge.market_total if m.moundedge else None) or (
         m.dratings.market_total if m.dratings else None
     )
     if market_total is not None:
         if m.dratings and m.dratings.total_projected_runs is not None:
-            votes.append(("DRatings", "over" if m.dratings.total_projected_runs > market_total else "under"))
+            gap = m.dratings.total_projected_runs - market_total
+            votes.append(("DRatings", "over" if gap > 0 else "under", gap))
         if m.moundedge and m.moundedge.bpp_total is not None:
-            votes.append(("BPP", "over" if m.moundedge.bpp_total > market_total else "under"))
+            gap = m.moundedge.bpp_total - market_total
+            votes.append(("BPP", "over" if gap > 0 else "under", gap))
     if m.kalshi and m.kalshi.over_pct is not None:
-        votes.append(("Kalshi", "over" if m.kalshi.over_pct > 50 else "under"))
+        votes.append(("Kalshi", "over" if m.kalshi.over_pct > 50 else "under", None))
     if (
         m.moundedge
         and m.moundedge.split_total_over_money is not None
         and m.moundedge.split_total_under_money is not None
     ):
-        votes.append(
-            ("Betting split", "over" if m.moundedge.split_total_over_money > m.moundedge.split_total_under_money else "under")
-        )
+        votes.append((
+            "Betting split",
+            "over" if m.moundedge.split_total_over_money > m.moundedge.split_total_under_money else "under",
+            None,
+        ))
     return votes
 
 
@@ -856,9 +874,19 @@ def _moneyline_conviction_row(m):
 
 def _totals_conviction_row(m):
     votes = _totals_votes(m)
-    row = _conviction_row(m, votes, lambda d: d)
+    # _conviction_row only needs (source, direction) pairs to tally
+    # agreement - magnitude is layered on afterward here so moneyline's
+    # simpler 2-tuple votes don't have to carry an always-None gap (win
+    # probabilities and projected-score margins aren't a comparable unit).
+    row = _conviction_row(m, [(src, d) for src, d, _gap in votes], lambda d: d)
     if row:
         row["direction"] = row["label"]
+        gaps_by_source = {src: gap for src, _d, gap in votes}
+        agreeing_gaps = [gaps_by_source[src] for src in row["agreeing_sources"] if gaps_by_source.get(src) is not None]
+        row["avg_gap"] = round(sum(agreeing_gaps) / len(agreeing_gaps), 2) if agreeing_gaps else None
+        # (source, direction_label, gap) triples now, so a dissenting
+        # numeric source's own gap can be shown too
+        row["dissenting"] = [(src, label, gaps_by_source.get(src)) for src, label in row["dissenting"]]
     return row
 
 
@@ -908,6 +936,15 @@ def build_report_data(
         key=lambda row: (-row["agree_count"], -row["total_count"]),
     )
 
+    # Kalshi Market Depth: today's highest-conviction games only (same two
+    # games the Conviction Board already highlights), not the whole slate -
+    # bid/ask + volume per game is a lot of surface area, and these are the
+    # picks worth actually checking the market's liquidity on.
+    kalshi_depth_games = []
+    for board in (moneyline_board, totals_board):
+        if board and board[0]["matchup"].kalshi and board[0]["matchup"] not in kalshi_depth_games:
+            kalshi_depth_games.append(board[0]["matchup"])
+
     spotlight_games = [m for m in matchups if m.away_abbrev in SPOTLIGHT_TEAMS or m.home_abbrev in SPOTLIGHT_TEAMS]
     spotlight_keys = {(m.away_abbrev, m.home_abbrev) for m in spotlight_games}
 
@@ -935,6 +972,7 @@ def build_report_data(
         "most_flagged": most_flagged,
         "moneyline_board": moneyline_board,
         "totals_board": totals_board,
+        "kalshi_depth_games": kalshi_depth_games,
         "rest_clear_games": rest_clear_games,
         "rest_toss_up_games": rest_toss_up_games,
         "alignment_rows": alignment_rows,

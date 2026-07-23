@@ -18,7 +18,8 @@ from mlb_daily.fetch import dratings, kalshi, moundedge, mymodel, reddit, schedu
 from mlb_daily.report import fonts
 from mlb_daily.report.render import render_artifact_fragment, render_report
 from mlb_daily.tracker.log_predictions import log_todays_predictions
-from mlb_daily.tracker.log_results import fetch_and_log_results
+from mlb_daily.tracker.log_results import PREDICTIONS_LOG_PATH, RESULTS_LOG_PATH, fetch_and_log_results
+from mlb_daily.tracker.track_record import build_track_record
 
 ET = ZoneInfo("America/New_York")  # MLB slates are organized by US Eastern date
 PT = ZoneInfo("America/Los_Angeles")  # "generated at" is shown in Pacific time
@@ -118,6 +119,27 @@ def main():
     except Exception as e:
         print(f"[warn] Results tracker fetch failed: {e}", file=sys.stderr)
         traceback.print_exc(file=sys.stderr)
+
+    # Track Record section: trailing days' highest-conviction picks vs what
+    # actually happened - pure display over the two CSVs above, so a
+    # failure here shouldn't take down the rest of the report either.
+    try:
+        import csv as _csv
+
+        def _read_csv(path):
+            if not path.exists():
+                return []
+            with path.open(newline="", encoding="utf-8") as f:
+                return list(_csv.DictReader(f))
+
+        report_data["track_record"] = build_track_record(
+            _read_csv(PREDICTIONS_LOG_PATH), _read_csv(RESULTS_LOG_PATH), num_days=7, exclude_date=today_iso,
+        )
+        print(f"Track record: {len(report_data['track_record'])} day(s)")
+    except Exception as e:
+        print(f"[warn] Track record build failed: {e}", file=sys.stderr)
+        traceback.print_exc(file=sys.stderr)
+        report_data["track_record"] = []
 
     inline_font_css = _fetch_safe("Google Fonts (Oswald/Inter)", _inline_font_css, "")
     if inline_font_css:
