@@ -1,0 +1,36 @@
+name: Probe Live Pages URL
+
+# Temporary, one-off check of what GitHub Pages is actually serving at
+# https://meganfinnrigney-eng.github.io/mlb/ right now - the dev sandbox
+# used to build this repo can't reach github.io directly (outbound proxy
+# blocks it), so this runs the same check from a real GitHub Actions
+# runner instead. Safe to delete once the live site is confirmed.
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch live page (headers + content checks)
+        run: |
+          curl -sS -D /tmp/headers.txt -o /tmp/live.html "https://meganfinnrigney-eng.github.io/mlb/?cachebust=$(date +%s)"
+          echo "===== RESPONSE HEADERS ====="
+          cat /tmp/headers.txt
+          echo
+          echo "===== PAGE SIZE ====="
+          wc -l /tmp/live.html
+          echo
+          echo "===== TITLE ====="
+          grep -o '<title>[^<]*</title>' /tmp/live.html
+          echo
+          echo "===== GENERATED TIMESTAMP ====="
+          grep -o 'Generated [^<]*' /tmp/live.html | head -1
+          echo
+          echo "===== FEATURE PRESENCE COUNTS ====="
+          echo "kalshi (case-insens.): $(grep -ic kalshi /tmp/live.html || true)"
+          echo "conviction (case-insens.): $(grep -ic conviction /tmp/live.html || true)"
+          echo "my model (case-insens.): $(grep -ic 'my model' /tmp/live.html || true)"
+          echo "team-chip: $(grep -c 'team-chip' /tmp/live.html || true)"
+          echo "Tonight's Lineup: $(grep -c "Tonight" /tmp/live.html || true)"
