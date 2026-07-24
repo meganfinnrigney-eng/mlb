@@ -86,7 +86,12 @@
   body {
     color: var(--ink);
     font-family: var(--font-body);
-    max-width: 880px; margin: 0 auto; padding: 26px 20px 80px;
+    /* 1100px rather than a classic ~700px prose column - this page is
+       mostly cards/tables/badges, not long-form text, so the extra width
+       gives the wider tables (Conviction Board, Totals Alignment) more
+       room before they need to scroll, without lines in the prose
+       sections getting uncomfortably long. */
+    max-width: 1100px; margin: 0 auto; padding: 26px 20px 80px;
     line-height: 1.55; font-size: var(--fs-body);
     animation: fade-in 0.4s ease-out both;
   }
@@ -384,7 +389,7 @@
 <div class="hero-band">
 <div class="masthead">
   <h1>MLB Daily Analysis</h1>
-  <div class="meta">Thursday, July 23, 2026<strong>Published 2026-07-23 17:17 PDT</strong></div>
+  <div class="meta">Thursday, July 23, 2026<strong>Published 2026-07-23 17:35 PDT</strong></div>
 </div>
 <div class="disclaimer-strip">Personal-learning report comparing model projections to market/public data. No betting units, stake sizing, or recommended plays anywhere in this report. · Thursday, July 23, 2026 · 5-game slate · season stats + last-30-day trends · ▲▼ trend vs season</div>
 
@@ -424,15 +429,15 @@
   
 <div class="prob-row is-top">
   <span class="prob-label">Kansas City Royals</span>
-  <span class="prob-bar-track"><span class="prob-bar-fill" style="width:72.5%"></span></span>
-  <span class="prob-pct">72%</span>
+  <span class="prob-bar-track"><span class="prob-bar-fill" style="width:78.5%"></span></span>
+  <span class="prob-pct">78%</span>
 </div>
 
   
 <div class="prob-row">
   <span class="prob-label">Detroit Tigers</span>
-  <span class="prob-bar-track"><span class="prob-bar-fill" style="width:27.5%"></span></span>
-  <span class="prob-pct">28%</span>
+  <span class="prob-bar-track"><span class="prob-bar-fill" style="width:21.5%"></span></span>
+  <span class="prob-pct">22%</span>
 </div>
 
 </div>
@@ -444,15 +449,15 @@
   
 <div class="prob-row">
   <span class="prob-label">Over 9.5</span>
-  <span class="prob-bar-track"><span class="prob-bar-fill" style="width:8.5%"></span></span>
-  <span class="prob-pct">8%</span>
+  <span class="prob-bar-track"><span class="prob-bar-fill" style="width:4.0%"></span></span>
+  <span class="prob-pct">4%</span>
 </div>
 
   
 <div class="prob-row is-top">
   <span class="prob-label">Under 9.5</span>
-  <span class="prob-bar-track"><span class="prob-bar-fill" style="width:91.5%"></span></span>
-  <span class="prob-pct">92%</span>
+  <span class="prob-bar-track"><span class="prob-bar-fill" style="width:96.0%"></span></span>
+  <span class="prob-pct">96%</span>
 </div>
 
 </div>
@@ -981,11 +986,11 @@
 <tr>
   <td style="font-weight:600; white-space:nowrap">KCR @ DET</td>
   <td>
-    <div class="cell-bar-row"><span class="cell-bar-label">KCR</span><span class="prob-bar-track sm"><span class="prob-bar-fill" style="width:72.5%"></span></span><span class="cell-bar-pct">72%</span></div>
-    <div class="cell-bar-row"><span class="cell-bar-label">DET</span><span class="prob-bar-track sm"><span class="prob-bar-fill" style="width:27.5%"></span></span><span class="cell-bar-pct">28%</span></div>
+    <div class="cell-bar-row"><span class="cell-bar-label">KCR</span><span class="prob-bar-track sm"><span class="prob-bar-fill" style="width:78.5%"></span></span><span class="cell-bar-pct">78%</span></div>
+    <div class="cell-bar-row"><span class="cell-bar-label">DET</span><span class="prob-bar-track sm"><span class="prob-bar-fill" style="width:21.5%"></span></span><span class="cell-bar-pct">22%</span></div>
   </td>
   <td class="num">9.5</td>
-  <td>Over 8% / Under 92%</td>
+  <td>Over 4% / Under 96%</td>
 </tr>
 
 </tbody>
@@ -1003,21 +1008,21 @@
     
 <div class="depth-row">
   <span class="depth-name"><span class="team-chip" style="background:#004687" title="KCR"></span>Kansas City Royals</span>
-  <span class="depth-pct">72%</span>
-  <span class="depth-bidask">bid 72¢ / ask 73¢</span>
+  <span class="depth-pct">78%</span>
+  <span class="depth-bidask">bid 78¢ / ask 79¢</span>
   
 </div>
 
     
 <div class="depth-row">
   <span class="depth-name"><span class="team-chip" style="background:#0C2340" title="DET"></span>Detroit Tigers</span>
-  <span class="depth-pct">28%</span>
-  <span class="depth-bidask">bid 27¢ / ask 28¢</span>
+  <span class="depth-pct">22%</span>
+  <span class="depth-bidask">bid 21¢ / ask 22¢</span>
   
 </div>
 
     
-    <div class="depth-stat"><span class="depth-stat-value">4,156,950</span><span class="depth-stat-label">contracts traded, last 24h</span></div>
+    <div class="depth-stat"><span class="depth-stat-value">5,655,424</span><span class="depth-stat-label">contracts traded, last 24h</span></div>
   </div>
 
   
@@ -1027,20 +1032,20 @@
     
 <div class="depth-row">
   <span class="depth-name">Over 9.5</span>
-  <span class="depth-pct">8%</span>
-  <span class="depth-bidask">bid 6¢ / ask 11¢</span>
+  <span class="depth-pct">4%</span>
+  <span class="depth-bidask">bid 3¢ / ask 5¢</span>
   
 </div>
 
     
 <div class="depth-row">
   <span class="depth-name">Under 9.5</span>
-  <span class="depth-pct">92%</span>
-  <span class="depth-bidask">bid 89¢ / ask 94¢</span>
+  <span class="depth-pct">96%</span>
+  <span class="depth-bidask">bid 95¢ / ask 97¢</span>
   
 </div>
 
-    <div class="depth-stat"><span class="depth-stat-value">199,731</span><span class="depth-stat-label">contracts traded, last 24h</span></div>
+    <div class="depth-stat"><span class="depth-stat-value">208,203</span><span class="depth-stat-label">contracts traded, last 24h</span></div>
   </div>
   
 
