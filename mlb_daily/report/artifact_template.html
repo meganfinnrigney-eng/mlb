@@ -383,6 +383,26 @@
 <span class="board-dots">{% for i in range(total_count) %}{% if i < agree_count %}<span class="dot-on">●</span>{% else %}<span class="dot-off">○</span>{% endif %}{% endfor %}</span>
 {% endmacro %}
 
+{% macro ml_verdict_note(row) %}
+{{ row.agree_count }}/{{ row.total_count }} agree: {{ team_chip(row.team) }}<strong>{{ row.team }}</strong> <span class="muted">({{ row.team_name }})</span>
+{% set parts = [] %}
+{% for src, team in row.dissenting %}{% set _ = parts.append(src ~ " leans " ~ team) %}{% endfor %}
+{% for src, team in row.reference %}{% set _ = parts.append(src ~ ": " ~ team ~ " (ref)") %}{% endfor %}
+{% if parts %}<br><span class="muted">{{ parts|join("; ") }}</span>{% endif %}
+{% endmacro %}
+
+{% macro totals_verdict_note(row) %}
+{% if row.market_total is not none and row.sources_avg_total is not none %}
+Market {{ row.market_total }} → sources avg {{ "%.1f"|format(row.sources_avg_total) }} (<strong>{{ row.direction|upper }}</strong>{% if row.avg_gap is not none %} by {{ "%.1f"|format(row.avg_gap|abs) }}{% endif %}) — {{ row.agree_count }}/{{ row.total_count }} agree
+{% else %}
+{{ row.agree_count }}/{{ row.total_count }} lean <strong>{{ row.direction|upper }}</strong>
+{% endif %}
+{% set parts = [] %}
+{% for src, direction, gap in row.dissenting %}{% set _ = parts.append(src ~ " leans " ~ direction ~ (" by %.1f"|format(gap|abs) if gap is not none else "")) %}{% endfor %}
+{% for src, direction in row.reference %}{% set _ = parts.append(src ~ ": " ~ direction ~ " (ref)") %}{% endfor %}
+{% if parts %}<br><span class="muted">{{ parts|join("; ") }}</span>{% endif %}
+{% endmacro %}
+
 {% macro moneyline_board_row(row) %}
 <tr>
   <td style="font-weight:600; white-space:nowrap">{{ team_chip(row.matchup.away_abbrev) }}{{ row.matchup.away_name }} @ {{ team_chip(row.matchup.home_abbrev) }}{{ row.matchup.home_name }}</td>
@@ -494,6 +514,61 @@
 </div>
 {% else %}
 <div class="also-note">Neither the Detroit Tigers nor the Seattle Mariners play today.</div>
+{% endif %}
+
+{% set show_ml_pick = r.top_moneyline_pick and not r.top_moneyline_pick_is_spotlight %}
+{% set show_totals_pick = r.top_totals_pick and not r.top_totals_pick_is_spotlight %}
+{% if r.top_moneyline_pick or r.top_totals_pick %}
+<div class="hero-card conviction">
+  <div class="kicker">Highest conviction tonight</div>
+  {% if not show_ml_pick and not show_totals_pick %}
+  <div class="also-note">Today's highest-conviction pick{% if r.top_moneyline_pick and r.top_totals_pick %}s are{% else %} is{% endif %} also a Tigers/Mariners game — see above.</div>
+  {% elif show_ml_pick and show_totals_pick and r.top_picks_same_game %}
+  {% set hc = r.top_moneyline_pick %}
+  {% set hct = r.top_totals_pick %}
+  <div class="callout-game">
+    <div class="g-row"><span class="g-head">{{ team_chip(hc.matchup.away_abbrev) }}{{ hc.matchup.away_name }} @ {{ team_chip(hc.matchup.home_abbrev) }}{{ hc.matchup.home_name }}</span>{% if hc.matchup.game_time %} <span class="g-time">{{ hc.matchup.game_time }}</span>{% endif %}</div>
+    <div class="cg-score">{{ score_line(hc.matchup) }}</div>
+    {{ hero_pct(hc.matchup) }}
+    {{ sparkline(hc.matchup) }}
+    {{ kalshi_bars(hc.matchup) }}
+    <div class="cg-note"><strong>Moneyline —</strong> {{ ml_verdict_note(hc) }}</div>
+    <div class="cg-note"><strong>Totals —</strong> {{ totals_verdict_note(hct) }}</div>
+  </div>
+  {% else %}
+  {% if show_ml_pick %}
+  {% set hc = r.top_moneyline_pick %}
+  <div class="callout-game">
+    <div class="g-row"><span class="g-head">{{ team_chip(hc.matchup.away_abbrev) }}{{ hc.matchup.away_name }} @ {{ team_chip(hc.matchup.home_abbrev) }}{{ hc.matchup.home_name }}</span>{% if hc.matchup.game_time %} <span class="g-time">{{ hc.matchup.game_time }}</span>{% endif %}</div>
+    <div class="cg-score">{{ score_line(hc.matchup) }}</div>
+    {{ hero_pct(hc.matchup) }}
+    {{ sparkline(hc.matchup) }}
+    {{ kalshi_bars(hc.matchup) }}
+    <div class="cg-note"><strong>Moneyline —</strong> {{ ml_verdict_note(hc) }}</div>
+  </div>
+  {% elif r.top_moneyline_pick_is_spotlight %}
+  <div class="also-note">Today's highest-conviction moneyline pick is also a Tigers/Mariners game — see above.</div>
+  {% endif %}
+  {% if show_totals_pick %}
+  {% set hct = r.top_totals_pick %}
+  <div class="callout-game">
+    <div class="g-row"><span class="g-head">{{ team_chip(hct.matchup.away_abbrev) }}{{ hct.matchup.away_name }} @ {{ team_chip(hct.matchup.home_abbrev) }}{{ hct.matchup.home_name }}</span>{% if hct.matchup.game_time %} <span class="g-time">{{ hct.matchup.game_time }}</span>{% endif %}</div>
+    <div class="cg-score">{{ score_line(hct.matchup) }}</div>
+    {{ hero_pct(hct.matchup) }}
+    {{ sparkline(hct.matchup) }}
+    {{ kalshi_bars(hct.matchup) }}
+    <div class="cg-note"><strong>Totals —</strong> {{ totals_verdict_note(hct) }}</div>
+  </div>
+  {% elif r.top_totals_pick_is_spotlight %}
+  <div class="also-note">Today's highest-conviction totals pick is also a Tigers/Mariners game — see above.</div>
+  {% endif %}
+  {% endif %}
+</div>
+{% else %}
+<div class="hero-card conviction">
+  <div class="kicker">Highest conviction tonight</div>
+  <div class="also-note">No game clears the agreement bar for a highest-conviction pick today.</div>
+</div>
 {% endif %}
 
 <div class="hero-card conviction">

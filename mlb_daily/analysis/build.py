@@ -990,6 +990,26 @@ def build_report_data(
     spotlight_games = [m for m in matchups if m.away_abbrev in SPOTLIGHT_TEAMS or m.home_abbrev in SPOTLIGHT_TEAMS]
     spotlight_keys = {(m.away_abbrev, m.home_abbrev) for m in spotlight_games}
 
+    # "Highest Conviction Tonight" callout: today's single highest-agreement
+    # pick per category (moneyline_board/totals_board are already sorted
+    # best-first by the same tally Track Record uses), shown as its own
+    # highlighted block above the full board - same idea as the old
+    # single-game callout this replaced, just split per category since
+    # moneyline and totals no longer collapse into one score.
+    top_moneyline_pick = moneyline_board[0] if moneyline_board else None
+    top_totals_pick = totals_board[0] if totals_board else None
+    top_picks_same_game = bool(
+        top_moneyline_pick and top_totals_pick
+        and (top_moneyline_pick["matchup"].away_abbrev, top_moneyline_pick["matchup"].home_abbrev, top_moneyline_pick["matchup"].game_number)
+        == (top_totals_pick["matchup"].away_abbrev, top_totals_pick["matchup"].home_abbrev, top_totals_pick["matchup"].game_number)
+    )
+    top_moneyline_pick_is_spotlight = bool(
+        top_moneyline_pick and (top_moneyline_pick["matchup"].away_abbrev, top_moneyline_pick["matchup"].home_abbrev) in spotlight_keys
+    )
+    top_totals_pick_is_spotlight = bool(
+        top_totals_pick and (top_totals_pick["matchup"].away_abbrev, top_totals_pick["matchup"].home_abbrev) in spotlight_keys
+    )
+
     # "Clear" = signals agree AND are strong enough to clear the toss-up bar;
     # everything else (weak signals, OR strong-but-conflicting "mixed
     # signals") goes in the toss-up group, per-request. Sorting by
@@ -1014,6 +1034,11 @@ def build_report_data(
         "most_flagged": most_flagged,
         "moneyline_board": moneyline_board,
         "totals_board": totals_board,
+        "top_moneyline_pick": top_moneyline_pick,
+        "top_totals_pick": top_totals_pick,
+        "top_picks_same_game": top_picks_same_game,
+        "top_moneyline_pick_is_spotlight": top_moneyline_pick_is_spotlight,
+        "top_totals_pick_is_spotlight": top_totals_pick_is_spotlight,
         "kalshi_depth_games": kalshi_depth_games,
         "rest_clear_games": rest_clear_games,
         "rest_toss_up_games": rest_toss_up_games,
