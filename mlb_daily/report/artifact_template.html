@@ -81,7 +81,12 @@
   body {
     color: var(--ink);
     font-family: var(--font-body);
-    max-width: 880px; margin: 0 auto; padding: 26px 20px 80px;
+    /* 1100px rather than a classic ~700px prose column - this page is
+       mostly cards/tables/badges, not long-form text, so the extra width
+       gives the wider tables (Conviction Board, Totals Alignment) more
+       room before they need to scroll, without lines in the prose
+       sections getting uncomfortably long. */
+    max-width: 1100px; margin: 0 auto; padding: 26px 20px 80px;
     line-height: 1.55; font-size: var(--fs-body);
     animation: fade-in 0.4s ease-out both;
   }
