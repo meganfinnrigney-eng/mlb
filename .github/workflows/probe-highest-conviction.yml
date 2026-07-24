@@ -1,0 +1,20 @@
+name: Probe Highest Conviction Callout Live
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch live index.html and check for the callout
+        run: |
+          curl -sS "https://meganfinnrigney-eng.github.io/mlb/" -o /tmp/live.html
+          echo "--- 'Highest conviction tonight' present? ---"
+          grep -c "Highest conviction tonight" /tmp/live.html || true
+          echo "--- context around it ---"
+          python3 - << 'PYEOF'
+          html = open('/tmp/live.html', encoding='utf-8').read()
+          i = html.find('Highest conviction tonight')
+          print(html[max(0,i-30):i+1500] if i >= 0 else 'NOT FOUND')
+          PYEOF
